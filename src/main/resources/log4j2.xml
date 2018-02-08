@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Properties>
+        <Property name="log-path">.</Property>
+    </Properties>
+
+    <!-- Appenders (writing to file in various ways) -->
+    <Appenders>
+        <RollingFile name="INTERNAL"
+                     fileName="${log-path}/muproc.log"
+                     filePattern="${log-path}/muproc-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] [%-5level] %c{1}: %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="9"/>
+        </RollingFile>
+
+        <RollingFile name="STATISTICS"
+                     fileName="${log-path}/statistics.log"
+                     filePattern="${log-path}/statistics-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t]: %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="9"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <logger name="eu.ensure" level="INFO" />
+        <logger name="org.apache" level="WARN" />
+
+        <logger name="STATISTICS" level="INFO">
+            <appender-ref ref="STATISTICS"/>
+        </logger>
+
+        <Root level="DEBUG">
+            <appender-ref ref="INTERNAL"/>
+        </Root>
+    </Loggers>
+</Configuration>

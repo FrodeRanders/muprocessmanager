@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <entry key="manager">derby</entry>
+    <entry key="database">sagas</entry>
+    <entry key="driver">org.apache.derby.jdbc.EmbeddedDataSource</entry>
+    <entry key="url">jdbc:derby:/Users/froran/Projects/fk/sagagas/db;create=true</entry>
+    <entry key="user"/>
+    <entry key="password"/>
+</properties>
