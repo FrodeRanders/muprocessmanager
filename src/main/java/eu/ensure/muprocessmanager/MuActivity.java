@@ -18,7 +18,15 @@
 package eu.ensure.muprocessmanager;
 
 /**
- * Be sure to implement the default constructor!
+ * A representation of any activity taking place in a {@link MuProcess} that has
+ * both a forward as well as a backward (compensational) behaviour.
+ * <p>
+ * The idea is to wrap both the work to do along the "happy path" (walking forward)
+ * as well as the compensation (walking backward).
+ * <p>
+ * Be sure to implement the default constructor, because the compensation is logged
+ * to database ({@link MuPersistentLog} takes care of this) from which a MuActivity is
+ * instantiated dynamically upon which the compensation is invoked.
  */
-public interface MuActivity extends MuForwardActivity, MuBackwardActivity {
+public interface MuActivity extends MuForwardBehaviour, MuBackwardBehaviour {
 }

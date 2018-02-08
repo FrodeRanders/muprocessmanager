@@ -89,7 +89,7 @@ public class MuProcess {
         // Run forward action
         boolean forwardSuccess;
         try {
-            forwardSuccess = activity.forwardAction(parameters);
+            forwardSuccess = activity.forward(parameters);
         }
         catch (Throwable t) {
             String info = this + ": Forward activity (\"" + activity.getClass().getName() + "\") step " + currentStep + " failed: ";

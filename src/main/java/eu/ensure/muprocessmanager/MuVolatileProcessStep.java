@@ -25,7 +25,7 @@ import java.io.IOException;
 
     private final MuActivityParameters parameters;
 
-    private MuBackwardActivity backwardActivity = null;
+    private MuBackwardBehaviour backwardBehaviour = null;
 
     /* package private */ MuVolatileProcessStep(final MuActivityParameters parameters) throws MuProcessException {
         try {
@@ -38,13 +38,13 @@ import java.io.IOException;
         }
     }
 
-    /* package private */ boolean execute(final MuForwardActivity forward, final MuBackwardActivity backward) {
-        backwardActivity = backward;
+    /* package private */ boolean execute(final MuForwardBehaviour forward, final MuBackwardBehaviour backward) {
+        backwardBehaviour = backward;
 
         // Run forward transaction
         boolean success;
         try {
-            success = forward.forwardAction(parameters);
+            success = forward.forward(parameters);
         }
         catch (Throwable t) {
             success = false;
@@ -57,7 +57,7 @@ import java.io.IOException;
         // Run backward transaction
         boolean success;
         try {
-            success = backwardActivity.backwardAction(parameters);
+            success = backwardBehaviour.backward(parameters);
         }
         catch (Throwable t) {
             success = false;

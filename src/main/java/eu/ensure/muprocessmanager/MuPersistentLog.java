@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
 import java.sql.*;
-import java.util.Locale;
 import java.util.Optional;
 
 public class MuPersistentLog {
@@ -35,7 +34,7 @@ public class MuPersistentLog {
     private static final Logger statisticsLog = LogManager.getLogger("STATISTICS");
 
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    private static final ActivityLoader<MuBackwardActivity> loader = new ActivityLoader<>("compensation activity");
+    private static final ActivityLoader<MuBackwardBehaviour> loader = new ActivityLoader<>("compensation activity");
 
     private final DataSource dataSource;
 
@@ -59,7 +58,7 @@ public class MuPersistentLog {
     private static final String INCREMENT_PROCESS_STEP_RETRIES = "UPDATE mu_process_step SET retries = retries + 1 WHERE process_id = ? AND step_id = ?";
 
     public interface CompensationRunnable {
-        boolean run(MuBackwardActivity activity, Method method, MuActivityParameters parameters, int step, int retries) throws MuProcessBackwardActivityException;
+        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, int step, int retries) throws MuProcessBackwardActivityException;
     }
 
     public interface CleanupRunnable {
@@ -213,7 +212,7 @@ public class MuPersistentLog {
                             log.trace(info);
                         }
 
-                        MuBackwardActivity activity = loader.load(className);
+                        MuBackwardBehaviour activity = loader.load(className);
                         if (activity != null) {
                             Class[] parameterTypes = { MuActivityParameters.class };
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
@@ -419,12 +418,12 @@ public class MuPersistentLog {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /* package private */ void pushCompensation(
-            final MuProcess process, final MuBackwardActivity activity,
+            final MuProcess process, final MuBackwardBehaviour activity,
             final MuActivityParameters parameters
     ) throws MuProcessException {
 
         // Determine class name
-        Class<? extends MuBackwardActivity> clazz = activity.getClass();
+        Class<? extends MuBackwardBehaviour> clazz = activity.getClass();
         String className = clazz.getName();
 
         // Check existence of persistable method name

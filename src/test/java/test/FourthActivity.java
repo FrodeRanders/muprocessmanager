@@ -28,13 +28,13 @@ public class FourthActivity implements MuActivity {
     public FourthActivity() {}
 
     @Override
-    public boolean forwardAction(MuActivityParameters args) {
+    public boolean forward(MuActivityParameters args) {
         //System.out.println(this.getClass().getName() + " forward activity: " + args);
         return !(Math.random() < forwardFailureProbability);
     }
 
     @Override
-    public boolean backwardAction(MuActivityParameters args) {
+    public boolean backward(MuActivityParameters args) {
         //System.out.println(this.getClass().getName() + " backward activity: " + args);
         return !(Math.random() < backwardFailureProbability);
     }

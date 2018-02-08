@@ -19,6 +19,13 @@ package eu.ensure.muprocessmanager;
 
 import java.util.HashMap;
 
+/**
+ * Wraps parameters to a {@link MuActivity}. This is simply a collection of
+ * key and value pairs.
+ * <p>
+ * The value part has to be serializable, as the whole thing is persisted
+ * to database ({@link MuPersistentLog} takes care of this) as a JSON object.
+ */
 public class MuActivityParameters extends HashMap<String, Object> {
 
     @Override

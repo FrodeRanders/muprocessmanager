@@ -18,9 +18,9 @@
 package eu.ensure.muprocessmanager;
 
 /**
- * Be sure to realize the default constructor!
+ * A representation of the "happy path" behaviour of a {@link MuActivity}.
  */
 @FunctionalInterface
-public interface MuForwardActivity {
-    boolean forwardAction(MuActivityParameters args);
+public interface MuForwardBehaviour {
+    boolean forward(MuActivityParameters args);
 }

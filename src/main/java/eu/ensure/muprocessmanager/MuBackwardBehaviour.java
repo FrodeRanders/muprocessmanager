@@ -18,11 +18,12 @@
 package eu.ensure.muprocessmanager;
 
 /**
- * Be sure to realize the default constructor!
+ * A representation of the compensation behaviour of a {@link MuActivity}.
  */
 @FunctionalInterface
-public interface MuBackwardActivity {
-    boolean backwardAction(MuActivityParameters args);
+public interface MuBackwardBehaviour {
+    boolean backward(MuActivityParameters args);
 
-    default String getPersistableMethodName() { return "backwardAction"; }
+    default String getPersistableMethodName() { return "backward"; }
 }
+

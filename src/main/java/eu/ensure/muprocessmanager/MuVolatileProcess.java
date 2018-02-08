@@ -33,7 +33,7 @@ public class MuVolatileProcess {
         this.acceptCompensationFailure = acceptCompensationFailure;
     }
 
-    public <P> void execute(final MuForwardActivity forward, final MuBackwardActivity backward, final MuActivityParameters parameters) throws MuProcessException {
+    public <P> void execute(final MuForwardBehaviour forward, final MuBackwardBehaviour backward, final MuActivityParameters parameters) throws MuProcessException {
 
         MuVolatileProcessStep step = new MuVolatileProcessStep(parameters);
         stepStack.push(step);
