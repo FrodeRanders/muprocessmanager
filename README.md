@@ -58,6 +58,8 @@ the &#956;processmanager runs recover activities in the background picking up ab
 store and executing the compensations. Eventually individual processes may remain in a partly recovered state, 
 which will need some kind of external action.
 
+![Image](doc/microprocess-states.png?raw=true)
+
 Processes are identified through a [correlation ID](https://blog.rapid7.com/2016/12/23/the-value-of-correlation-ids/).
 
 ## Index
