@@ -17,13 +17,16 @@
  */
 package eu.ensure.muprocessmanager;
 
-public class MuProcessForwardActivityException extends MuProcessException {
+/**
+ * An exception occurring during {@link MuForwardBehaviour} of a {@link MuActivity}.
+ */
+public class MuProcessForwardBehaviourException extends MuProcessException {
 
-    public MuProcessForwardActivityException(String info) {
+    public MuProcessForwardBehaviourException(String info) {
         super(info);
     }
 
-    public MuProcessForwardActivityException(String info, Throwable t) {
+    public MuProcessForwardBehaviourException(String info, Throwable t) {
         super(info, t);
     }
 }

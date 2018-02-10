@@ -17,13 +17,16 @@
  */
 package eu.ensure.muprocessmanager;
 
-public class MuProcessBackwardActivityException extends MuProcessException {
+/**
+ * An exception occurring during {@link MuBackwardBehaviour} of a {@link MuActivity}.
+ */
+public class MuProcessBackwardBehaviourException extends MuProcessException {
 
-    public MuProcessBackwardActivityException(String info) {
+    public MuProcessBackwardBehaviourException(String info) {
         super(info);
     }
 
-    public MuProcessBackwardActivityException(String info, Throwable t) {
+    public MuProcessBackwardBehaviourException(String info, Throwable t) {
         super(info, t);
     }
 }

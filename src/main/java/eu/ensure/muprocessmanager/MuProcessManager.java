@@ -33,6 +33,14 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.*;
 
+/**
+ * Implements a micro-process manager.
+ * <p>
+ * Acquire a {@link MuProcess} from this manager
+ * and execute your {@link MuActivity} in this process -- this manager will take
+ * care of potential failures by automatically running compensations. Compensations
+ * are persisted to a relational database (in the background).
+ */
 public class MuProcessManager {
     private static final Logger log = LogManager.getLogger(MuProcessManager.class);
 

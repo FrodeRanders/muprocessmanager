@@ -17,6 +17,10 @@
  */
 package eu.ensure.muprocessmanager;
 
+/**
+ * Please refer to the description of the success and failure modes in the
+ * documentation.
+ */
 public enum MuProcessStatus {
     NEW(0),
     PROGRESSING(1),

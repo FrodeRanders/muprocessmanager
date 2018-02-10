@@ -26,7 +26,6 @@ import junit.framework.TestSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Locale;
 import java.util.UUID;
 
 public class AppTest extends TestCase {
@@ -189,13 +188,13 @@ public class AppTest extends TestCase {
 
                     process.finished();
 
-                } catch (MuProcessBackwardActivityException mpbae) {
+                } catch (MuProcessBackwardBehaviourException mpbae) {
                     // Forward activity failed and so did some compensation activities
                     String info = "Process and compensation failure: " + mpbae.getMessage();
                     if (log.isTraceEnabled()) {
                         log.trace(info);
                     }
-                } catch (MuProcessForwardActivityException mpfae) {
+                } catch (MuProcessForwardBehaviourException mpfae) {
                     // Forward activity failed, but compensations were successful
                     String info = "No success, but managed to compensate: " + mpfae.getMessage();
                     if (log.isTraceEnabled()) {

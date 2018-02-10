@@ -19,6 +19,9 @@ package eu.ensure.muprocessmanager.utils;
 
 import java.io.*;
 
+/**
+ * Properly clones objects using internal serialization and subsequent deserialization.
+ */
 public class Serialization {
 
     private static ByteArrayOutputStream toOutputStream(Object object) throws IOException {

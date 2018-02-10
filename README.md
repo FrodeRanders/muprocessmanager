@@ -116,12 +116,12 @@ try {
     
     process.finished();   
     
-} catch (MuProcessBackwardActivityException mpbae) {
+} catch (MuProcessBackwardBehaviourException mpbae) {
     // Forward activity failed and so did some compensation activities
     String info = "Process and compensation failure: " + mpbae.getMessage();
     log.warn(info, mpbae);
     
-} catch (MuProcessForwardActivityException mpfae) {
+} catch (MuProcessForwardBehaviourException mpfae) {
     // Forward activity failed, but compensations were successful
     String info = "No success, but managed to compensate: " + mpfae.getMessage();
     log.info(info, mpfae);

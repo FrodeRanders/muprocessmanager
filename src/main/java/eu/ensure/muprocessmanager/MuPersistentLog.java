@@ -29,6 +29,14 @@ import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.Optional;
 
+/**
+ * Takes care of persisting compensations to a relational database and subsequently reading
+ * process steps (activities) from the database. Currently only compensations are stored.
+ * <p>
+ * The DDL for this database is found in src/resources/eu/ensure/muprocessmanager/create.sql
+ * <p>
+ * Currently the DML-stuff is maintained internally in this class.
+ */
 public class MuPersistentLog {
     private static final Logger log = LogManager.getLogger(MuPersistentLog.class);
     private static final Logger statisticsLog = LogManager.getLogger("STATISTICS");
@@ -58,7 +66,7 @@ public class MuPersistentLog {
     private static final String INCREMENT_PROCESS_STEP_RETRIES = "UPDATE mu_process_step SET retries = retries + 1 WHERE process_id = ? AND step_id = ?";
 
     public interface CompensationRunnable {
-        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, int step, int retries) throws MuProcessBackwardActivityException;
+        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, int step, int retries) throws MuProcessBackwardBehaviourException;
     }
 
     public interface CleanupRunnable {
@@ -228,7 +236,7 @@ public class MuPersistentLog {
                         else {
                             String info = "Failed to compensate process (correlationId=\"" + correlationId + "\", processId=\"" + processId + "\",  stepId=" + stepId + "): ";
                             info += "Not a MuBackwardActivity! " + className;
-                            throw new MuProcessBackwardActivityException(info);
+                            throw new MuProcessBackwardBehaviourException(info);
                         }
                     }
                 }
@@ -237,17 +245,17 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to query compensation: ";
             info += Database.squeeze(sqle);
-            throw new MuProcessBackwardActivityException(info, sqle);
+            throw new MuProcessBackwardBehaviourException(info, sqle);
         }
         catch (ClassNotFoundException cnfe) {
             String info = "Failed to instantiate compensation: ";
             info += cnfe.getMessage();
-            throw new MuProcessBackwardActivityException(info, cnfe);
+            throw new MuProcessBackwardBehaviourException(info, cnfe);
         }
         catch (NoSuchMethodException nsme) {
             String info = "Failed to establish call endpoint for compensation: ";
             info += nsme.getMessage();
-            throw new MuProcessBackwardActivityException(info, nsme);
+            throw new MuProcessBackwardBehaviourException(info, nsme);
         }
     }
 
@@ -271,7 +279,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to query compensation: ";
             info += Database.squeeze(sqle);
-            throw new MuProcessBackwardActivityException(info, sqle);
+            throw new MuProcessBackwardBehaviourException(info, sqle);
         }
         finally {
             // Set process status
@@ -487,7 +495,7 @@ public class MuPersistentLog {
 
     private void popCompensation(
             final int processId, final int stepId
-    ) throws MuProcessBackwardActivityException {
+    ) throws MuProcessBackwardBehaviourException {
 
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
@@ -504,7 +512,7 @@ public class MuPersistentLog {
             String info = "Failed to remove process step: ";
             info += Database.squeeze(sqle);
             log.warn(info);
-            throw new MuProcessBackwardActivityException(info, sqle);
+            throw new MuProcessBackwardBehaviourException(info, sqle);
         }
     }
 }

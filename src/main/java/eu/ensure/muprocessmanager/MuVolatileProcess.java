@@ -22,6 +22,16 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Stack;
 
+/**
+ * This is a non-volatile process, in which you can execute activities. If the process fails,
+ * compensations are executed (similar to the {@link MuProcess}) but without the persistence
+ * steps. If your process thread dies, the state is lost!
+ * <p>
+ * Since compensations (i.e. {@link MuBackwardBehaviour})are not backed to database, you may
+ * use lambdas both for the forward and backward behaviours of each activity.
+ * <p>
+ * This is a convenience utility for creating micro-processes that may fail.
+ */
 public class MuVolatileProcess {
     private static final Logger log = LogManager.getLogger(MuVolatileProcess.class);
 
@@ -60,7 +70,7 @@ public class MuVolatileProcess {
                     backwardStepSuccess = false;
                     if (!acceptCompensationFailure) {
                         String info = "Failed to compensate activity " + stepNumber;
-                        throw new MuProcessBackwardActivityException(info, t);
+                        throw new MuProcessBackwardBehaviourException(info, t);
                     }
                 }
                 overallBackwardSuccess &= backwardStepSuccess;
@@ -74,11 +84,11 @@ public class MuVolatileProcess {
             if (overallBackwardSuccess) {
                 String info = "Forward activity failed, ";
                 info += "but compensation was successful.";
-                throw new MuProcessForwardActivityException(info);
+                throw new MuProcessForwardBehaviourException(info);
             } else {
                 String info = "Forward activity failed ";
                 info += "and also failed to compensate all activities";
-                throw new MuProcessBackwardActivityException(info);
+                throw new MuProcessBackwardBehaviourException(info);
             }
         }
     }

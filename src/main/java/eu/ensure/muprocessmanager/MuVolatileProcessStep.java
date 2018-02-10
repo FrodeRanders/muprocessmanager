@@ -21,6 +21,9 @@ import eu.ensure.muprocessmanager.utils.Serialization;
 
 import java.io.IOException;
 
+/**
+ * Corresponds to an individual volatile process step.
+ */
 /* package private */ class MuVolatileProcessStep {
 
     private final MuActivityParameters parameters;

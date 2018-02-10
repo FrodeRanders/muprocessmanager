@@ -25,6 +25,9 @@ import java.lang.reflect.Method;
 
 /**
  * Dynamically loads objects.
+ * <p>
+ * Used by the micro-process manager in order to instantiate compensation activities
+ * from persistent store.
  */
 public class ActivityLoader<C> {
     private static final Logger log = LogManager.getLogger(ActivityLoader.class);

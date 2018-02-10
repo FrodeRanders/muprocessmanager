@@ -20,6 +20,10 @@ package eu.ensure.muprocessmanager.queue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Factory that creates different types of worker queues:
+ * {@link SimpleWorkQueue}, {@link MultiWorkQueue}, {@link WorkStealingQueue}.
+ */
 public class WorkerQueueFactory {
     private static final Logger log = LogManager.getLogger(WorkerQueueFactory.class);
 
@@ -30,6 +34,12 @@ public class WorkerQueueFactory {
         WorkStealing
     }
 
+    /**
+     * Returns a thread-backed queue.
+     * @param type {@ling Type} of queue
+     * @param nThreads number of threads tending to the queue
+     * @return
+     */
 	public static WorkQueue getWorkQueue(Type type, int nThreads) {
 		switch(type) {
 			case Simple:

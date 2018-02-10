@@ -26,6 +26,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Models a micro-process, identified by a unique correlation ID, in which individual
+ * activities may be executed. As such, this micro-process keeps track of activities
+ * as they occur and there is no support for anything fancy like templating a process.
+ * Use a process engine in that case -- but that may not be particularly _micro_.
+ */
 public class MuProcess {
     private static final Logger log = LogManager.getLogger(MuProcess.class);
 
@@ -193,7 +199,7 @@ public class MuProcess {
 
                     if (!acceptCompensationFailure) {
                         String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\"";
-                        throw new MuProcessBackwardActivityException(info, t);
+                        throw new MuProcessBackwardBehaviourException(info, t);
                     }
                 }
 
@@ -210,7 +216,7 @@ public class MuProcess {
                 compensationLog.cleanupAfterSuccessfulCompensation(processId);
 
                 String info = "Forward activity failed, but compensations were successful";
-                exception = new MuProcessForwardActivityException(info);
+                exception = new MuProcessForwardBehaviourException(info);
 
             } else {
                 compensationLog.cleanupAfterFailedCompensation(processId);
@@ -220,7 +226,7 @@ public class MuProcess {
                     info.append("{step=").append(failedCompensation.getStep());
                     info.append(" activity=").append(failedCompensation.getActivityName()).append("} ");
                 }
-                exception = new MuProcessBackwardActivityException(info.toString());
+                exception = new MuProcessBackwardBehaviourException(info.toString());
             }
         }
         return exception;

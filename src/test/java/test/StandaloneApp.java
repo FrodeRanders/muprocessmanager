@@ -21,7 +21,6 @@ import eu.ensure.muprocessmanager.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -57,12 +56,12 @@ public class StandaloneApp {
 
                 process.finished();
 
-            } catch (MuProcessBackwardActivityException mpbae) {
+            } catch (MuProcessBackwardBehaviourException mpbae) {
                 // Forward activity failed and so did some compensation activities
                 String info = "Process and compensation failure: " + mpbae.getMessage();
                 log.warn(info);
 
-            } catch (MuProcessForwardActivityException mpfae) {
+            } catch (MuProcessForwardBehaviourException mpfae) {
                 // Forward activity failed, but compensations were successful
                 String info = "No success: " + mpfae.getMessage();
                 log.trace(info);

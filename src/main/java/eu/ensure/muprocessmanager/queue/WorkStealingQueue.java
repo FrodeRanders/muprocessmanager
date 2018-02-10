@@ -23,6 +23,11 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+/**
+ * A work queue backed by a set of pool workers, internally
+ * using multiple dequeues, where the pool workers steal work
+ * from each other.
+ */
 public class WorkStealingQueue implements WorkQueue {
     private static final Logger log = LogManager.getLogger(WorkStealingQueue.class);
 
@@ -82,7 +87,9 @@ public class WorkStealingQueue implements WorkQueue {
     }
 
     public void stop() {
-        log.info("Stopping work queue...");
+        if (log.isTraceEnabled()) {
+            log.trace("Stopping work queue...");
+        }
 
         stopRequested = true;
         doInterruptAllWaitingThreads();

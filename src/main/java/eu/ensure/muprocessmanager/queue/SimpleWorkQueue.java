@@ -23,6 +23,10 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+/**
+ * A work queue backed by a set of pool workers, internally
+ * using a single dequeue.
+ */
 public class SimpleWorkQueue implements WorkQueue {
     private static final Logger log = LogManager.getLogger(SimpleWorkQueue.class);
 
@@ -55,7 +59,9 @@ public class SimpleWorkQueue implements WorkQueue {
     }
 
     public void stop() {
-        log.info("Stopping work queue...");
+        if (log.isTraceEnabled()) {
+            log.trace("Stopping work queue...");
+        }
 
         stopRequested = true;
         doInterruptAllWaitingThreads();
