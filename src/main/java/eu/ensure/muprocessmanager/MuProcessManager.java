@@ -147,6 +147,17 @@ public class MuProcessManager {
                 //
                 switch (_status) {
                     case NEW:
+                        if (hasTimedout) {
+                            // Automatically remove after timeout
+                            if (log.isDebugEnabled()) {
+                                String info = "Removing stuck process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
+                                log.debug(info);
+                            }
+                            compensationLog.remove(correlationId, processId);
+                            removeCount[status]++;
+                        }
+                        break;
+
                     case PROGRESSING:
                         if (hasTimedout) {
                             if (log.isDebugEnabled()) {
@@ -154,6 +165,7 @@ public class MuProcessManager {
                                 log.debug(info);
                             }
 
+                            // Attempt compensation
                             recoverWorkQueue.execute(() -> {
                                 // Since we don't have a micro process waiting, we will not propagate any
                                 // exceptions
@@ -188,6 +200,7 @@ public class MuProcessManager {
 
                     case COMPENSATION_FAILED:
                         if (hasTimedout) {
+                            // Automatically abandon after timeout
                             if (log.isTraceEnabled()) {
                                 String info = "Abandoning process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
                                 log.trace(info);
@@ -202,6 +215,7 @@ public class MuProcessManager {
                                 log.trace(info);
                             }
 
+                            // Re-attempt compensation
                             recoverWorkQueue.execute(() -> {
                                 // Since we don't have a micro process waiting, we will not propagate any
                                 // exceptions
