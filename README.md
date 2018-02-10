@@ -46,6 +46,7 @@ and reverting to backward actions in the form of compensations if the forward ac
 The individual compensations are pushed on a persistent "stack" (logged to persistent store) ahead of attempting to
 execute the local transaction. If any such local transaction fails, the "forward motion" in the process stops and the 
 &#956;processmanager reverts to pop'ing compensations from the stack &#8212; executing them in a "backwards motion".
+
 ![Image](doc/figure4.png?raw=true)
 
 The compensation is done synchronous in the process and an exception is thrown that both describes the problem
