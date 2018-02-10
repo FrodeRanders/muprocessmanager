@@ -36,7 +36,7 @@ What the Saga pattern effectively does, is making compensational behaviour expli
 any local transaction with the corresponding compensation and stipulating how they should behave. Compensational code 
 is not new, but the Saga pattern makes it easier to reason around the failure states of the micro-process.
 
-##A practical Saga
+## A practical Saga
 This software offering implements and hides the details of executing forward actions (along the "happy path") 
 and reverting to backward actions in the form of compensations if the forward actions fail. 
 
@@ -60,7 +60,7 @@ which will need some kind of external action.
 
 Processes are identified through a [correlation ID](https://blog.rapid7.com/2016/12/23/the-value-of-correlation-ids/).
 
-##Index
+## Index
 Recover functionality are found in `eu.ensure.muprocessmanager.MuProcessManager::recover`.
 
 State transitions related to forward activities are found in `eu.ensure.muprocessmanager.MuProcess::execute` and
@@ -70,7 +70,7 @@ All reading and writing from database (the persistent compensation log) is imple
 
 Example activities are found in the test-package.
 
-##Example
+## Example
 How to prepare the &#956;processmanager:
 ```
 // Prepare process manager
