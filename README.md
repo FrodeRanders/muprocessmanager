@@ -172,3 +172,19 @@ public class FirstActivity implements MuActivity {
     }
 }
 ```
+
+Example logging (from test cases with probabilistic failure rates):
+```
+...
+[statistics] {8 PROGRESSING} {136 SUCCESSFUL} {155 COMPENSATED} {9 COMPENSATION_FAILED} {308 in total}
+[recover]    {8 attempted compensations from COMPENSATION_FAILED} {308 observed in total}
+[statistics] {2 NEW} {6 PROGRESSING} {1741 SUCCESSFUL} {2190 COMPENSATED} {180 COMPENSATION_FAILED} {4119 in total}
+[statistics] {3 NEW} {8 PROGRESSING} {3745 SUCCESSFUL} {4843 COMPENSATED} {394 COMPENSATION_FAILED} {8993 in total}
+[recover] [  {79 attempted compensations from COMPENSATION_FAILED} {9008 observed in total}
+[statistics] {2 NEW} {7 PROGRESSING} {6060 SUCCESSFUL} {8105 COMPENSATED} {226 COMPENSATION_FAILED} {14400 in total}
+[statistics] {12 PROGRESSING} {8662 SUCCESSFUL} {11246 COMPENSATED} {495 COMPENSATION_FAILED} {20415 in total}
+[recover]    {222 removed from SUCCESSFUL} {276 removed from COMPENSATED} {496 attempted compensations from COMPENSATION_FAILED} {20416 observed in total}
+[statistics] {1 NEW} {7 PROGRESSING} {10813 SUCCESSFUL} {14523 COMPENSATED} {282 COMPENSATION_FAILED} {25626 in total}
+[statistics] {1 NEW} {7 PROGRESSING} {13432 SUCCESSFUL} {17805 COMPENSATED} {547 COMPENSATION_FAILED} {31792 in total}
+...
+```
