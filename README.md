@@ -26,7 +26,7 @@ consensus-protocol on top of the individual transactions.
  
 Without a transaction manager and without participating in a global transaction, is it even possible to guarantee 
 ACID characteristics? The answer is, in short, no. On the other hand, if it is possible to waive some of the 
-constraints of the ACID characteristics, it cold be possible. 
+constraints of the ACID characteristics, it could be possible. 
 
 If we could, for instance, trade _consistency_ with _eventual consistency_ or allow intermediate changes to the 
 database to be visible to the outside, the Saga article lays out a pattern for implementing micro-services that does
