@@ -39,6 +39,7 @@ is not new, but the Saga pattern makes it easier to reason around the failure st
 ##A practical Saga
 This software offering implements and hides the details of executing forward actions (along the "happy path") 
 and reverting to backward actions in the form of compensations if the forward actions fail. 
+
 ![Image](doc/figure2.png?raw=true)
 ![Image](doc/figure3.png?raw=true)
 
