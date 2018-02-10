@@ -21,6 +21,7 @@ a local database transaction cannot guarantee ACID characteristics for the proce
 Having a transaction manager, the individual activities could participate in a global (distributed) transaction, having 
 local transactions that individually participates in, say, the [two-phace-commit (2PC)](https://en.wikipedia.org/wiki/Two-phase_commit_protocol) 
 consensus-protocol on top of the individual transactions.
+
 ![Image](doc/figure1.png?raw=true)
  
 Without a transaction manager and without participating in a global transaction, is it even possible to guarantee 
