@@ -49,7 +49,7 @@ execute the local transaction. If any such local transaction fails, the "forward
 
 ![Image](doc/figure4.png?raw=true)
 
-The compensation is done synchronous in the process and an exception is thrown that both describes the problem
+The compensation is normally done synchronously in the process and an exception is thrown that both describes the problem
 as well as interrupts the micro-process. The machinery around the &#956;processmanager is kind of boring (as it 
 should be :) while the emphasis has to be on the internal failure states. 
 
