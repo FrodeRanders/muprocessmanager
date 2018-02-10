@@ -87,7 +87,7 @@ catch (Exception e) {
 }
 ```
 
-How to instantiate a process:
+How to instantiate and run a process:
 ```
 // A correlation ID identifying this process
 String correlationId = UUID.randomUUID().toString();
