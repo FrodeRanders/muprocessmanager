@@ -98,29 +98,24 @@ String correlationId = UUID.randomUUID().toString();
 // of individual activities.
 MuProcess process = null;
 try {
+    MuActivityParameters parameters = new MuActivityParameters();
+
     process = mngr.newProcess(correlationId);
     
-
-    MuActivityParameters parameters = new MuActivityParameters();
     parameters.put("arg1", "param1");
     process.execute(new FirstActivity(), parameters);
     
-
     parameters.put("arg2", 42);
     process.execute(new SecondActivity(), parameters);
     
-
     parameters.put("arg3", true);
     process.execute(new ThirdActivity(), parameters);
     
-
     parameters.put("arg4", 22 / 7.0);
     process.execute(new FourthActivity(), parameters);
     
-
     process.finished();   
     
-
 } catch (MuProcessBackwardActivityException mpbae) {
     // Forward activity failed and so did some compensation activities
     String info = "Process and compensation failure: " + mpbae.getMessage();
