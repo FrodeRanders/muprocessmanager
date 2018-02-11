@@ -29,13 +29,11 @@ public class ThirdActivity implements MuActivity {
 
     @Override
     public boolean forward(MuActivityParameters args) {
-        //System.out.println(this.getClass().getName() + " forward activity: " + args);
         return !(Math.random() < forwardFailureProbability);
     }
 
     @Override
     public boolean backward(MuActivityParameters args) {
-        //System.out.println(this.getClass().getName() + " backward activity: " + args);
         return !(Math.random() < backwardFailureProbability);
     }
 }
