@@ -1,6 +1,28 @@
 # &#956;processmanager
-A microprocess manager, implemented with Sagas in mind.
+A micro-process manager, implemented with Sagas in mind.
 =======================================================
+
+## Description of content
+This library implements a drop-in micro-process manager, utilizing the Saga pattern. Out of the box,
+a local embedded Derby database is used to persist processes and process activities; if the database does not 
+exist, the database and tables are created automatically &#8212; trivializing development use.
+
+In a non-development scenario, the backing database may be stored in the application database or in
+a separate database.
+
+A key concern has been to provide a relatively simple abstraction over the Saga pattern. This library
+hides details from the utilizing application.
+
+### Improvements
+A key insight from developing this library is that the hard problem is reasoning around the fail states.
+The Saga pattern only offer so much and in the end you need to understand how the fail states affect your
+business application. Of course you need to understand that in a globally (distributed) transaction
+environment as well, but that environment makes it easier to reason about. 
+
+An imminent improvement is to extract the handling of failure states, as handled in the background by
+the process manager, either by introducing a 'policy' concept or allowing the utilizing application to
+register handlers for the various fail states. The timing of the different moving parts of this mechanism
+is highly dependent on the business case and need to be available to the outside.
 
 ## Background
 [Hector Garcia-Molina and Kenneth Salem presented an article in 1987](https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf)
