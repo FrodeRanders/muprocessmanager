@@ -87,8 +87,8 @@ Processes are identified through a [correlation ID](https://blog.rapid7.com/2016
 ## Index
 Recover functionality are found in [`eu.ensure.muprocessmanager.MuProcessManager::recover`](src/main/java/eu/ensure/muprocessmanager/MuProcessManager.java).
 
-State transitions related to forward activities are found in [`eu.ensure.muprocessmanager.MuProcess::execute` and
-`eu.ensure.muprocessmanager.MuProcess::compensate`](src/main/java/eu/ensure/muprocessmanager/MuProcess.java).
+State transitions related to forward activities are found in [`eu.ensure.muprocessmanager.MuProcess::execute`](src/main/java/eu/ensure/muprocessmanager/MuProcess.java) and backwards activities in 
+[`eu.ensure.muprocessmanager.MuProcess::compensate`](src/main/java/eu/ensure/muprocessmanager/MuProcess.java).
 
 All reading and writing from database (the persistent compensation log) is implemented in [`eu.ensure.muprocessmanager.MuPersistentLog`](src/main/java/eu/ensure/muprocessmanager/MuPersistentLog.java).
 
