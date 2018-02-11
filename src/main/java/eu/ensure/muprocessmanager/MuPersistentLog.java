@@ -28,6 +28,7 @@ import javax.sql.DataSource;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.Optional;
+import java.util.Properties;
 
 /**
  * Takes care of persisting compensations to a relational database and subsequently reading
@@ -45,25 +46,8 @@ public class MuPersistentLog {
     private static final ActivityLoader<MuBackwardBehaviour> loader = new ActivityLoader<>("compensation activity");
 
     private final DataSource dataSource;
+    private final Properties sqlStatements;
 
-    private static final String STORE_PROCESS_HEADER = "INSERT INTO mu_process (correlation_id, status) VALUES (?,?)";
-    private static final String REMOVE_PROCESS_HEADER = "DELETE FROM mu_process WHERE process_id = ?";
-    private static final String GET_ABANDONED_PROCESS_HEADERS = "SELECT correlation_id, process_id, status, created, modified FROM mu_process WHERE status >= 5 ORDER BY modified DESC";
-    private static final String GET_CURRENT_PROCESS_HEADERS = "SELECT correlation_id, process_id, status, created, modified FROM mu_process WHERE status < 5 ORDER BY modified DESC";
-    private static final String COUNT_PROCESSES = "SELECT COUNT(*), status FROM mu_process GROUP BY status";
-
-    private static final String GET_PROCESS_HEADER_BY_CORRID = "SELECT correlation_id, process_id, status, created, modified FROM mu_process WHERE correlation_id = ?";
-    private static final String UPDATE_PROCESS_HEADER_STATUS = "UPDATE mu_process SET status = ?, modified = CURRENT_TIMESTAMP WHERE process_id = ?";
-
-    private static final String STORE_PROCESS_STEP = "INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, parameters) VALUES (?,?,?,?,?)";
-    private static final String REMOVE_PROCESS_STEP = "DELETE FROM mu_process_step WHERE process_id = ? AND step_id = ?";
-    private static final String REMOVE_PROCESS_STEPS = "DELETE FROM mu_process_step WHERE process_id = ?";
-    private static final String GET_PROCESS_STEPS =
-            "SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.parameters, step.retries " +
-            "FROM mu_process_step step INNER JOIN mu_process proc ON proc.process_id = step.process_id " +
-            "WHERE proc.process_id = ? " +
-            "ORDER BY step_id DESC";
-    private static final String INCREMENT_PROCESS_STEP_RETRIES = "UPDATE mu_process_step SET retries = retries + 1 WHERE process_id = ? AND step_id = ?";
 
     public interface CompensationRunnable {
         boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, int step, int retries) throws MuProcessBackwardBehaviourException;
@@ -73,8 +57,18 @@ public class MuPersistentLog {
         void run(String correlationId, int processId, int status, java.util.Date created, java.util.Date modified) throws MuProcessException;
     }
 
-    /* package private */  MuPersistentLog(DataSource dataSource) {
+    /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements) {
         this.dataSource = dataSource;
+        this.sqlStatements = sqlStatements;
+    }
+
+    private String getStatement(String key) throws MuProcessException {
+        String statement = sqlStatements.getProperty(key);
+        if (null == statement || statement.length() == 0) {
+            String info = "No SQL statement matching key=\"" + key + "\"";
+            throw new MuProcessException(info);
+        }
+        return statement;
     }
 
     /**
@@ -92,7 +86,8 @@ public class MuPersistentLog {
         }
 
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(STORE_PROCESS_HEADER, Statement.RETURN_GENERATED_KEYS)) {
+
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS_HEADER"), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, process.getCorrelationId());
                 stmt.setInt(2, MuProcessStatus.NEW.toInt());
                 int i = stmt.executeUpdate();
@@ -121,7 +116,7 @@ public class MuPersistentLog {
             final String correlationId
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(GET_PROCESS_HEADER_BY_CORRID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_HEADER_BY_CORRID"))) {
                 stmt.setString(1, correlationId);
 
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -150,7 +145,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_PROCESS_HEADER_STATUS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS_HEADER_STATUS"))) {
                 int idx = 0;
                 stmt.setInt(++idx, status.toInt());
                 stmt.setInt(++idx, processId);
@@ -174,7 +169,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
-            try (PreparedStatement stmt = conn.prepareStatement(INCREMENT_PROCESS_STEP_RETRIES)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("INCREMENT_PROCESS_STEP_RETRIES"))) {
                 int idx = 0;
                 stmt.setInt(++idx, processId);
                 stmt.setInt(++idx, stepId);
@@ -196,7 +191,7 @@ public class MuPersistentLog {
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(GET_PROCESS_STEPS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS"))) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -265,7 +260,7 @@ public class MuPersistentLog {
 
         // Remove process steps
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(GET_PROCESS_STEPS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS"))) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -315,7 +310,7 @@ public class MuPersistentLog {
 
         //
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(COUNT_PROCESSES)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("COUNT_PROCESSES"))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         // count, status
@@ -333,6 +328,11 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to count process headers: ";
             info += Database.squeeze(sqle);
+            log.warn(info);
+        }
+        catch (MuProcessException mpe) {
+            String info = "Cannot dump statistics: ";
+            info += mpe.getMessage();
             log.warn(info);
         }
 
@@ -361,7 +361,7 @@ public class MuPersistentLog {
             final CleanupRunnable runnable
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(GET_CURRENT_PROCESS_HEADERS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_CURRENT_PROCESS_HEADERS"))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         // correlation_id, process_id, status, created, modified
@@ -401,12 +401,12 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
-            try (PreparedStatement stmt = conn.prepareStatement(REMOVE_PROCESS_STEPS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEPS"))) {
                 stmt.setInt(1, processId);
                 stmt.executeUpdate();
             }
 
-            try (PreparedStatement stmt = conn.prepareStatement(REMOVE_PROCESS_HEADER)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_HEADER"))) {
                 stmt.setInt(1, processId);
                 stmt.executeUpdate();
             }
@@ -465,7 +465,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
-            try (PreparedStatement stmt = conn.prepareStatement(STORE_PROCESS_STEP)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS_STEP"))) {
                 int idx = 0;
                 stmt.setInt(++idx, process.getProcessId());
                 stmt.setInt(++idx, process.getCurrentStep());
@@ -476,7 +476,7 @@ public class MuPersistentLog {
             }
 
             // Potentially check whether process status is NEW or (already) PROGRESSING
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_PROCESS_HEADER_STATUS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS_HEADER_STATUS"))) {
                 int idx = 0;
                 stmt.setInt(++idx, MuProcessStatus.PROGRESSING.toInt());
                 stmt.setInt(++idx, process.getProcessId());
@@ -495,12 +495,12 @@ public class MuPersistentLog {
 
     private void popCompensation(
             final int processId, final int stepId
-    ) throws MuProcessBackwardBehaviourException {
+    ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
-            try (PreparedStatement stmt = conn.prepareStatement(REMOVE_PROCESS_STEP)) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEP"))) {
                 int idx = 0;
                 stmt.setInt(++idx, processId);
                 stmt.setInt(++idx, stepId);

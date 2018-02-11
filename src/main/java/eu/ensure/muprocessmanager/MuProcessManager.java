@@ -63,12 +63,13 @@ public class MuProcessManager {
 
     //
     private final MuPersistentLog compensationLog;
-    private static final String APPLICATION_NAME = "mu_process_manager";
     private static final boolean DEBUG = false;
 
 
-    private MuProcessManager(DataSource dataSource) {
-        compensationLog = new MuPersistentLog(dataSource);
+    private MuProcessManager(DataSource dataSource, Properties sqlStatements) {
+        compensationLog = new MuPersistentLog(dataSource, sqlStatements);
+
+        // Queue used to recover 'unattended' processes
         recoverWorkQueue = WorkerQueueFactory.getWorkQueue(
                 WorkerQueueFactory.Type.Multi,
                 NUMBER_RECOVER_THREADS
@@ -294,14 +295,28 @@ public class MuProcessManager {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static MuProcessManager getManager(DataSource dataSource) {
-        return new MuProcessManager(dataSource);
+    public static MuProcessManager getManager(DataSource dataSource, Properties sqlStatements) {
+        return new MuProcessManager(dataSource, sqlStatements);
     }
 
+    public static MuProcessManager getManager(DataSource dataSource) throws MuProcessException {
+        try (InputStream is = MuProcessManager.class.getResourceAsStream("sql-statements.xml")) {
+            final Properties sqlStatements = new Properties();
+            sqlStatements.loadFromXML(is);
+            return getManager(dataSource, sqlStatements);
+        }
+        catch (IOException ioe) {
+            String info = "Failed to load SQL statements: ";
+            info += ioe.getMessage();
+            log.warn(info, ioe);
+
+            throw new MuProcessException(info, ioe);
+        }
+    }
 
     private static MuProcessManager getManager(Database.Configuration config) throws MuProcessException {
         try {
-            DataSource dataSource = Derby.getDataSource(APPLICATION_NAME, config);
+            DataSource dataSource = Derby.getDataSource("mu_process_manager", config);
 
             MuProcessManager manager = getManager(dataSource);
 
@@ -310,8 +325,8 @@ public class MuProcessManager {
             Manager instance = new Derby(dataSource, options);
 
             manager.create(instance, new PrintWriter(System.out));
-
             return manager;
+
         } catch (Throwable t) {
             String info = "Failed to create process manager: ";
             info += t.getMessage();
