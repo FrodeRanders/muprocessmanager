@@ -198,14 +198,23 @@ public class MuProcess {
                     failedCompensations.add(new FailedCompensation(step, activityName));
 
                     if (!acceptCompensationFailure) {
+                        // Handling when having a throwable, i.e. compensation failed catastrophically
                         String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\"";
                         throw new MuProcessBackwardBehaviourException(info, t);
                     }
                 }
 
-                if (!compensationSuccess && log.isTraceEnabled()) {
-                    String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\" [continuing]";
-                    log.trace(info);
+                if (!compensationSuccess) {
+                    if (log.isTraceEnabled()) {
+                        String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\" [continuing]";
+                        log.trace(info);
+                    }
+                    
+                    if (!acceptCompensationFailure) {
+                        // Handling without throwable, i.e. compensation failed in a controlled manner.
+                        String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\"";
+                        throw new MuProcessBackwardBehaviourException(info);
+                    }
                 }
 
                 return compensationSuccess;
