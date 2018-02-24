@@ -53,10 +53,6 @@ public class MuProcessManager {
     private Timer recoverTimer = null;
 
     private final WorkQueue recoverWorkQueue;
-    private final static int NUMBER_RECOVER_THREADS = 4;
-
-    //
-    private final long _GENERAL_TIMEOUT_PERIOD = 20000; // 5 * 60 * 1000L;
 
     //
     private final MuPersistentLog compensationLog;
@@ -73,7 +69,7 @@ public class MuProcessManager {
         // Queue used to recover 'unattended' processes
         recoverWorkQueue = WorkerQueueFactory.getWorkQueue(
                 WorkerQueueFactory.Type.Multi,
-                NUMBER_RECOVER_THREADS
+                policy.numberOfRecoveryThreads()
         );
     }
 

@@ -8,14 +8,43 @@
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
+    <description>A library implementing a micro process manager</description>
+    <url>http://github.com/FrodeRanders/muprocessmanager</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Frode Randers</name>
+            <email>frode.randers@gmail.com</email>
+            <organizationUrl>https://github.com/FrodeRanders</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/FrodeRanders/muprocessmanager.git</connection>
+        <developerConnection>scm:git:ssh://github.com:FrodeRanders/muprocessmanager.git</developerConnection>
+        <url>http://github.com/FrodeRanders/muprocessmanager/tree/master</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <ensure.vopn.version>1.8</ensure.vopn.version>
         <gson.version>2.8.2</gson.version>
         <derby.version>10.14.1.0</derby.version>
         <log4j.version>2.10.0</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
+        <commons.io.version>1.3.2</commons.io.version>
     </properties>
 
     <dependencies>
@@ -34,9 +63,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.commons</groupId>
+            <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>1.3.2</version>
+            <version>${commons.io.version}</version>
         </dependency>
 
         <!-- Logging -->
@@ -119,23 +148,27 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <!-- Default configuration for all reports -->
-
-                </configuration>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
                 <executions>
                     <execution>
-                        <id>aggregate</id>
+                        <id>attach-sources</id>
                         <goals>
-                            <goal>aggregate</goal>
+                            <goal>jar</goal>
                         </goals>
-                        <phase>site</phase>
-                        <configuration>
-                            <!-- Specific configuration for the aggregate report -->
-
-                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

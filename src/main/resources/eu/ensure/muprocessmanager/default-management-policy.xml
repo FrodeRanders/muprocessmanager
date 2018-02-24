@@ -11,6 +11,9 @@
          the process mManager in the background), the behaviour may differ. -->
     <entry key="accept-compensation-failure">true</entry>
 
+    <!-- Number of threads used when recovering processes -->
+    <entry key="number-of-recovery-threads">4</entry>
+
     <!-- Minutes to retain process information and, in case process was successful
          (having status SUCCESSFUL), the process result. -->
     <entry key="minutes-to-track-process">5</entry>

@@ -167,7 +167,7 @@ public class AppTest extends TestCase {
 
         final Collection<String> sampledCorrelationIds = new LinkedList<>();
 
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 100000; i++) {
             final int[] j = { i };
 
             workQueue.execute(() -> {

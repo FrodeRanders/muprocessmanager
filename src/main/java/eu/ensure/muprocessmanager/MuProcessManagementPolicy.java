@@ -21,4 +21,7 @@ public interface MuProcessManagementPolicy {
 
     @Configurable(property = "accept-compensation-failure", value = "true")
     boolean acceptCompensationFailure();
+
+    @Configurable(property = "number-of-recovery-threads")
+    int numberOfRecoveryThreads();
 }
