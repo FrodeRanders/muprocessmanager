@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.Stack;
 
 /**
- * This is a non-volatile process, in which you can execute activities. If the process fails,
+ * This is a volatile process, in which you can execute activities. If the process fails,
  * compensations are executed (similar to the {@link MuProcess}) but without the persistence
  * steps. If your process thread dies, the state is lost!
  * <p>
