@@ -15,12 +15,12 @@
 
     <entry key="FETCH_ABANDONED_PROCESSES">
         SELECT correlation_id, process_id, status, created, modified FROM mu_process
-        WHERE status >= 6 ORDER BY modified DESC
+        WHERE status >= 5 ORDER BY modified DESC
     </entry>
 
     <entry key="FETCH_PROCESSES">
         SELECT correlation_id, process_id, status, created, modified FROM mu_process
-        WHERE status &lt; 6 ORDER BY modified DESC
+        WHERE status &lt; 5 ORDER BY modified DESC
     </entry>
 
     <entry key="FETCH_PROCESS_RESULT_BY_CORRID">

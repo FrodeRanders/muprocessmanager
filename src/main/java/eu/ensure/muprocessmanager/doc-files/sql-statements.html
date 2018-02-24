@@ -36,14 +36,14 @@
     <div class="key">FETCH_ABANDONED_PROCESSES</div>
     <div class="value">
         <pre>SELECT correlation_id, process_id, status, created, modified FROM mu_process
-WHERE status >= 6 ORDER BY modified DESC</pre>
+WHERE status >= 5 ORDER BY modified DESC</pre>
        <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESSES</div>
     <div class="value">
         <pre>SELECT correlation_id, process_id, status, created, modified FROM mu_process
-WHERE status &lt; 6 ORDER BY modified DESC</pre>
+WHERE status &lt; 5 ORDER BY modified DESC</pre>
         <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
     </div>
 

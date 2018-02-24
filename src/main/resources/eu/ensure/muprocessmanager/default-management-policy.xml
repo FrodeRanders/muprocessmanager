@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>
+        Policy for the process manager operation.
+    </comment>
+
+    <!-- Is it acceptable to fail to compensate? If 'true', compensation will
+         continue and if 'false', compensation will be interrupted. Depending
+         on whether compensation is done synchronously or asynchronously (by
+         the process mManager in the background), the behaviour may differ. -->
+    <entry key="accept-compensation-failure">true</entry>
+
+    <!-- Minutes to retain process information and, in case process was successful
+         (having status SUCCESSFUL), the process result. -->
+    <entry key="minutes-to-track-process">5</entry>
+
+    <!-- If the process dies abruptly without synchronously finishing or failing,
+         the process may have status PROGRESSING (thus seemingly be progressing).
+         The process manager will look for progressing processes that have not
+         been touched for a while. This configuration indicates how long this
+         time span may be. -->
+    <entry key="minutes-before-assuming-process-stuck">5</entry>
+
+    <!-- Individual process steps that have failed compensation, will be re-attempted
+         after a while. This configuration indicates how long this time span
+         may be. -->
+    <entry key="seconds-between-recompensation-attempts">30</entry>
+
+    <!-- Should be shorter than (or equal to) 'minutes-before-recovering-stuck-process'
+         and 'seconds-between-recompensation-attempts' (considering unit of time) -->
+    <entry key="seconds-between-recovery-attempts">30</entry>
+
+
+    <!-- Seconds between logging statistics about number of processes in
+         each state. This logging is directed to a particular statistics log -->
+    <entry key="seconds-between-logging-statistics">60</entry>
+
+</properties>

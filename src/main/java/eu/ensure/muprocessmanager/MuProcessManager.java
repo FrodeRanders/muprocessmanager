@@ -23,6 +23,7 @@ import eu.ensure.vopn.db.Database;
 import eu.ensure.vopn.db.utils.Derby;
 import eu.ensure.vopn.db.utils.Manager;
 import eu.ensure.vopn.db.utils.Options;
+import eu.ensure.vopn.lang.ConfigurationTool;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,29 +46,29 @@ public class MuProcessManager {
     private static final Logger log = LogManager.getLogger(MuProcessManager.class);
 
     //
-    private final boolean acceptCompensationFailure = true;
+    private final boolean acceptCompensationFailure;
 
-    //
-    private final static int DUMP_STATISTICS_PERIOD = 5000; // 5 * 60 * 1000; // Every 5 minutes
+    // Timers
     private Timer dumpStatisticsTimer = null;
-
-    //
-    private final static int RECOVER_PROCESSES_PERIOD = 10000 ; // 1 * 60 * 1000; // Every minute
     private Timer recoverTimer = null;
 
     private final WorkQueue recoverWorkQueue;
     private final static int NUMBER_RECOVER_THREADS = 4;
 
     //
-    private final long GENERAL_TIMEOUT_PERIOD = 20000; // 5 * 60 * 1000L;
+    private final long _GENERAL_TIMEOUT_PERIOD = 20000; // 5 * 60 * 1000L;
 
     //
     private final MuPersistentLog compensationLog;
+    private final MuProcessManagementPolicy policy;
     private static final boolean DEBUG = false;
 
 
-    private MuProcessManager(DataSource dataSource, Properties sqlStatements) {
+    private MuProcessManager(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
         compensationLog = new MuPersistentLog(dataSource, sqlStatements);
+        this.policy = policy;
+
+        acceptCompensationFailure = policy.acceptCompensationFailure();
 
         // Queue used to recover 'unattended' processes
         recoverWorkQueue = WorkerQueueFactory.getWorkQueue(
@@ -90,7 +91,9 @@ public class MuProcessManager {
             };
             dumpStatisticsTimer = new Timer("statistics");
             int initialDelay = 1000; // 1 second
-            dumpStatisticsTimer.scheduleAtFixedRate(statisticsTask, initialDelay, DUMP_STATISTICS_PERIOD);
+            dumpStatisticsTimer.scheduleAtFixedRate(
+                    statisticsTask, initialDelay, 1000 * policy.secondsBetweenLoggingStatistics()
+            );
         }
 
         // Schedule abandoned processes cleanup, which will periodically check for abandoned
@@ -107,7 +110,9 @@ public class MuProcessManager {
 
             recoverTimer = new Timer("recover");
             int initialDelay = 1000; // 1 second_
-            recoverTimer.scheduleAtFixedRate(cleanupTask, initialDelay, RECOVER_PROCESSES_PERIOD);
+            recoverTimer.scheduleAtFixedRate(
+                    cleanupTask, initialDelay, 1000 * policy.secondsBetweenRecoveryAttempts()
+            );
         }
     }
 
@@ -144,22 +149,26 @@ public class MuProcessManager {
 
         //
         try {
+            final int processRetentionTime = 60 * 1000 * policy.minutesToTrackProcess();
+            final int processRecompensationTime = 1000 * policy.secondsBetweenRecompensationAttempts();
+            final int processAssumedStuckTime = 60 * 1000 * policy.minutesBeforeAssumingProcessStuck();
+
             compensationLog.recover((correlationId, processId, status, created, modified) -> {
                 observations[0]++; // explicit code
                 MuProcessStatus _status = MuProcessStatus.fromInt(status);
 
                 // Check if process has been stuck?
                 Date now = new Date();
-                Date then = new Date(now.getTime() - GENERAL_TIMEOUT_PERIOD);
-                boolean hasTimedout = modified.before(then);
+                boolean isRipeForRemoval = modified.before(new Date(now.getTime() - processRetentionTime));
 
                 //
                 switch (_status) {
                     case NEW:
-                        if (hasTimedout) {
+                        if (isRipeForRemoval) {
                             // Automatically remove after timeout
                             if (log.isDebugEnabled()) {
-                                String info = "Removing stuck process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
+                                String info = "Removing stuck process: correlationId=\"" + correlationId + "\", ";
+                                info += "processId=\"" + processId + "\", status=\"" + _status + "\"";
                                 log.debug(info);
                             }
                             compensationLog.remove(correlationId, processId);
@@ -167,10 +176,13 @@ public class MuProcessManager {
                         }
                         break;
 
-                    case PROGRESSING:
-                        if (hasTimedout) {
+                    case PROGRESSING: {
+                        boolean assumedStuck = modified.before(new Date(now.getTime() - processAssumedStuckTime));
+
+                        if (assumedStuck) {
                             if (log.isDebugEnabled()) {
-                                String info = "Abandoning stuck process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
+                                String info = "Recovering stuck process: correlationId=\"" + correlationId + "\", ";
+                                info += "processId=\"" + processId + "\", status=\"" + _status + "\"";
                                 log.debug(info);
                             }
 
@@ -185,21 +197,24 @@ public class MuProcessManager {
 
                                 } catch (MuProcessException unexpected) {
                                     if (log.isDebugEnabled()) {
-                                        String info = "Failed to recover process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\": ";
+                                        String info = "Failed to recover process: correlationId=\"" + correlationId + "\", ";
+                                        info += "processId=\"" + processId + "\", status=\"" + _status + "\": ";
                                         info += unexpected.getMessage();
                                         log.debug(info);
                                     }
                                 }
                             });
                         }
+                    }
                         break;
 
                     case SUCCESSFUL:
                     case COMPENSATED:
-                        if (hasTimedout) {
+                        if (isRipeForRemoval) {
                             // Automatically remove after timeout
                             if (log.isTraceEnabled()) {
-                                String info = "Removing retired process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
+                                String info = "Removing retired process: correlationId=\"" + correlationId + "\", ";
+                                info += "processId=\"" + processId + "\", status=\"" + _status + "\"";
                                 log.trace(info);
                             }
                             compensationLog.remove(correlationId, processId);
@@ -208,10 +223,11 @@ public class MuProcessManager {
                         break;
 
                     case COMPENSATION_FAILED:
-                        if (hasTimedout) {
+                        if (isRipeForRemoval) {
                             // Automatically abandon after timeout
                             if (log.isTraceEnabled()) {
-                                String info = "Abandoning process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
+                                String info = "Abandoning process: correlationId=\"" + correlationId + "\", ";
+                                info += "processId=\"" + processId + "\", status=\"" + _status + "\"";
                                 log.trace(info);
                             }
                             compensationLog.abandon(correlationId, processId);
@@ -219,28 +235,34 @@ public class MuProcessManager {
 
                         }
                         else {
-                            if (log.isTraceEnabled()) {
-                                String info = "Recovering process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\"";
-                                log.trace(info);
-                            }
+                            boolean isRipeForRecompensation = modified.before(new Date(now.getTime() - processRecompensationTime));
 
-                            // Re-attempt compensation
-                            recoverWorkQueue.execute(() -> {
-                                // Since we don't have a micro process waiting, we will not propagate any
-                                // exceptions
-                                try {
-                                    // Ignored returned exception -- we don't want to throw anything here
-                                    MuProcess.compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
-                                    recoverCount[status]++;
-
-                                } catch (MuProcessException unexpected) {
-                                    if (log.isDebugEnabled()) {
-                                        String info = "Failed to recover process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\": ";
-                                        info += unexpected.getMessage();
-                                        log.debug(info);
-                                    }
+                            if (isRipeForRecompensation) {
+                                if (log.isTraceEnabled()) {
+                                    String info = "Recovering process: correlationId=\"" + correlationId + "\", ";
+                                    info += "processId=\"" + processId + "\", status=\"" + _status + "\"";
+                                    log.trace(info);
                                 }
-                            });
+
+                                // Re-attempt compensation
+                                recoverWorkQueue.execute(() -> {
+                                    // Since we don't have a micro process waiting, we will not propagate any
+                                    // exceptions
+                                    try {
+                                        // Ignored returned exception -- we don't want to throw anything here
+                                        MuProcess.compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+                                        recoverCount[status]++;
+
+                                    } catch (MuProcessException unexpected) {
+                                        if (log.isDebugEnabled()) {
+                                            String info = "Failed to recover process: correlationId=\"" + correlationId + "\", ";
+                                            info += "processId=\"" + processId + "\", status=\"" + _status + "\": ";
+                                            info += unexpected.getMessage();
+                                            log.debug(info);
+                                        }
+                                    }
+                                });
+                            }
                         }
                         break;
 
@@ -318,10 +340,13 @@ public class MuProcessManager {
      * Returns a {@link MuProcessManager} that uses an external database for persisting process information.
      * @param dataSource a datasource for external database.
      * @param sqlStatements a lookup table containing SQL statements, see <a href="file:doc-files/sql-statements.html">SQL statements reference</a>.
+     * @param policy the process management policy for the operation.
      * @return {@link MuProcessManager}
      */
-    public static MuProcessManager getManager(DataSource dataSource, Properties sqlStatements) {
-        return new MuProcessManager(dataSource, sqlStatements);
+    public static MuProcessManager getManager(
+            DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy
+    ) {
+        return new MuProcessManager(dataSource, sqlStatements, policy);
     }
 
     /**
@@ -329,10 +354,17 @@ public class MuProcessManager {
      * @return {@link MuProcessManager}
      */
     public static MuProcessManager getManager(DataSource dataSource) throws MuProcessException {
-        try (InputStream is = MuProcessManager.class.getResourceAsStream("sql-statements.xml")) {
+        try (InputStream sqlIs = MuProcessManager.class.getResourceAsStream("sql-statements.xml")) {
             final Properties sqlStatements = new Properties();
-            sqlStatements.loadFromXML(is);
-            return getManager(dataSource, sqlStatements);
+            sqlStatements.loadFromXML(sqlIs);
+
+            try (InputStream policyIs = MuProcessManagementPolicy.class.getResourceAsStream("default-management-policy.xml")) {
+                final Properties policyProperties = new Properties();
+                policyProperties.loadFromXML(policyIs);
+
+                MuProcessManagementPolicy policy = ConfigurationTool.bindProperties(MuProcessManagementPolicy.class, policyProperties);
+                return getManager(dataSource, sqlStatements, policy);
+            }
         }
         catch (IOException ioe) {
             String info = "Failed to load SQL statements: ";
@@ -366,7 +398,7 @@ public class MuProcessManager {
     /**
      * Returns a {@link MuProcessManager} that internally uses an embedded Apache Derby database
      * for persisting process information. Appropriate during development and non-critical operation,
-     * but consider using {@link MuProcessManager#getManager(DataSource, Properties)} instead.
+     * but consider using {@link MuProcessManager#getManager(DataSource, Properties, MuProcessManagementPolicy)} instead.
      * @return {@link MuProcessManager}
      * @throws MuProcessException if failing to prepare local database.
      */

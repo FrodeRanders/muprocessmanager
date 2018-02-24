@@ -24,11 +24,10 @@ package eu.ensure.muprocessmanager;
 public enum MuProcessStatus {
     NEW(0),
     PROGRESSING(1),
-    REGRESSING(2),
-    SUCCESSFUL(3),
-    COMPENSATED(4),
-    COMPENSATION_FAILED(5),
-    ABANDONED(6);
+    SUCCESSFUL(2),
+    COMPENSATED(3),
+    COMPENSATION_FAILED(4),
+    ABANDONED(5);
 
     private final int status;
 
@@ -49,18 +48,15 @@ public enum MuProcessStatus {
                 return PROGRESSING;
 
             case 2:
-                return REGRESSING;
-
-            case 3:
                 return SUCCESSFUL;
 
-            case 4:
+            case 3:
                 return COMPENSATED;
 
-            case 5:
+            case 4:
                 return COMPENSATION_FAILED;
 
-            case 6:
+            case 5:
             default:
                 return ABANDONED;
         }

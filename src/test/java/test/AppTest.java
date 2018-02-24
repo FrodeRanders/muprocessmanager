@@ -26,10 +26,7 @@ import junit.framework.TestSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class AppTest extends TestCase {
     private static final Logger log = LogManager.getLogger(AppTest.class);
@@ -170,7 +167,7 @@ public class AppTest extends TestCase {
 
         final Collection<String> sampledCorrelationIds = new LinkedList<>();
 
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             final int[] j = { i };
 
             workQueue.execute(() -> {
@@ -232,20 +229,34 @@ public class AppTest extends TestCase {
         }
 
         do {
+            System.out.println("\nProcess result samples:");
             try {
-                for (String correlationId : sampledCorrelationIds){
+                // Iterate since we will modify collection
+                Iterator<String> sit = sampledCorrelationIds.iterator();
+                while (sit.hasNext()) {
+                    String correlationId = sit.next();
+
                     System.out.print("correlationId=" + correlationId);
                     Optional<MuProcessStatus> _status = mngr.getProcessStatus(correlationId);
                     if (_status.isPresent()) {
                         MuProcessStatus status = _status.get();
                         System.out.print(" status=" + status);
+
                         switch (status) {
                             case SUCCESSFUL:
                                 Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
                                 _result.ifPresent(objects -> objects.forEach((v) -> System.out.print(" {" + v + "}")));
+                                sit.remove();
+                                break;
+
+                            case NEW:
+                            case PROGRESSING:
+                                // Check later
                                 break;
 
                             default:
+                                // No idea to recheck
+                                sit.remove();
                                 break;
                         }
                     }
