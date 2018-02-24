@@ -26,6 +26,9 @@ import junit.framework.TestSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Optional;
 import java.util.UUID;
 
 public class AppTest extends TestCase {
@@ -165,20 +168,34 @@ public class AppTest extends TestCase {
 
         workQueue.start();
 
-        for (int i = 0; i < 1000000; i++) {
+        final Collection<String> sampledCorrelationIds = new LinkedList<>();
+
+        for (int i = 0; i < 100000; i++) {
+            final int[] j = { i };
+
             workQueue.execute(() -> {
                 String correlationId = UUID.randomUUID().toString();
+                if (j[0] % 1000 == 0) {
+                    // Sample each thousandth correlation ID
+                    sampledCorrelationIds.add(correlationId);
+                }
 
                 MuProcess process = null;
                 try {
                     process = mngr.newProcess(correlationId);
+
+                    MuProcessResult result = new MuProcessResult("This is a result");
 
                     MuActivityParameters parameters = new MuActivityParameters();
                     parameters.put("arg1", "param1");
                     process.execute(new FirstActivity(), parameters);
 
                     parameters.put("arg2", 42);
-                    process.execute(new SecondActivity(), parameters);
+                    process.execute(
+                            (p) -> result.add(10 * (int) p.get("arg2")),
+                            new SecondActivityCompensation(),
+                            parameters
+                    );
 
                     parameters.put("arg3", true);
                     process.execute(new ThirdActivity(), parameters);
@@ -186,7 +203,8 @@ public class AppTest extends TestCase {
                     parameters.put("arg4", 22 / 7.0);
                     process.execute(new FourthActivity(), parameters);
 
-                    process.finished();
+                    result.add("This is another part of the result");
+                    process.finished(result);
 
                 } catch (MuProcessBackwardBehaviourException mpbae) {
                     // Forward activity failed and so did some compensation activities
@@ -208,24 +226,37 @@ public class AppTest extends TestCase {
                     }
 
                     String info = "Process failure: " + t.getMessage();
-                    log.warn(info);
+                    log.warn(info, t);
                 }
             });
         }
 
         do {
             try {
+                for (String correlationId : sampledCorrelationIds){
+                    System.out.print("correlationId=" + correlationId);
+                    Optional<MuProcessStatus> _status = mngr.getProcessStatus(correlationId);
+                    if (_status.isPresent()) {
+                        MuProcessStatus status = _status.get();
+                        System.out.print(" status=" + status);
+                        switch (status) {
+                            case SUCCESSFUL:
+                                Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
+                                _result.ifPresent(objects -> objects.forEach((v) -> System.out.print(" {" + v + "}")));
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                    System.out.println();
+                }
+
                 Thread.sleep(20 * 1000); // 20 seconds
             }
-            catch (InterruptedException ignore) {}
+            catch (InterruptedException | MuProcessException ignore) {}
         } while (!workQueue.isEmpty());
 
         workQueue.stop();
-
-        // Then wait another few minutes
-        try {
-            Thread.sleep(15 * 60 * 1000); // 15 minutes
-        }
-        catch (InterruptedException ignore) {}
     }
 }

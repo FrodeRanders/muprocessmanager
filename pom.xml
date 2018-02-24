@@ -4,7 +4,7 @@
 
     <groupId>eu.ensure</groupId>
     <artifactId>muprocessmanager</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -31,6 +31,12 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
         </dependency>
 
         <!-- Logging -->
@@ -110,6 +116,28 @@
                     <maxmem>1024m</maxmem>
                     <encoding>UTF-8</encoding>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <!-- Default configuration for all reports -->
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>aggregate</id>
+                        <goals>
+                            <goal>aggregate</goal>
+                        </goals>
+                        <phase>site</phase>
+                        <configuration>
+                            <!-- Specific configuration for the aggregate report -->
+
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

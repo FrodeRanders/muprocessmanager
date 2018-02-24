@@ -28,7 +28,9 @@ CREATE TABLE mu_process (
 
   correlation_id VARCHAR(255) NOT NULL, -- for now
 
-  status INTEGER NOT NULL DEFAULT 0, -- 0=new, 1=progressing, 2=successful, 3=compensated, 4=compensation-failed, 5=abandoned
+  status INTEGER NOT NULL DEFAULT 0, -- 0=new, 1=progressing, 2=regressing, 3=successful, 4=compensated, 5=compensation-failed, 6=abandoned
+
+  result CLOB DEFAULT NULL,
 
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -48,9 +50,9 @@ CREATE TABLE mu_process_step (
   CONSTRAINT mu_p_s_process_ex
     FOREIGN KEY (process_id) REFERENCES mu_process(process_id),
 
-  class_name VARCHAR(255) NOT NULL, -- for now
-  method_name VARCHAR(255) NOT NULL, -- for now
-  parameters VARCHAR(255) NOT NULL, -- for now
+  class_name VARCHAR(255) NOT NULL,  -- qualified class name must fit
+  method_name VARCHAR(255) NOT NULL, -- method name must fit
+  parameters CLOB NOT NULL,
 
   retries INTEGER NOT NULL DEFAULT 0,
 

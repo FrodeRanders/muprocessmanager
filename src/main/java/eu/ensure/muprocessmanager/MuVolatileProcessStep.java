@@ -17,7 +17,7 @@
  */
 package eu.ensure.muprocessmanager;
 
-import eu.ensure.muprocessmanager.utils.Serialization;
+import eu.ensure.muprocessmanager.utils.Cloner;
 
 import java.io.IOException;
 
@@ -32,7 +32,7 @@ import java.io.IOException;
 
     /* package private */ MuVolatileProcessStep(final MuActivityParameters parameters) throws MuProcessException {
         try {
-            this.parameters = Serialization.copy(parameters);
+            this.parameters = Cloner.clone(parameters);
         }
         catch (IOException | ClassNotFoundException e) {
             String info = "Could not clone activity parameters for process step: ";

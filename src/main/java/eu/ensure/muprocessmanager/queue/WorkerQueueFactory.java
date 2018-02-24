@@ -36,7 +36,7 @@ public class WorkerQueueFactory {
 
     /**
      * Returns a thread-backed queue.
-     * @param type {@ling Type} of queue
+     * @param type {@link Type} of queue
      * @param nThreads number of threads tending to the queue
      * @return
      */

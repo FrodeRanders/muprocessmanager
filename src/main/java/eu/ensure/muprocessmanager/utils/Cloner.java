@@ -20,9 +20,9 @@ package eu.ensure.muprocessmanager.utils;
 import java.io.*;
 
 /**
- * Properly clones objects using internal serialization and subsequent deserialization.
+ * Properly deep-clones objects using internal serialization and subsequent deserialization.
  */
-public class Serialization {
+public class Cloner {
 
     private static ByteArrayOutputStream toOutputStream(Object object) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -44,7 +44,7 @@ public class Serialization {
     }
 
     /**
-     * Makes a 'snapshot' of an object, i.e. makes a deep copy of the object structure
+     * Makes a 'snapshot' of an object, i.e. makes a deep clone of the object structure
      * to preserve state and protect against later modification.
      * <p>
      * @param original
@@ -52,7 +52,7 @@ public class Serialization {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public static <T> T copy(T original) throws IOException, ClassNotFoundException {
+    public static <T> T clone(T original) throws IOException, ClassNotFoundException {
         T object;
 
         try (ObjectInputStream ois = toInputStream(original)) {

@@ -289,16 +289,45 @@ public class MuProcessManager {
         return new MuProcess(correlationId, compensationLog, acceptCompensationFailure);
     }
 
+    /**
+     * Retrieves process status ({@link MuProcessStatus}) for a process, identified by correlation ID.
+     * {@link MuProcessStatus} is available for a time period after the corresponding {@link MuProcess}
+     * has vanished.
+     * @param correlationId
+     * @return {@link MuProcessStatus} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
+     * @throws MuProcessException if failing to retrieve result
+     */
     public Optional<MuProcessStatus> getProcessStatus(final String correlationId) throws MuProcessException {
         return compensationLog.getProcessStatus(correlationId);
     }
 
+    /**
+     * Retrieves process results from {@link MuProcessStatus#SUCCESSFUL} processes.
+     * @param correlationId
+     * @return {@link MuProcessResult} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
+     * @throws MuProcessException if failing to retrieve result
+     * @throws MuProcessResultsUnavailable if process is not {@link MuProcessStatus#SUCCESSFUL}
+     */
+    public Optional<MuProcessResult> getProcessResult(final String correlationId) throws MuProcessException {
+        return compensationLog.getProcessResult(correlationId);
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Returns a {@link MuProcessManager} that uses an external database for persisting process information.
+     * @param dataSource a datasource for external database.
+     * @param sqlStatements a lookup table containing SQL statements, see <a href="file:doc-files/sql-statements.html">SQL statements reference</a>.
+     * @return {@link MuProcessManager}
+     */
     public static MuProcessManager getManager(DataSource dataSource, Properties sqlStatements) {
         return new MuProcessManager(dataSource, sqlStatements);
     }
 
+    /**
+     * Returns a {@link MuProcessManager} that uses an external database for persisting process information.
+     * @return {@link MuProcessManager}
+     */
     public static MuProcessManager getManager(DataSource dataSource) throws MuProcessException {
         try (InputStream is = MuProcessManager.class.getResourceAsStream("sql-statements.xml")) {
             final Properties sqlStatements = new Properties();
@@ -334,6 +363,13 @@ public class MuProcessManager {
         }
     }
 
+    /**
+     * Returns a {@link MuProcessManager} that internally uses an embedded Apache Derby database
+     * for persisting process information. Appropriate during development and non-critical operation,
+     * but consider using {@link MuProcessManager#getManager(DataSource, Properties)} instead.
+     * @return {@link MuProcessManager}
+     * @throws MuProcessException if failing to prepare local database.
+     */
     public static MuProcessManager getManager() throws MuProcessException {
         Properties properties = new Properties();
         try {

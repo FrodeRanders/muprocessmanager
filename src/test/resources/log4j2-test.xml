@@ -33,7 +33,7 @@
     </Appenders>
 
     <Loggers>
-        <logger name="eu.ensure" level="INFO" />
+        <logger name="eu.ensure" level="DEBUG" />
         <logger name="org.apache" level="WARN" />
 
         <logger name="STATISTICS" level="INFO">

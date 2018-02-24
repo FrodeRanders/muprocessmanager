@@ -17,27 +17,15 @@
  */
 package test;
 
-import eu.ensure.muprocessmanager.MuActivity;
 import eu.ensure.muprocessmanager.MuActivityParameters;
+import eu.ensure.muprocessmanager.MuBackwardBehaviour;
 
-public class SecondActivity implements MuActivity {
+public class SecondActivityCompensation implements MuBackwardBehaviour {
 
-    private static final double forwardExceptionProbability = 0.0001;
-    private static final double forwardFailureProbability = 0.05;
     private static final double backwardExceptionProbability = 0.0001;
     private static final double backwardFailureProbability = 0.05;
 
-    public SecondActivity() {}
-
-    @Override
-    public boolean forward(MuActivityParameters args) {
-        // A possibility for an exception
-        if (Math.random() < forwardExceptionProbability) {
-            throw new NullPointerException("just an example of a nasty failure"); // utter failure
-        }
-
-        return !(Math.random() < forwardFailureProbability);
-    }
+    public SecondActivityCompensation() {}
 
     @Override
     public boolean backward(MuActivityParameters args) {

@@ -17,7 +17,7 @@
  */
 package eu.ensure.muprocessmanager;
 
-import eu.ensure.muprocessmanager.utils.Serialization;
+import eu.ensure.muprocessmanager.utils.Cloner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,6 +34,8 @@ import java.util.Optional;
  */
 public class MuProcess {
     private static final Logger log = LogManager.getLogger(MuProcess.class);
+
+    private final static String LAMBDA_INDICATION = "lambda$";
 
     //
     private final String correlationId;
@@ -82,7 +84,7 @@ public class MuProcess {
 
         MuActivityParameters parametersSnapshot;
         try {
-            parametersSnapshot = Serialization.copy(parameters);
+            parametersSnapshot = Cloner.clone(parameters);
         }
         catch (IOException | ClassNotFoundException e) {
             String info = this + ": Failed to make snapshot of activity parameters for " + activity.getClass().getName();
@@ -114,9 +116,58 @@ public class MuProcess {
         }
     }
 
-    public void finished() {
+    public void execute(
+            final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
+            final MuActivityParameters parameters
+    ) throws MuProcessException {
+
+        String backwardClassName = backwardBehaviour.getClass().getName();
+        if (backwardClassName.contains(LAMBDA_INDICATION)) {
+            String info = "Backward behaviour can not be a lambda: " + backwardClassName;
+            throw new MuProcessException(info);
+        }
+
+        MuActivityParameters parametersSnapshot;
         try {
-            compensationLog.cleanupAfterSuccess(getProcessId());
+            parametersSnapshot = Cloner.clone(parameters);
+        }
+        catch (IOException | ClassNotFoundException e) {
+            String info = this + ": Failed to make snapshot of activity parameters for " + backwardClassName;
+            throw new MuProcessException(info, e);
+        }
+
+        // Log backward activity
+        compensationLog.pushCompensation(this, backwardBehaviour, parametersSnapshot);
+
+        // Run forward action
+        boolean forwardSuccess;
+        try {
+            forwardSuccess = forwardBehaviour.forward(parameters);
+        }
+        catch (Throwable t) {
+            String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
+            info += t.getMessage();
+            log.info(info, t);
+
+            forwardSuccess = false;
+        }
+
+        if (!forwardSuccess) {
+            // So we failed. Now run backward actions, and throw exception corresponding to
+            // relevant syndrome:
+            //     - failed, but managed to compensate
+            //     - failed and so did compensation(s)
+            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+        }
+    }
+
+    public void finished() {
+        finished(null);
+    }
+
+    public void finished(MuProcessResult result) {
+        try {
+            compensationLog.cleanupAfterSuccess(getProcessId(), result);
         }
         catch (MuProcessException mpe) {
             String info = "Failed to mark process as succesful: ";

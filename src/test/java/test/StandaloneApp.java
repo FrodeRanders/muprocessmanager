@@ -46,7 +46,11 @@ public class StandaloneApp {
                 process.execute(new FirstActivity(), parameters);
 
                 parameters.put("arg2", 42);
-                process.execute(new SecondActivity(), parameters);
+                process.execute(
+                        (p) -> !(Math.random() < 0.0001),
+                        new SecondActivityCompensation(),
+                        parameters
+                );
 
                 parameters.put("arg3", true);
                 process.execute(new ThirdActivity(), parameters);
