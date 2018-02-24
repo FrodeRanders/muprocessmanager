@@ -1,4 +1,3 @@
-# &#956;processmanager
 A micro-process manager, implemented with Sagas in mind.
 =======================================================
 
