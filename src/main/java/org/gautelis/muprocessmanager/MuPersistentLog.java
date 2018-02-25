@@ -105,13 +105,7 @@ public class MuPersistentLog {
     /* package private */ int pushProcess(
             final MuProcess process
     ) throws MuProcessException {
-        if (log.isTraceEnabled()) {
-            String info = "Persisting process (" + process.getProcessId() + ")";
-            log.trace(info);
-        }
-
         try (Connection conn = dataSource.getConnection()) {
-
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS"), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, process.getCorrelationId());
                 stmt.setInt(2, MuProcessStatus.NEW.toInt());
@@ -120,6 +114,13 @@ public class MuPersistentLog {
                     if (rs.next()) {
                         int processId = rs.getInt(1);
                         process.setProcessId(processId);
+
+                        if (log.isTraceEnabled()) {
+                            String info = "Persisted process: correlationId=\"" + process.getCorrelationId();
+                            info += "\", processId=" + processId;
+                            log.trace(info);
+                        }
+
                         return processId;
                     }
                     else {
@@ -228,6 +229,11 @@ public class MuPersistentLog {
             info += Database.squeeze(sqle);
             log.warn(info);
             throw new MuProcessException(info, sqle);
+        }
+
+        if (log.isTraceEnabled()) {
+            String info = "Updated process " + processId + " status " + status;
+            log.trace(info);
         }
     }
 
@@ -521,9 +527,9 @@ public class MuPersistentLog {
         }
 
         if (log.isTraceEnabled()) {
-            String info = "Persisting process step (" + process.getProcessId() + ")[";
+            String info = "Persisting process step " + process.getProcessId() + "#";
             info += process.getCurrentStep();
-            info += "] class=" + className;
+            info += " class=" + className;
             info += " method=" + methodName;
             log.trace(info);
         }

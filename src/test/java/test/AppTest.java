@@ -263,6 +263,9 @@ public class AppTest extends TestCase {
                     }
                     System.out.println();
                 }
+                else {
+                    System.out.print(" (running transaction, status not yet visible) ");
+                }
 
                 Thread.sleep(20 * 1000); // 20 seconds
             }
