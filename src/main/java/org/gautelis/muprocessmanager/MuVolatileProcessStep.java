@@ -15,9 +15,9 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
-import eu.ensure.muprocessmanager.utils.Cloner;
+import org.gautelis.muprocessmanager.utils.Cloner;
 
 import java.io.IOException;
 

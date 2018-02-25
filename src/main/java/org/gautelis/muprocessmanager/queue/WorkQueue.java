@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager.queue;
+package org.gautelis.muprocessmanager.queue;
 
 public interface WorkQueue {
 

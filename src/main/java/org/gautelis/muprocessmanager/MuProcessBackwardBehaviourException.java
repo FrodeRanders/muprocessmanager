@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
 /**
  * An exception occurring during {@link MuBackwardBehaviour} of a {@link MuActivity}.

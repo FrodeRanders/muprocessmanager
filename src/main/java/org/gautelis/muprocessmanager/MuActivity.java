@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
 /**
  * A representation of any activity taking place in a {@link MuProcess} that has

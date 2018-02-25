@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager.queue;
+package org.gautelis.muprocessmanager.queue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,36 +25,34 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * A work queue backed by a set of pool workers, internally
- * using multiple dequeues.
+ * using a single dequeue.
  */
-public class MultiWorkQueue implements WorkQueue {
-    private static final Logger log = LogManager.getLogger(MultiWorkQueue.class);
+public class SimpleWorkQueue implements WorkQueue {
+    private static final Logger log = LogManager.getLogger(SimpleWorkQueue.class);
 
     private final int nThreads;
-    private int queue_no = 0;
     private final PoolWorker[] threads;
-    private final BlockingDeque[] queue;
+    private final BlockingDeque queue;
     private volatile boolean stopRequested = false;
-
+    
     private final Object lock = new Object();
-
-    /*
+    
+    /* 
      * constructor to initiate worker threads and queue associated with it
      */
-    /* package private */ MultiWorkQueue(int nThreads) {
+    /* package private */ SimpleWorkQueue(int nThreads)
+    {
         this.nThreads = nThreads;
-        queue = new BlockingDeque[nThreads];
+        queue = new LinkedBlockingDeque<Runnable>();
         threads = new PoolWorker[nThreads];
-        for (int i = 0; i < nThreads; i++) {
-            queue[i] = new LinkedBlockingDeque<>();
-        }
     }
-
+    
     public void start() {
-        for (int i = 0; i < nThreads; i++) {
-            threads[i] = new PoolWorker(i);
+    	for (int i=0; i<nThreads; i++) {
+            threads[i] = new PoolWorker();
             threads[i].start();
         }
+
         if (log.isTraceEnabled()) {
             log.trace("Starting work queue...");
         }
@@ -75,90 +73,77 @@ public class MultiWorkQueue implements WorkQueue {
 
     /*
      * Executes the given task in the future.
-     * <p>
      * Queues the task and notifies the waiting thread. Also it makes
      * the Work assigner to wait if the queued task reaches to threshold
      */
     @SuppressWarnings("unchecked")
-    public synchronized boolean execute(Runnable r) {
-
-        try {
-            queue[queue_no++ % nThreads].putFirst(r);
-            if (queue_no == nThreads) {
-                queue_no = 0;
-            }
+    public boolean execute(Runnable r) {
+    	try {
+			queue.putFirst(r);
             return true;
 
-        } catch (InterruptedException e) {
+		} catch (InterruptedException e) {
             String info = "Failed to enqueue task: ";
-            Throwable baseCause = eu.ensure.vopn.lang.Stacktrace.getBaseCause(e);
+            Throwable baseCause = org.gautelis.vopn.lang.Stacktrace.getBaseCause(e);
             info += baseCause.getMessage();
             log.warn(info, e);
-        }
+		}
         return false;
     }
 
     /*
-     * Checks whether the queue is empty (or not)
+     * Checks whether queue is empty (or not)
      */
     public synchronized boolean isEmpty() {
-        for (BlockingDeque q : queue) {
-            if (!q.isEmpty()) {
-                return false;
-            }
-        }
-        return true;
+        return queue.isEmpty();
     }
+
 
     /*
      * Clean-up the worker thread when all the tasks are done
      */
-    private synchronized void doInterruptAllWaitingThreads() {
-        //Interrupt all the threads
-        for (int i = 0; i < nThreads; i++) {
-            threads[i].interrupt();
-        }
-        synchronized (lock) {
-            lock.notify();
-        }
+    private void doInterruptAllWaitingThreads() {
+    	//Interrupt all the threads
+    	for (int i=0; i<nThreads; i++) {
+    		threads[i].interrupt();
+    	}
+    	
+    	synchronized(lock) {
+    		lock.notify();
+    	}
     }
 
     /*
      * Worker thread to execute user tasks
      */
     private class PoolWorker extends Thread {
-
-        private int index;
-
-        PoolWorker(int index) {
-            this.index = index;
-        }
-
-
-        /*
-         * Method to retrieve task from worker queue and start executing it.
-         * This thread will wait for a task if there is no task in the queue.
-         */
+    	/*
+    	 * Method to retrieve task from worker queue and start executing it.
+    	 * This thread will wait for a task if there is no task in the queue. 
+    	 */
         public void run() {
+
             Runnable r;
 
             while (!stopRequested) {
-                try {
-                    r = (Runnable) queue[index].takeLast();
-                } catch (InterruptedException e1) {
-                    continue; // and check if we are requested to stop
-                }
+            	try {
+					r = (Runnable) queue.takeLast();
+				}
+                catch (InterruptedException e1) {
+					continue; // and check if we are requested to stop
+				}
 
                 try {
                     if (log.isTraceEnabled()) {
-                        log.trace("Running pool worker [" + index + "] task");
+                        log.trace("Running pool worker task");
                     }
                     r.run();
-                } catch (java.lang.Throwable t) {
+                }
+                catch (java.lang.Throwable t) {
                     String info = "Failed to run queued task: ";
-                    Throwable baseCause = eu.ensure.vopn.lang.Stacktrace.getBaseCause(t);
+                    Throwable baseCause = org.gautelis.vopn.lang.Stacktrace.getBaseCause(t);
                     info += baseCause.getMessage();
-                    log.warn(info, t);
+                    log.info(info, t);
                 }
             }
         }

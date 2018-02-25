@@ -17,8 +17,8 @@
  */
 package test;
 
-import eu.ensure.muprocessmanager.MuActivityParameters;
-import eu.ensure.muprocessmanager.MuBackwardBehaviour;
+import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuBackwardBehaviour;
 
 public class SecondActivityCompensation implements MuBackwardBehaviour {
 

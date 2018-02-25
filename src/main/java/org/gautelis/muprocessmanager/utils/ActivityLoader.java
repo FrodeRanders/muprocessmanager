@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager.utils;
+package org.gautelis.muprocessmanager.utils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

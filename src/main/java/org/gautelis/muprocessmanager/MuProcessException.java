@@ -15,18 +15,17 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
-/**
- * An exception occurring during {@link MuForwardBehaviour} of a {@link MuActivity}.
- */
-public class MuProcessForwardBehaviourException extends MuProcessException {
+public class MuProcessException extends Exception {
 
-    public MuProcessForwardBehaviourException(String info) {
+    private MuProcessException() {}
+
+    public MuProcessException(String info) {
         super(info);
     }
 
-    public MuProcessForwardBehaviourException(String info, Throwable t) {
+    public MuProcessException(String info, Throwable t) {
         super(info, t);
     }
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager.utils;
+package org.gautelis.muprocessmanager.utils;
 
 import java.io.*;
 

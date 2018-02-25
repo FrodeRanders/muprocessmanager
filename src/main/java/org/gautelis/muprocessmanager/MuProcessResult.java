@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

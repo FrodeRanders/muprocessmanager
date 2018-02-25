@@ -17,9 +17,10 @@
  */
 package test;
 
-import eu.ensure.muprocessmanager.*;
-import eu.ensure.muprocessmanager.queue.WorkQueue;
-import eu.ensure.muprocessmanager.queue.WorkerQueueFactory;
+import org.gautelis.muprocessmanager.*;
+import org.gautelis.muprocessmanager.*;
+import org.gautelis.muprocessmanager.queue.WorkQueue;
+import org.gautelis.muprocessmanager.queue.WorkerQueueFactory;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;

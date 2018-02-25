@@ -15,15 +15,18 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
 /**
- * A representation of the compensation behaviour of a {@link MuActivity}.
+ * An exception occurring during {@link MuForwardBehaviour} of a {@link MuActivity}.
  */
-@FunctionalInterface
-public interface MuBackwardBehaviour {
-    boolean backward(MuActivityParameters args);
+public class MuProcessForwardBehaviourException extends MuProcessException {
 
-    default String getPersistableMethodName() { return "backward"; }
+    public MuProcessForwardBehaviourException(String info) {
+        super(info);
+    }
+
+    public MuProcessForwardBehaviourException(String info, Throwable t) {
+        super(info, t);
+    }
 }
-

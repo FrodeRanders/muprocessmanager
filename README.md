@@ -77,12 +77,12 @@ which will need some kind of external action.
 Processes are identified through a [correlation ID](https://blog.rapid7.com/2016/12/23/the-value-of-correlation-ids/).
 
 ## Index
-Recover functionality are found in [`eu.ensure.muprocessmanager.MuProcessManager::recover`](src/main/java/eu/ensure/muprocessmanager/MuProcessManager.java).
+Recover functionality are found in [`MuProcessManager::recover`](src/main/java/org/gautelis/muprocessmanager/MuProcessManager.java).
 
-State transitions related to forward activities are found in [`eu.ensure.muprocessmanager.MuProcess::execute`](src/main/java/eu/ensure/muprocessmanager/MuProcess.java) and backwards activities in 
-[`eu.ensure.muprocessmanager.MuProcess::compensate`](src/main/java/eu/ensure/muprocessmanager/MuProcess.java).
+State transitions related to forward activities are found in [`MuProcess::execute`](src/main/java/org/gautelis/muprocessmanager/MuProcess.java) and backwards activities in 
+[`MuProcess::compensate`](src/main/java/org/gautelis/muprocessmanager/MuProcess.java).
 
-All reading and writing from database (the persistent compensation log) is implemented in [`eu.ensure.muprocessmanager.MuPersistentLog`](src/main/java/eu/ensure/muprocessmanager/MuPersistentLog.java).
+All reading and writing from database (the persistent compensation log) is implemented in [`MuPersistentLog`](src/main/java/org/gautelis/muprocessmanager/MuPersistentLog.java).
 
 Example activities are found in the test-package.
 
@@ -157,8 +157,8 @@ in this case a simple dummy load with probabilistic failure behaviour:
 ```
 package test;
 
-import eu.ensure.muprocessmanager.MuActivity;
-import eu.ensure.muprocessmanager.MuActivityParameters;
+import MuActivity;
+import MuActivityParameters;
 
 public class FirstActivity implements MuActivity {
 

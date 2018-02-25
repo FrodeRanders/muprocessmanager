@@ -15,15 +15,15 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
-import eu.ensure.muprocessmanager.queue.WorkQueue;
-import eu.ensure.muprocessmanager.queue.WorkerQueueFactory;
-import eu.ensure.vopn.db.Database;
-import eu.ensure.vopn.db.utils.Derby;
-import eu.ensure.vopn.db.utils.Manager;
-import eu.ensure.vopn.db.utils.Options;
-import eu.ensure.vopn.lang.ConfigurationTool;
+import org.gautelis.muprocessmanager.queue.WorkQueue;
+import org.gautelis.muprocessmanager.queue.WorkerQueueFactory;
+import org.gautelis.vopn.db.Database;
+import org.gautelis.vopn.db.utils.Derby;
+import org.gautelis.vopn.db.utils.Manager;
+import org.gautelis.vopn.db.utils.Options;
+import org.gautelis.vopn.lang.ConfigurationTool;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

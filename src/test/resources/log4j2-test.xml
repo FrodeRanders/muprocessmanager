@@ -33,8 +33,8 @@
     </Appenders>
 
     <Loggers>
-        <logger name="eu.ensure.vopn.lang" level="INFO" />
-        <logger name="eu.ensure" level="DEBUG" />
+        <logger name="org.gautelis.vopn.lang" level="INFO" />
+        <logger name="org.gautelis" level="DEBUG" />
         <logger name="org.apache" level="WARN" />
 
         <logger name="STATISTICS" level="INFO">

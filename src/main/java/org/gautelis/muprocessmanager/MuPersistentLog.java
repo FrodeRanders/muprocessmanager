@@ -15,12 +15,12 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import eu.ensure.muprocessmanager.utils.ActivityLoader;
-import eu.ensure.vopn.db.Database;
+import org.gautelis.muprocessmanager.utils.ActivityLoader;
+import org.gautelis.vopn.db.Database;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

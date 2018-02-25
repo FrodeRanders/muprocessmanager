@@ -15,17 +15,20 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
-public class MuProcessException extends Exception {
+/**
+ * An exception occurring when trying to claim a {@link MuProcessResult} from an unsuccessful process.
+ * Process results are available for successful processes under a period of time after finishing
+ * a {@link MuProcess} (after a call to {@link MuProcess#finished(MuProcessResult)}).
+ */
+public class MuProcessResultsUnavailable extends MuProcessException {
 
-    private MuProcessException() {}
-
-    public MuProcessException(String info) {
+    public MuProcessResultsUnavailable(String info) {
         super(info);
     }
 
-    public MuProcessException(String info, Throwable t) {
+    public MuProcessResultsUnavailable(String info, Throwable t) {
         super(info, t);
     }
 }

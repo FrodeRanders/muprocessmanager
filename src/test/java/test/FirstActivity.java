@@ -17,8 +17,8 @@
  */
 package test;
 
-import eu.ensure.muprocessmanager.MuActivity;
-import eu.ensure.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuActivity;
+import org.gautelis.muprocessmanager.MuActivityParameters;
 
 public class FirstActivity implements MuActivity {
 

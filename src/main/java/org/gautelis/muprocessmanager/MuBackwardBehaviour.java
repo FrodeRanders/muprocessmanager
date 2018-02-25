@@ -15,12 +15,15 @@
  * limitations under the License.
  *
  */
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
 /**
- * A representation of the "happy path" behaviour of a {@link MuActivity}.
+ * A representation of the compensation behaviour of a {@link MuActivity}.
  */
 @FunctionalInterface
-public interface MuForwardBehaviour {
-    boolean forward(MuActivityParameters args);
+public interface MuBackwardBehaviour {
+    boolean backward(MuActivityParameters args);
+
+    default String getPersistableMethodName() { return "backward"; }
 }
+

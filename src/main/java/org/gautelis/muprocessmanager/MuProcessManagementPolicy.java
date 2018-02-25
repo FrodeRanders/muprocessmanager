@@ -1,6 +1,6 @@
-package eu.ensure.muprocessmanager;
+package org.gautelis.muprocessmanager;
 
-import eu.ensure.vopn.lang.Configurable;
+import org.gautelis.vopn.lang.Configurable;
 
 public interface MuProcessManagementPolicy {
 
