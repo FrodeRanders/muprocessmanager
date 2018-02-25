@@ -157,8 +157,8 @@ in this case a simple dummy load with probabilistic failure behaviour:
 ```
 package test;
 
-import MuActivity;
-import MuActivityParameters;
+import org.gautelis.muprocessmanager.MuActivity;
+import org.gautelis.muprocessmanager.MuActivityParameters;
 
 public class FirstActivity implements MuActivity {
 
