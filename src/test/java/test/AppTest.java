@@ -19,13 +19,13 @@ package test;
 
 import org.gautelis.muprocessmanager.*;
 import org.gautelis.muprocessmanager.*;
-import org.gautelis.muprocessmanager.queue.WorkQueue;
-import org.gautelis.muprocessmanager.queue.WorkerQueueFactory;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gautelis.vopn.queue.WorkQueue;
+import org.gautelis.vopn.queue.WorkerQueueFactory;
 
 import java.util.*;
 

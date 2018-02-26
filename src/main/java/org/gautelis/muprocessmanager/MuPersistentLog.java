@@ -19,10 +19,10 @@ package org.gautelis.muprocessmanager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.gautelis.muprocessmanager.utils.ActivityLoader;
 import org.gautelis.vopn.db.Database;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.gautelis.vopn.lang.DynamicLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.Reader;
@@ -35,18 +35,20 @@ import java.util.Properties;
 
 /**
  * Takes care of persisting compensations to a relational database and subsequently reading
- * process steps (activities) from the database. Currently only compensations are stored.
+ * process steps (activities) from the database. Currently compensations are stored (together
+ * with the corresponding parameters) as well as {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}
+ * results.
  * <p>
- * The DDL for this database is found in src/resources/eu/ensure/muprocessmanager/create.sql
+ * The DDL is found in src/resources/org/gautelis/muprocessmanager/default-database-create.sql.
  * <p>
- * Currently the DML-stuff is maintained internally in this class.
+ * The DML is found in src/resources/org/gautelis/muprocessmanager/sql-statements.xml.
  */
 public class MuPersistentLog {
-    private static final Logger log = LogManager.getLogger(MuPersistentLog.class);
-    private static final Logger statisticsLog = LogManager.getLogger("STATISTICS");
+    private static final Logger log = LoggerFactory.getLogger(MuPersistentLog.class);
+    private static final Logger statisticsLog = LoggerFactory.getLogger("STATISTICS");
 
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    private static final ActivityLoader<MuBackwardBehaviour> loader = new ActivityLoader<>("compensation activity");
+    private static final DynamicLoader<MuBackwardBehaviour> loader = new DynamicLoader<>("compensation activity");
 
     private final DataSource dataSource;
     private final Properties sqlStatements;
@@ -97,9 +99,10 @@ public class MuPersistentLog {
 
 
     /**
-     * Logs MuProcess to database, mutating MuProcess by setting processId after persisting (and allocating identity).
-     * @param process
-     * @return
+     * Logs {@link MuProcess} to database, mutating {@link MuProcess} by setting processId
+     * after persisting (and allocating identity).
+     * @param process the process to persist.
+     * @return the processId of the (new) process.
      * @throws MuProcessException
      */
     /* package private */ int pushProcess(
@@ -515,7 +518,9 @@ public class MuPersistentLog {
         catch (NoSuchMethodException nsme) {
             // Not ever expected to happen in production! Can potentially happen in development though,
             // so it is relevant to prominently log this
-            String info = "Failed to validate backward activity method (" + methodName + ") in class (" + className + "): ";
+            String info = "Failed to validate backward activity: ";
+            info += "class=\"" + className + "\", method=\"" + methodName + "\": ";
+            info += nsme.getMessage();
             log.warn(info, nsme);
             throw new MuProcessException(info);
         }
@@ -529,8 +534,8 @@ public class MuPersistentLog {
         if (log.isTraceEnabled()) {
             String info = "Persisting process step " + process.getProcessId() + "#";
             info += process.getCurrentStep();
-            info += " class=" + className;
-            info += " method=" + methodName;
+            info += " class=\"" + className + "\"";
+            info += " method=\"" + methodName + "\"";
             log.trace(info);
         }
 

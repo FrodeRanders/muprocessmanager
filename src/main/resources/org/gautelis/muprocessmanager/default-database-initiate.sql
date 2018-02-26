@@ -19,4 +19,4 @@
 -- Initiate database
 ---------------------------------------------------------------
 
-
+-- Not necessary for the default Derby database

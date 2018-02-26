@@ -17,7 +17,7 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.gautelis.muprocessmanager.utils.Cloner;
+import org.gautelis.vopn.io.Cloner;
 
 import java.io.IOException;
 

@@ -17,9 +17,9 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.gautelis.muprocessmanager.utils.Cloner;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.gautelis.vopn.io.Cloner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -33,7 +33,7 @@ import java.util.Optional;
  * Use a process engine in that case -- but that may not be particularly _micro_.
  */
 public class MuProcess {
-    private static final Logger log = LogManager.getLogger(MuProcess.class);
+    private static final Logger log = LoggerFactory.getLogger(MuProcess.class);
 
     private final static String LAMBDA_INDICATION = "lambda$";
 
@@ -161,10 +161,23 @@ public class MuProcess {
         }
     }
 
+    /**
+     * The process has finished successfully.
+     */
     public void finished() {
         finished(null);
     }
 
+    /**
+     * The process has finished successfully with the specified result. The result
+     * will be retained (for a while) and may be retrieved later. The scenario that
+     * we had in mind was a timeout somewhere between the caller and the micro process
+     * implementation, where the micro process finishes successfully but the caller
+     * gets a timeout and may not now whether the process succeeded. The process may
+     * be queried for it's state and the result retrieved if the process was
+     * {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}.
+     * @param result the {@link MuProcessResult} associated with a successful micro process.
+     */
     public void finished(MuProcessResult result) {
         try {
             compensationLog.cleanupAfterSuccess(getProcessId(), result);
@@ -176,6 +189,10 @@ public class MuProcess {
         }
     }
 
+    /**
+     * Informs the process manager (indirectly) that your process failed. The nature
+     * of this failure is fully up to the process to decide for itself.
+     */
     public void failed() {
         try {
             compensationLog.cleanupAfterFailure(getProcessId());
@@ -185,10 +202,6 @@ public class MuProcess {
             info += mpe.getMessage();
             log.warn(info);
         }
-    }
-
-    /* package private */ void cleanup() throws MuProcessException {
-
     }
 
     /* package private */ Optional<MuProcessStatus> getProcessStatus() throws MuProcessException {

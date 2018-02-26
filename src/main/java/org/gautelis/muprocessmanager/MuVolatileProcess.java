@@ -17,8 +17,8 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Stack;
 
@@ -33,7 +33,7 @@ import java.util.Stack;
  * This is a convenience utility for creating micro-processes that may fail.
  */
 public class MuVolatileProcess {
-    private static final Logger log = LogManager.getLogger(MuVolatileProcess.class);
+    private static final Logger log = LoggerFactory.getLogger(MuVolatileProcess.class);
 
     private final boolean acceptCompensationFailure;
 

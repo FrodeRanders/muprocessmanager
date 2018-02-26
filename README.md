@@ -1,5 +1,5 @@
-A micro-process manager, implemented with Sagas in mind.
-=======================================================
+A micro-process manager based on the Saga pattern.
+==================================================
 
 ## Description of content
 This library implements a drop-in micro-process manager, utilizing the Saga pattern. Out of the box,
