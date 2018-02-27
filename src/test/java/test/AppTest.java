@@ -89,10 +89,12 @@ public class AppTest extends TestCase {
         MuVolatileProcess process = mngr.newVolatileProcess();
 
         try {
+            MuProcessResult result = new MuProcessResult();
+
             MuActivityParameters parameters = new MuActivityParameters();
             parameters.put("arg1", "param1");
             process.execute(
-                    p -> {
+                    (p, r) -> {
                         System.out.println("First forward activity: " + p);
                         return true;
                     },
@@ -100,12 +102,12 @@ public class AppTest extends TestCase {
                         System.out.println("First backward activity: " + p);
                         return true;
                     },
-                    parameters
+                    parameters, result
             );
 
             parameters.put("arg2", 42);
             process.execute(
-                    p -> {
+                    (p, r) -> {
                         System.out.println("Second forward activity: " + p);
                         return true;
                     },
@@ -113,12 +115,12 @@ public class AppTest extends TestCase {
                         System.out.println("Second backward activity: " + p);
                         return true;
                     },
-                    parameters
+                    parameters, result
             );
 
             parameters.put("arg3", true);
             process.execute(
-                    p -> {
+                    (p, r) -> {
                         System.out.println("Third forward activity: " + p);
                         if (/* failure? */ true) {
                             System.out.println("Simulated FAILURE");
@@ -131,12 +133,12 @@ public class AppTest extends TestCase {
                         System.out.println("Third backward activity: " + p);
                         return false; // Even compensation failed
                     },
-                    parameters
+                    parameters, result
             );
 
             parameters.put("arg4", 22/7.0);
             process.execute(
-                    p -> {
+                    (p, r) -> {
                         System.out.println("Fourth forward activity: " + p);
                         return true;
                     },
@@ -144,7 +146,7 @@ public class AppTest extends TestCase {
                         System.out.println("Fourth backward activity: " + p);
                         return true;
                     },
-                    parameters
+                    parameters, result
             );
         }
         catch (MuProcessException mpe) {
@@ -182,26 +184,29 @@ public class AppTest extends TestCase {
                 try {
                     process = mngr.newProcess(correlationId);
 
-                    MuProcessResult result = new MuProcessResult("This is a result");
+                    MuProcessResult result = new MuProcessResult();
 
                     MuActivityParameters parameters = new MuActivityParameters();
-                    parameters.put("arg1", "param1");
-                    process.execute(new FirstActivity(), parameters);
+                    parameters.put("weight", 100.0 * Math.random());
+                    process.execute(new FirstActivity(), parameters, result);
 
-                    parameters.put("arg2", 42);
+                    parameters.put("hat-size", 42);
                     process.execute(
-                            (p) -> result.add(10 * (int) p.get("arg2")),
+                            (p, r) -> {
+                                double weight = (double) r.remove(0);
+                                double stepTwoResult = weight * (int) p.get("hat-size");
+                                return r.add(stepTwoResult);
+                            },
                             new SecondActivityCompensation(),
-                            parameters
+                            parameters, result
                     );
 
-                    parameters.put("arg3", true);
-                    process.execute(new ThirdActivity(), parameters);
+                    parameters.put("shrink-head", true);
+                    process.execute(new ThirdActivity(), parameters, result);
 
-                    parameters.put("arg4", 22 / 7.0);
-                    process.execute(new FourthActivity(), parameters);
+                    parameters.put("pi-kinda", 22 / 7.0);
+                    process.execute(new FourthActivity(), parameters, result);
 
-                    result.add("This is another part of the result");
                     process.finished(result);
 
                 } catch (MuProcessBackwardBehaviourException mpbae) {

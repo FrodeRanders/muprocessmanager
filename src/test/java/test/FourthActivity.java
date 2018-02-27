@@ -19,6 +19,7 @@ package test;
 
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuProcessResult;
 
 public class FourthActivity implements MuActivity {
 
@@ -29,7 +30,10 @@ public class FourthActivity implements MuActivity {
     public FourthActivity() {}
 
     @Override
-    public boolean forward(MuActivityParameters args) {
+    public boolean forward(MuActivityParameters args, MuProcessResult result) {
+        double piApprox = (double) args.get("pi-kinda");
+        double hatSize = (double) result.remove(0);
+        result.add(piApprox * hatSize);
         return !(Math.random() < forwardFailureProbability);
     }
 

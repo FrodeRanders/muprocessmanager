@@ -80,7 +80,10 @@ public class MuProcess {
         return currentStep;
     }
 
-    public void execute(final MuActivity activity, final MuActivityParameters parameters) throws MuProcessException {
+    public void execute(
+            final MuActivity activity,
+            final MuActivityParameters parameters, final MuProcessResult result
+    ) throws MuProcessException {
 
         MuActivityParameters parametersSnapshot;
         try {
@@ -97,7 +100,7 @@ public class MuProcess {
         // Run forward action
         boolean forwardSuccess;
         try {
-            forwardSuccess = activity.forward(parameters);
+            forwardSuccess = activity.forward(parameters, result);
         }
         catch (Throwable t) {
             String info = this + ": Forward activity (\"" + activity.getClass().getName() + "\") step " + currentStep + " failed: ";
@@ -118,7 +121,7 @@ public class MuProcess {
 
     public void execute(
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
-            final MuActivityParameters parameters
+            final MuActivityParameters parameters, final MuProcessResult result
     ) throws MuProcessException {
 
         String backwardClassName = backwardBehaviour.getClass().getName();
@@ -142,7 +145,7 @@ public class MuProcess {
         // Run forward action
         boolean forwardSuccess;
         try {
-            forwardSuccess = forwardBehaviour.forward(parameters);
+            forwardSuccess = forwardBehaviour.forward(parameters, result);
         }
         catch (Throwable t) {
             String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";

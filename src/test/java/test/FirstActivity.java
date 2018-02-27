@@ -19,6 +19,7 @@ package test;
 
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuProcessResult;
 
 public class FirstActivity implements MuActivity {
 
@@ -28,7 +29,10 @@ public class FirstActivity implements MuActivity {
     public FirstActivity() {}
 
     @Override
-    public boolean forward(MuActivityParameters args) {
+    public boolean forward(MuActivityParameters args, MuProcessResult results) {
+        double weight = (double) args.get("weight");
+        double realWeight = 0.83 * weight;
+        results.add(realWeight);
         return !(Math.random() < forwardFailureProbability);
     }
 

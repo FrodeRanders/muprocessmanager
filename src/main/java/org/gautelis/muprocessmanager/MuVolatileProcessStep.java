@@ -41,13 +41,16 @@ import java.io.IOException;
         }
     }
 
-    /* package private */ boolean execute(final MuForwardBehaviour forward, final MuBackwardBehaviour backward) {
+    /* package private */ boolean execute(
+            final MuForwardBehaviour forward, final MuBackwardBehaviour backward,
+            final MuProcessResult result
+    ) {
         backwardBehaviour = backward;
 
         // Run forward transaction
         boolean success;
         try {
-            success = forward.forward(parameters);
+            success = forward.forward(parameters, result);
         }
         catch (Throwable t) {
             success = false;

@@ -22,5 +22,11 @@ package org.gautelis.muprocessmanager;
  */
 @FunctionalInterface
 public interface MuForwardBehaviour {
-    boolean forward(MuActivityParameters args);
+    /**
+     * Execute forward behaviour.
+     * @param arguments arguments to the forward transaction
+     * @param result results of the forward transaction
+     * @return
+     */
+    boolean forward(MuActivityParameters arguments, MuProcessResult result);
 }
