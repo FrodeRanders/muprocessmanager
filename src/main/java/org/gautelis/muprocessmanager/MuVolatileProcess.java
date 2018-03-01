@@ -39,13 +39,25 @@ public class MuVolatileProcess {
 
     private Stack<MuVolatileProcessStep> stepStack = new Stack<>();
 
+    //
+    final MuProcessResult result = new MuProcessResult();
+
+
     /* package private */ MuVolatileProcess(final boolean acceptCompensationFailure) {
         this.acceptCompensationFailure = acceptCompensationFailure;
     }
 
+    /**
+     * Get results associated with this process.
+     * @return process result(s) so far.
+     */
+    public MuProcessResult getResult() {
+        return result;
+    }
+
     public <P> void execute(
             final MuForwardBehaviour forward, final MuBackwardBehaviour backward,
-            final MuActivityParameters parameters, final MuProcessResult result
+            final MuActivityParameters parameters
     ) throws MuProcessException {
 
         MuVolatileProcessStep step = new MuVolatileProcessStep(parameters);

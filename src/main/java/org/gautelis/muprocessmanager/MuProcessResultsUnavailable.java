@@ -20,7 +20,7 @@ package org.gautelis.muprocessmanager;
 /**
  * An exception occurring when trying to claim a {@link MuProcessResult} from an unsuccessful process.
  * Process results are available for successful processes under a period of time after finishing
- * a {@link MuProcess} (after a call to {@link MuProcess#finished(MuProcessResult)}).
+ * a {@link MuProcess} (after a call to {@link MuProcess#finished}).
  */
 public class MuProcessResultsUnavailable extends MuProcessException {
 

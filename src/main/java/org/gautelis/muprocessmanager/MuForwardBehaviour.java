@@ -26,7 +26,7 @@ public interface MuForwardBehaviour {
      * Execute forward behaviour.
      * @param arguments arguments to the forward transaction
      * @param result results of the forward transaction
-     * @return
+     * @return true if successful, false otherwise
      */
     boolean forward(MuActivityParameters arguments, MuProcessResult result);
 }

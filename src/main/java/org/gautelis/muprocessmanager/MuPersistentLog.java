@@ -215,11 +215,13 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
                 stmt.setInt(++idx, status.toInt());
-                if (null != result) {
-                    stmt.setCharacterStream(++idx, new StringReader(gson.toJson(result)));
+                if (null == result || result.isEmpty()) {
+                    stmt.setNull(++idx, Types.CLOB);
                 }
                 else {
-                    stmt.setNull(++idx, Types.CLOB);
+                    // No need to explicitly Cloner.clone() result, since we
+                    // are implicitly cloning by persisting to database.
+                    stmt.setCharacterStream(++idx, new StringReader(gson.toJson(result)));
                 }
                 stmt.setInt(++idx, processId);
                 stmt.executeUpdate();

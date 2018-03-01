@@ -89,8 +89,6 @@ public class AppTest extends TestCase {
         MuVolatileProcess process = mngr.newVolatileProcess();
 
         try {
-            MuProcessResult result = new MuProcessResult();
-
             MuActivityParameters parameters = new MuActivityParameters();
             parameters.put("arg1", "param1");
             process.execute(
@@ -102,7 +100,7 @@ public class AppTest extends TestCase {
                         System.out.println("First backward activity: " + p);
                         return true;
                     },
-                    parameters, result
+                    parameters
             );
 
             parameters.put("arg2", 42);
@@ -115,7 +113,7 @@ public class AppTest extends TestCase {
                         System.out.println("Second backward activity: " + p);
                         return true;
                     },
-                    parameters, result
+                    parameters
             );
 
             parameters.put("arg3", true);
@@ -133,7 +131,7 @@ public class AppTest extends TestCase {
                         System.out.println("Third backward activity: " + p);
                         return false; // Even compensation failed
                     },
-                    parameters, result
+                    parameters
             );
 
             parameters.put("arg4", 22/7.0);
@@ -146,7 +144,7 @@ public class AppTest extends TestCase {
                         System.out.println("Fourth backward activity: " + p);
                         return true;
                     },
-                    parameters, result
+                    parameters
             );
         }
         catch (MuProcessException mpe) {
@@ -184,11 +182,9 @@ public class AppTest extends TestCase {
                 try {
                     process = mngr.newProcess(correlationId);
 
-                    MuProcessResult result = new MuProcessResult();
-
                     MuActivityParameters parameters = new MuActivityParameters();
                     parameters.put("weight", 100.0 * Math.random());
-                    process.execute(new FirstActivity(), parameters, result);
+                    process.execute(new FirstActivity(), parameters);
 
                     parameters.put("hat-size", 42);
                     process.execute(
@@ -198,16 +194,16 @@ public class AppTest extends TestCase {
                                 return r.add(stepTwoResult);
                             },
                             new SecondActivityCompensation(),
-                            parameters, result
+                            parameters
                     );
 
                     parameters.put("shrink-head", true);
-                    process.execute(new ThirdActivity(), parameters, result);
+                    process.execute(new ThirdActivity(), parameters);
 
                     parameters.put("pi-kinda", 22 / 7.0);
-                    process.execute(new FourthActivity(), parameters, result);
+                    process.execute(new FourthActivity(), parameters);
 
-                    process.finished(result);
+                    process.finished();
 
                 } catch (MuProcessBackwardBehaviourException mpbae) {
                     // Forward activity failed and so did some compensation activities

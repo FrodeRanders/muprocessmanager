@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,9 @@ public class MuProcess {
 
     //
     private final boolean acceptCompensationFailure;
+
+    //
+    final MuProcessResult result = new MuProcessResult();
 
     /* package private */ MuProcess(
             final String correlationId, MuPersistentLog compensationLog, final boolean acceptCompensationFailure
@@ -80,9 +84,17 @@ public class MuProcess {
         return currentStep;
     }
 
+    /**
+     * Get results associated with this process.
+     * @return process result(s) so far.
+     */
+    public MuProcessResult getResult() {
+        return result;
+    }
+
     public void execute(
             final MuActivity activity,
-            final MuActivityParameters parameters, final MuProcessResult result
+            final MuActivityParameters parameters
     ) throws MuProcessException {
 
         MuActivityParameters parametersSnapshot;
@@ -121,7 +133,7 @@ public class MuProcess {
 
     public void execute(
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
-            final MuActivityParameters parameters, final MuProcessResult result
+            final MuActivityParameters parameters
     ) throws MuProcessException {
 
         String backwardClassName = backwardBehaviour.getClass().getName();
@@ -165,28 +177,23 @@ public class MuProcess {
     }
 
     /**
-     * The process has finished successfully.
+     * The process has finished successfully with the current accumulated process
+     * {@link MuProcessResult result}. The result will be retained (for a while) and
+     * may be retrieved later.
+     *
+     * The scenario that we had in mind was a timeout somewhere between the caller and
+     * the micro process implementation, where the micro process finishes successfully
+     * but the caller gets a timeout and may not now whether the process succeeded.
+     *
+     * The process may be queried for it's state and the result retrieved if the process was
+     * {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}.
      */
     public void finished() {
-        finished(null);
-    }
-
-    /**
-     * The process has finished successfully with the specified result. The result
-     * will be retained (for a while) and may be retrieved later. The scenario that
-     * we had in mind was a timeout somewhere between the caller and the micro process
-     * implementation, where the micro process finishes successfully but the caller
-     * gets a timeout and may not now whether the process succeeded. The process may
-     * be queried for it's state and the result retrieved if the process was
-     * {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}.
-     * @param result the {@link MuProcessResult} associated with a successful micro process.
-     */
-    public void finished(MuProcessResult result) {
         try {
             compensationLog.cleanupAfterSuccess(getProcessId(), result);
         }
-        catch (MuProcessException mpe) {
-            String info = "Failed to mark process as succesful: ";
+        catch (Exception mpe) {
+            String info = "Failed to mark process as successful: ";
             info += mpe.getMessage();
             log.warn(info);
         }
