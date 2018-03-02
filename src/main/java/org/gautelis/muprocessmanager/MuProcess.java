@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -106,8 +105,10 @@ public class MuProcess {
             throw new MuProcessException(info, e);
         }
 
+        final Optional<MuProcessState> preState = activity.getState();
+
         // Log backward activity
-        compensationLog.pushCompensation(this, activity, parametersSnapshot);
+        compensationLog.pushCompensation(this, activity, parametersSnapshot, preState);
 
         // Run forward action
         boolean forwardSuccess;
@@ -151,8 +152,10 @@ public class MuProcess {
             throw new MuProcessException(info, e);
         }
 
+        final Optional<MuProcessState> preState = forwardBehaviour.getState();
+
         // Log backward activity
-        compensationLog.pushCompensation(this, backwardBehaviour, parametersSnapshot);
+        compensationLog.pushCompensation(this, backwardBehaviour, parametersSnapshot, preState);
 
         // Run forward action
         boolean forwardSuccess;
@@ -253,14 +256,14 @@ public class MuProcess {
 
         List<FailedCompensation> failedCompensations = new LinkedList<>();
         try {
-            compensationLog.compensate(processId, (activity, method, parameters, step, retries) -> {
+            compensationLog.compensate(processId, (activity, method, parameters, preState, step, retries) -> {
                 boolean compensationSuccess;
 
                 String activityName = activity.getClass().getName();
 
                 try {
                     // Run backward transaction
-                    compensationSuccess = (boolean) method.invoke(activity, parameters);
+                    compensationSuccess = (boolean) method.invoke(activity, parameters, preState);
 
                     // Record failure, if needed
                     if (!compensationSuccess) {

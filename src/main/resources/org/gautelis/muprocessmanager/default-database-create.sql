@@ -34,7 +34,6 @@ CREATE TABLE mu_process (
 
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-
 );
 
 CREATE UNIQUE INDEX mu_process_corrid_ix ON mu_process ( correlation_id );
@@ -54,8 +53,9 @@ CREATE TABLE mu_process_step (
   method_name VARCHAR(255) NOT NULL, -- method name must fit
   parameters CLOB NOT NULL,
 
-  retries INTEGER NOT NULL DEFAULT 0,
+  previous_state CLOB DEFAULT NULL,
 
+  retries INTEGER NOT NULL DEFAULT 0,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

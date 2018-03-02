@@ -58,7 +58,7 @@ public class MuPersistentLog {
     private final static int STATUS_SUCCESSFUL = MuProcessStatus.SUCCESSFUL.ordinal();
 
     public interface CompensationRunnable {
-        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, int step, int retries) throws MuProcessBackwardBehaviourException;
+        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuProcessState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
     }
 
     public interface CleanupRunnable {
@@ -289,16 +289,28 @@ public class MuPersistentLog {
                         String methodName = rs.getString(++idx);
                         Clob paramClob = rs.getClob(++idx);
                         int retries = rs.getInt(++idx);
+                        Clob stateClob = rs.getClob(++idx);
+
+                        //
+                        Optional<MuProcessState> preState;
+                        if (rs.wasNull()) {
+                            preState = Optional.empty();
+                        }
+                        else {
+                            Reader stateReader = stateClob.getCharacterStream();
+                            MuProcessState state = gson.fromJson(stateReader, MuProcessState.class);
+                            preState = Optional.of(state);
+                        }
 
                         //
                         MuBackwardBehaviour activity = loader.load(className);
                         if (activity != null) {
-                            Class[] parameterTypes = { MuActivityParameters.class };
+                            Class[] parameterTypes = { MuActivityParameters.class, Optional.class };
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
 
                             Reader paramReader = paramClob.getCharacterStream();
                             MuActivityParameters parameters = gson.fromJson(paramReader, MuActivityParameters.class);
-                            if (runnable.run(activity, method, parameters, stepId, retries)) {
+                            if (runnable.run(activity, method, parameters, preState, stepId, retries)) {
                                 popCompensation(processId, stepId);
                             }
                             else {
@@ -504,7 +516,7 @@ public class MuPersistentLog {
 
     /* package private */ void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
-            final MuActivityParameters parameters
+            final MuActivityParameters parameters, final Optional<MuProcessState> preState
     ) throws MuProcessException {
 
         // Determine class name
@@ -515,7 +527,7 @@ public class MuPersistentLog {
         String methodName = activity.getPersistableMethodName();
 
         try {
-            clazz.getMethod(activity.getPersistableMethodName(), MuActivityParameters.class);
+            clazz.getMethod(activity.getPersistableMethodName(), MuActivityParameters.class, Optional.class);
         }
         catch (NoSuchMethodException nsme) {
             // Not ever expected to happen in production! Can potentially happen in development though,
@@ -551,6 +563,12 @@ public class MuPersistentLog {
                 stmt.setString(++idx, className);
                 stmt.setString(++idx, methodName);
                 stmt.setCharacterStream(++idx, new StringReader(gson.toJson(parameters)));
+                if (preState.isPresent()) {
+                    stmt.setCharacterStream(++idx, new StringReader(gson.toJson(preState)));
+                }
+                else {
+                    stmt.setNull(++idx, Types.CLOB);
+                }
                 stmt.executeUpdate();
             }
 

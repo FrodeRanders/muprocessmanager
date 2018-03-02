@@ -17,12 +17,14 @@
  */
 package org.gautelis.muprocessmanager;
 
+import java.util.Optional;
+
 /**
  * A representation of the compensation behaviour of a {@link MuActivity}.
  */
 @FunctionalInterface
 public interface MuBackwardBehaviour {
-    boolean backward(MuActivityParameters args);
+    boolean backward(MuActivityParameters args, Optional<MuProcessState> preState);
 
     default String getPersistableMethodName() { return "backward"; }
 }

@@ -20,6 +20,7 @@ package org.gautelis.muprocessmanager;
 import org.gautelis.vopn.io.Cloner;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Corresponds to an individual volatile process step.
@@ -27,6 +28,7 @@ import java.io.IOException;
 /* package private */ class MuVolatileProcessStep {
 
     private final MuActivityParameters parameters;
+    private Optional<MuProcessState> preState = Optional.empty();
 
     private MuBackwardBehaviour backwardBehaviour = null;
 
@@ -47,6 +49,8 @@ import java.io.IOException;
     ) {
         backwardBehaviour = backward;
 
+        preState = forward.getState();
+
         // Run forward transaction
         boolean success;
         try {
@@ -63,7 +67,7 @@ import java.io.IOException;
         // Run backward transaction
         boolean success;
         try {
-            success = backwardBehaviour.backward(parameters);
+            success = backwardBehaviour.backward(parameters, preState);
         }
         catch (Throwable t) {
             success = false;

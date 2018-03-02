@@ -96,7 +96,7 @@ public class AppTest extends TestCase {
                         System.out.println("First forward activity: " + p);
                         return true;
                     },
-                    p -> {
+                    (p, s) -> {
                         System.out.println("First backward activity: " + p);
                         return true;
                     },
@@ -109,7 +109,7 @@ public class AppTest extends TestCase {
                         System.out.println("Second forward activity: " + p);
                         return true;
                     },
-                    p -> {
+                    (p, s) -> {
                         System.out.println("Second backward activity: " + p);
                         return true;
                     },
@@ -127,7 +127,7 @@ public class AppTest extends TestCase {
                             return true;
                         }
                     },
-                    p -> {
+                    (p, s) -> {
                         System.out.println("Third backward activity: " + p);
                         return false; // Even compensation failed
                     },
@@ -140,7 +140,7 @@ public class AppTest extends TestCase {
                         System.out.println("Fourth forward activity: " + p);
                         return true;
                     },
-                    p -> {
+                    (p, s) -> {
                         System.out.println("Fourth backward activity: " + p);
                         return true;
                     },
@@ -168,7 +168,7 @@ public class AppTest extends TestCase {
 
         final Collection<String> sampledCorrelationIds = new LinkedList<>();
 
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 10000; i++) {
             final int[] j = { i };
 
             workQueue.execute(() -> {

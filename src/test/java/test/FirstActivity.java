@@ -20,6 +20,9 @@ package test;
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
 import org.gautelis.muprocessmanager.MuProcessResult;
+import org.gautelis.muprocessmanager.MuProcessState;
+
+import java.util.Optional;
 
 public class FirstActivity implements MuActivity {
 
@@ -37,7 +40,7 @@ public class FirstActivity implements MuActivity {
     }
 
     @Override
-    public boolean backward(MuActivityParameters args) {
+    public boolean backward(MuActivityParameters args, Optional<MuProcessState> preState) {
         return !(Math.random() < backwardFailureProbability);
     }
 }
