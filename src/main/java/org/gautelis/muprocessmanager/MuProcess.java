@@ -35,11 +35,12 @@ import java.util.Optional;
 public class MuProcess {
     private static final Logger log = LoggerFactory.getLogger(MuProcess.class);
 
+    public final static int PROCESS_ID_NOT_YET_ASSIGNED = -1;
     private final static String LAMBDA_INDICATION = "lambda$";
 
     //
     private final String correlationId;
-    private int processId = 0; // meaning as yet unknown
+    private int processId = PROCESS_ID_NOT_YET_ASSIGNED;
 
     //
     private int currentStep = 0; // meaning no steps yet

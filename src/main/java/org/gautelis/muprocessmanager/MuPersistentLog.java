@@ -20,6 +20,7 @@ package org.gautelis.muprocessmanager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.gautelis.vopn.db.Database;
+import org.gautelis.vopn.io.Closer;
 import org.gautelis.vopn.lang.DynamicLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +47,6 @@ import java.util.Properties;
 public class MuPersistentLog {
     private static final Logger log = LoggerFactory.getLogger(MuPersistentLog.class);
     private static final Logger statisticsLog = LoggerFactory.getLogger("STATISTICS");
-
-    private final int PROCESS_UNKNOWN = -1;
 
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private static final DynamicLoader<MuBackwardBehaviour> loader = new DynamicLoader<>("compensation activity");
@@ -114,7 +113,7 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS"), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, process.getCorrelationId());
                 stmt.setInt(2, MuProcessStatus.NEW.toInt());
-                int i = stmt.executeUpdate();
+                stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
                         int processId = rs.getInt(1);
@@ -212,8 +211,6 @@ public class MuPersistentLog {
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
-            conn.setAutoCommit(false);
-
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
                 stmt.setInt(++idx, status.toInt());
@@ -228,8 +225,6 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, processId);
                 stmt.executeUpdate();
             }
-
-            conn.commit();
         }
         catch (SQLException sqle) {
             String info = "Failed to set process status: ";
@@ -251,10 +246,12 @@ public class MuPersistentLog {
     }
 
     /* package private */ Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
-        try (Connection conn = dataSource.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
             conn.setAutoCommit(false);
 
-            int processId = PROCESS_UNKNOWN;
+            int processId = MuProcess.PROCESS_ID_NOT_YET_ASSIGNED;
             MuProcessStatus status = null;
             boolean doContinue = true;
 
@@ -295,7 +292,7 @@ public class MuPersistentLog {
                 }
             }
 
-            if (processId == PROCESS_UNKNOWN) {
+            if (processId == MuProcess.PROCESS_ID_NOT_YET_ASSIGNED) {
                 return Optional.empty();
             }
 
@@ -333,10 +330,21 @@ public class MuPersistentLog {
             return Optional.of(true);
         }
         catch (SQLException sqle) {
+            try {
+                conn.rollback();
+            }
+            catch (SQLException ignore) {}
+
             String info = "Failed to reset process: ";
             info += Database.squeeze(sqle);
             log.warn(info);
             throw new MuProcessException(info, sqle);
+        }
+        finally {
+            try {
+                if (null != conn) conn.close();
+            }
+            catch (SQLException ignore) {}
         }
     }
 
@@ -345,16 +353,12 @@ public class MuPersistentLog {
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
-            conn.setAutoCommit(false);
-
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("INCREMENT_PROCESS_STEP_RETRIES"))) {
                 int idx = 0;
                 stmt.setInt(++idx, processId);
                 stmt.setInt(++idx, stepId);
                 stmt.executeUpdate();
             }
-
-            conn.commit();
         }
         catch (SQLException sqle) {
             String info = "Failed to increment process step retries: ";
@@ -581,7 +585,9 @@ public class MuPersistentLog {
             log.trace(info);
         }
 
-        try (Connection conn = dataSource.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
             conn.setAutoCommit(false);
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEPS"))) {
@@ -596,11 +602,23 @@ public class MuPersistentLog {
 
             conn.commit();
 
-        } catch (SQLException sqle) {
+        }
+        catch (SQLException sqle) {
+            try {
+                conn.rollback();
+            }
+            catch (SQLException ignore) {}
+
             String info = "Failed to remove process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\": ";
             info += Database.squeeze(sqle);
             log.warn(info);
             throw new MuProcessException(info, sqle);
+        }
+        finally {
+            try {
+                if (null != conn) conn.close();
+            }
+            catch (SQLException ignore) {}
         }
     }
 
@@ -619,8 +637,6 @@ public class MuPersistentLog {
         }
 
         try (Connection conn = dataSource.getConnection()) {
-            conn.setAutoCommit(false);
-
             // Potentially check whether process status is NEW or (already) PROGRESSING
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
@@ -629,8 +645,6 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, process.getProcessId());
                 stmt.executeUpdate();
             }
-
-            conn.commit();
         }
         catch (SQLException sqle) {
             String info = "Failed to touch process header: ";
@@ -679,7 +693,9 @@ public class MuPersistentLog {
             log.trace(info);
         }
 
-        try (Connection conn = dataSource.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
             conn.setAutoCommit(false);
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS_STEP"))) {
@@ -710,10 +726,21 @@ public class MuPersistentLog {
             conn.commit();
         }
         catch (SQLException sqle) {
+            try {
+                conn.rollback();
+            }
+            catch (SQLException ignore) {}
+
             String info = "Failed to persist process step: ";
             info += Database.squeeze(sqle);
             log.warn(info);
             throw new MuProcessException(info, sqle);
+        }
+        finally {
+            try {
+                if (null != conn) conn.close();
+            }
+            catch (SQLException ignore) {}
         }
     }
 
@@ -722,15 +749,12 @@ public class MuPersistentLog {
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
-            conn.setAutoCommit(false);
-
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEP"))) {
                 int idx = 0;
                 stmt.setInt(++idx, processId);
                 stmt.setInt(++idx, stepId);
                 stmt.executeUpdate();
             }
-            conn.commit();
         }
         catch (SQLException sqle) {
             String info = "Failed to remove process step: ";
