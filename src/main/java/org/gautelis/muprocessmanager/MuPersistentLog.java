@@ -47,6 +47,8 @@ public class MuPersistentLog {
     private static final Logger log = LoggerFactory.getLogger(MuPersistentLog.class);
     private static final Logger statisticsLog = LoggerFactory.getLogger("STATISTICS");
 
+    private final int PROCESS_UNKNOWN = -1;
+
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private static final DynamicLoader<MuBackwardBehaviour> loader = new DynamicLoader<>("compensation activity");
 
@@ -248,6 +250,96 @@ public class MuPersistentLog {
         setProcessStatus(processId, status, /* no result */ null);
     }
 
+    /* package private */ Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            int processId = PROCESS_UNKNOWN;
+            MuProcessStatus status = null;
+            boolean doContinue = true;
+
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_ID_AND_STATUS_BY_CORRID"))) {
+                stmt.setString(1, correlationId);
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        int idx = 0;
+                        processId = rs.getInt(++idx);
+                        status = MuProcessStatus.fromInt(rs.getInt(++idx));
+
+                        switch (status) {
+                            /*
+                             * Cases where it does _not_ make sense to reset process -- at least not right away.
+                             *
+                             * OBSERVE FALLTHROUGH!
+                             */
+                            case NEW:
+                                // PRESUMED NOT OK, may be interrupting a running synchronous process
+
+                            case PROGRESSING:
+                                // NOT OK, may be interrupting a running synchronous process
+
+                            case SUCCESSFUL:
+                                // Really odd situation! Why reset (for retrying) when process
+                                // was successful?
+
+                                log.warn("Will NOT reset process: correlationId=\"{}\", processId=\"{}\", status={}",
+                                        correlationId, processId, status);
+                                doContinue = false;
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            if (processId == PROCESS_UNKNOWN) {
+                return Optional.empty();
+            }
+
+            if (!doContinue) {
+                return Optional.of(false);
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_STEPS_BY_PROCID"),
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
+                stmt.setInt(1, processId);
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        int idx = 0;
+                        int stepId = rs.getInt(++idx);
+                        int retries = rs.getInt(++idx);
+
+                        //
+                        log.debug("Removing process step: correlationId=\"{}\", processId=\"{}\", status={}, stepId={}, retries={}",
+                                correlationId, processId, status, stepId, retries);
+
+                        rs.deleteRow();
+                    }
+                }
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS"))) {
+                stmt.setInt(1, processId);
+                stmt.executeUpdate();
+            }
+
+            conn.commit();
+
+            return Optional.of(true);
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to reset process: ";
+            info += Database.squeeze(sqle);
+            log.warn(info);
+            throw new MuProcessException(info, sqle);
+        }
+    }
+
     /* package private */ void markRetry(
         final int processId, final int stepId
     ) throws MuProcessException {
@@ -334,11 +426,13 @@ public class MuPersistentLog {
         catch (ClassNotFoundException cnfe) {
             String info = "Failed to instantiate compensation: ";
             info += cnfe.getMessage();
+            log.info(info);
             throw new MuProcessBackwardBehaviourException(info, cnfe);
         }
         catch (NoSuchMethodException nsme) {
             String info = "Failed to establish call endpoint for compensation: ";
             info += nsme.getMessage();
+            log.info(info);
             throw new MuProcessBackwardBehaviourException(info, nsme);
         }
     }
@@ -513,6 +607,38 @@ public class MuPersistentLog {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //    Methods called from MuProcess and tightly integrated with the MuProcess lifecycle
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /* package private */ void touchProcessHeader(
+            final MuProcess process
+    ) throws MuProcessException {
+
+        // Persist
+        if (0 == process.incrementCurrentStep()) {
+            // Log process header
+            pushProcess(process);
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            // Potentially check whether process status is NEW or (already) PROGRESSING
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
+                int idx = 0;
+                stmt.setInt(++idx, MuProcessStatus.PROGRESSING.toInt());
+                stmt.setNull(++idx, Types.CLOB);
+                stmt.setInt(++idx, process.getProcessId());
+                stmt.executeUpdate();
+            }
+
+            conn.commit();
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to touch process header: ";
+            info += Database.squeeze(sqle);
+            log.warn(info);
+            throw new MuProcessException(info, sqle);
+        }
+    }
 
     /* package private */ void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,

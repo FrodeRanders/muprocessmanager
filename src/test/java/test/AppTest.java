@@ -166,9 +166,9 @@ public class AppTest extends TestCase {
 
         workQueue.start();
 
-        final Collection<String> sampledCorrelationIds = new LinkedList<>();
+        final Collection<String> sampledCorrelationIds = new ArrayList<>();
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100000; i++) {
             final int[] j = { i };
 
             workQueue.execute(() -> {
@@ -184,7 +184,15 @@ public class AppTest extends TestCase {
 
                     MuActivityParameters parameters = new MuActivityParameters();
                     parameters.put("weight", 100.0 * Math.random());
-                    process.execute(new FirstActivity(), parameters);
+                    process.execute(
+                            (p, r) -> {
+                                double weight = (double) p.get("weight");
+                                double realWeight = 0.83 * weight;
+                                r.add(realWeight);
+                                return !(Math.random() < /* forward failure probability */ 0.01);
+
+                            }, parameters
+                    );
 
                     parameters.put("hat-size", 42);
                     process.execute(
@@ -205,15 +213,15 @@ public class AppTest extends TestCase {
 
                     process.finished();
 
-                } catch (MuProcessBackwardBehaviourException mpbae) {
-                    // Forward activity failed and so did some compensation activities
-                    String info = "Process and compensation failure: " + mpbae.getMessage();
-                    if (log.isTraceEnabled()) {
-                        log.trace(info);
-                    }
                 } catch (MuProcessForwardBehaviourException mpfae) {
                     // Forward activity failed, but compensations were successful
                     String info = "No success, but managed to compensate: " + mpfae.getMessage();
+                    if (log.isTraceEnabled()) {
+                        log.trace(info);
+                    }
+                } catch (MuProcessBackwardBehaviourException mpbae) {
+                    // Forward activity failed and so did some compensation activities
+                    String info = "Process and compensation failure: " + mpbae.getMessage();
                     if (log.isTraceEnabled()) {
                         log.trace(info);
                     }
@@ -231,7 +239,7 @@ public class AppTest extends TestCase {
         }
 
         do {
-            System.out.println("\nProcess result samples:");
+            System.out.println("\nProcess result samples: " + sampledCorrelationIds.size());
             try {
                 // Iterate since we will modify collection
                 Iterator<String> sit = sampledCorrelationIds.iterator();
@@ -248,7 +256,12 @@ public class AppTest extends TestCase {
                             case SUCCESSFUL:
                                 Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
                                 _result.ifPresent(objects -> objects.forEach((v) -> System.out.print(" {" + v + "}")));
-                                sit.remove();
+                                try {
+                                    sit.remove();
+                                }
+                                catch (ConcurrentModificationException ignore) {
+                                    // Don't care since this is just for visualization
+                                }
                                 break;
 
                             case NEW:
@@ -257,8 +270,16 @@ public class AppTest extends TestCase {
                                 break;
 
                             default:
-                                // No idea to recheck
-                                sit.remove();
+                                // No idea to recheck, but we will try to reset the process here -- faking a retry
+                                Optional<Boolean> isReset = mngr.resetProcess(correlationId);
+                                isReset.ifPresent(aBoolean -> System.out.print(" (was " + (aBoolean ? "" : "NOT") + " reset)"));
+
+                                try {
+                                    sit.remove();
+                                }
+                                catch (ConcurrentModificationException ignore) {
+                                    // Don't care since this is just for visualization
+                                }
                                 break;
                         }
                     }

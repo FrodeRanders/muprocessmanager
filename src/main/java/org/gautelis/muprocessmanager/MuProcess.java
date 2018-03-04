@@ -91,6 +91,62 @@ public class MuProcess {
         return result;
     }
 
+    /**
+     * Executes an activity that only has a {@link MuForwardBehaviour forward behaviour} and no
+     * {@link MuBackwardBehaviour backward behaviour}. As such, we are <strong>NOT</strong> utilizing any of the
+     * behaviour laid forth in
+     * <a href="https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf">this article</a>
+     * about Sagas.
+     * <p>
+     * Appropriate if a micro process mixes activities both with and without the need for compensation.
+     * Even in this case, the mechanisms around {@link MuProcessState process state} works, so that it is possible
+     * to check status of processes and claim process results (for a configurable period of time).
+     * <p>
+     * This version of execute does not honour any {@link MuProcessState process state} -- since there
+     * can be no compensation for this activity.
+     * @param forwardBehaviour the forward behaviour of the activity to execute -- may be a lambda
+     * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
+     * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
+     */
+    public void execute(
+            final MuForwardBehaviour forwardBehaviour,
+            final MuActivityParameters parameters
+    ) throws MuProcessException {
+
+        compensationLog.touchProcessHeader(this);
+
+        // Run forward action
+        boolean forwardSuccess;
+        try {
+            forwardSuccess = forwardBehaviour.forward(parameters, result);
+        }
+        catch (Throwable t) {
+            String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
+            info += t.getMessage();
+            log.info(info, t);
+
+            forwardSuccess = false;
+        }
+
+        if (!forwardSuccess) {
+            // So we failed. Throw exception corresponding to
+            // relevant syndrome:
+            //     - failed, but managed to compensate
+            //     - failed and so did compensation(s)
+            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+        }
+    }
+
+
+    /**
+     * Executes an {@link MuActivity activity} in a {@link MuProcess process},
+     * using the behaviour laid forth in <a href="https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf">this article</a> about Sagas.
+     * @param activity the activity to execute
+     * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
+     * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
+     */
     public void execute(
             final MuActivity activity,
             final MuActivityParameters parameters
@@ -132,6 +188,17 @@ public class MuProcess {
         }
     }
 
+    /**
+     * Executes an activity, by means of the two constituents {@link MuForwardBehaviour forward behaviour}
+     * and {@link MuBackwardBehaviour backward behaviour}, using the behaviour laid forth in
+     * <a href="https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf">this article</a>
+     * about Sagas.
+     * @param forwardBehaviour the forward behaviour of the activity to execute -- may be a lambda
+     * @param backwardBehaviour the backward behaviour of the activity to execute -- may <strong>NOT</strong> be a lambda since we need to know what class to instantiate object from during compensation
+     * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
+     * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
+     */
     public void execute(
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
             final MuActivityParameters parameters

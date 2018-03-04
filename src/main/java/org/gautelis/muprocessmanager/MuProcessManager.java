@@ -59,6 +59,9 @@ public class MuProcessManager {
     private final MuProcessManagementPolicy policy;
     private static final boolean DEBUG = false;
 
+    //
+    private boolean justStarted = true; // updated after first successful recover()
+
 
     private MuProcessManager(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
         compensationLog = new MuPersistentLog(dataSource, sqlStatements);
@@ -213,7 +216,8 @@ public class MuProcessManager {
                         break;
 
                     case COMPENSATION_FAILED:
-                        if (isRipeForRemoval) {
+                        // First time through, try to recompensate once
+                        if (!justStarted && isRipeForRemoval) {
                             // Automatically abandon after timeout
                             log.trace("Abandoning process: correlationId=\"{}\", processId=\"{}\", status=\"{}\"", correlationId, processId, _status);
                             compensationLog.abandon(correlationId, processId);
@@ -251,6 +255,10 @@ public class MuProcessManager {
                         break;
                 }
             });
+
+            // Having run recover() once, we have at least tried to recompensate
+            // processes in COMPENSATION_FAILED once.
+            justStarted = false;
         }
         catch (MuProcessException mpe) {
             String info = "Scheduled recovery failed: ";
@@ -327,6 +335,27 @@ public class MuProcessManager {
     public Optional<MuProcessResult> getProcessResult(final String correlationId) throws MuProcessException {
         return compensationLog.getProcessResult(correlationId);
     }
+
+    /**
+     * Resets (possibly existing) process. If a process failed earlier and left some activities
+     * with status {@link MuProcessStatus#COMPENSATION_FAILED COMPENSATION_FAILED}, they have to
+     * be removed from background activities of the process manager that may still try to individually
+     * compensate them. If this is not done and we issue a new process for the same business request,
+     * successful activities may later be undone by the process manager, still trying to compensate
+     * the activity from an earlier run process.
+     * <p>
+     * This method will remove remnants of earlier run processes for the same business request
+     * (as identified by the correlation ID) in preparation for a new process with the same intent.
+     * <p>
+     * This method is not supposed to be issued while a running synchronous process exists.
+     * @param correlationId correlation ID identifying the business request initiating the process
+     * @return true if a matching process was found and reset, false if no matching process was found
+     * @throws MuProcessException upon failure
+     */
+    public Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
+        return compensationLog.resetProcess(correlationId);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
