@@ -25,54 +25,83 @@
 
     <div class="key">STORE_PROCESS</div>
     <div class="value">
-        <pre>INSERT INTO mu_process (correlation_id, status) VALUES (?,?)</pre>
+        <pre>INSERT INTO mu_process (correlation_id, status)
+VALUES (?,?)</pre>
      </div>
 
     <div class="key">REMOVE_PROCESS</div>
     <div class="value">
-        <pre>DELETE FROM mu_process WHERE process_id = ?</pre>
+        <pre>DELETE FROM mu_process
+WHERE process_id = ?</pre>
     </div>
 
     <div class="key">FETCH_ABANDONED_PROCESSES</div>
     <div class="value">
-        <pre>SELECT correlation_id, process_id, status, created, modified FROM mu_process
-WHERE status >= 5 ORDER BY modified DESC</pre>
+        <pre>SELECT correlation_id, process_id, status, created, modified
+FROM mu_process
+WHERE status >= 5
+ORDER BY modified DESC</pre>
        <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESSES</div>
     <div class="value">
-        <pre>SELECT correlation_id, process_id, status, created, modified FROM mu_process
-WHERE status &lt; 5 ORDER BY modified DESC</pre>
+        <pre>SELECT correlation_id, process_id, status, created, modified
+FROM mu_process
+WHERE status &lt; 5
+ORDER BY modified DESC</pre>
+        <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
+    </div>
+
+    <div class="key">FETCH_ABANDONED_PROCESS_DETAILS</div>>
+    <div class="value">
+        <pre>SELECT p.correlation_id, p.process_id, p.status, p.created, p.modified, s.step_id, s.retries, s.previous_state
+FROM mu_process p
+LEFT OUTER JOIN mu_process_step s
+  ON (p.process_id = s.process_id)
+WHERE p.status = 5</pre>
         <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESS_RESULT_BY_CORRID</div>
     <div class="value">
-        <pre>SELECT status, result FROM mu_process
+        <pre>SELECT status, result
+FROM mu_process
+WHERE correlation_id = ?</pre>
+    </div>
+
+    <div class="key">FETCH_PROCESS_STATUS_BY_CORRID</div>
+    <div class="value">
+        <pre>SELECT status
+FROM mu_process
+WHERE correlation_id = ?</pre>
+    </div>
+
+    <div class="key">FETCH_PROCESS_ID_AND_STATUS_BY_CORRID</div>>
+    <div class="value">
+        <pre>SELECT process_id, status
+FROM mu_process
 WHERE correlation_id = ?</pre>
     </div>
 
     <div class="key">COUNT_PROCESSES</div>
     <div class="value">
-        <pre>SELECT COUNT(*), status FROM mu_process GROUP BY status</pre>
-    </div>
-
-    <div class="key">FETCH_PROCESS_STATUS_BY_CORRID</div>
-    <div class="value">
-        <pre>SELECT status FROM mu_process
-WHERE correlation_id = ?</pre>
+        <pre>SELECT COUNT(*), status
+FROM mu_process
+GROUP BY status</pre>
     </div>
 
     <div class="key">UPDATE_PROCESS</div>
     <div class="value">
-        <pre>UPDATE mu_process SET status = ?, result = ?, modified = CURRENT_TIMESTAMP
+        <pre>UPDATE mu_process
+SET status = ?, result = ?, modified = CURRENT_TIMESTAMP
 WHERE process_id = ?</pre>
     </div>
 
     <div class="key">STORE_PROCESS_STEP</div>
     <div class="value">
-        <pre>INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, parameters) VALUES (?,?,?,?,?)</pre>
+        <pre>INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, parameters)
+VALUES (?,?,?,?,?)</pre>
     </div>
 
     <div class="key">REMOVE_PROCESS_STEP</div>
@@ -87,20 +116,28 @@ WHERE process_id = ? AND step_id = ?</pre>
 WHERE process_id = ?</pre>
     </div>
 
-    <div class="key">FETCH_PROCESS_STEPS</div>
+    <div class="key">FETCH_PROCESS_STEPS_BY_PROCID_DETAILED</div>
     <div class="value">
-        <pre>SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.parameters, step.retries
+        <pre>SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.parameters, step.retries, step.previous_state
 FROM mu_process_step step
-INNER JOIN mu_process proc ON proc.process_id = step.process_id
+INNER JOIN mu_process proc
+  ON proc.process_id = step.process_id
 WHERE proc.process_id = ?
 ORDER BY step_id DESC</pre>
     </div>
 
+    <div class="key">FETCH_PROCESS_STEPS_BY_PROCID_COARSE</div>
+    <div class="value">
+        <pre>SELECT step.step_id, step.retries
+FROM mu_process_step step
+WHERE step.process_id = ?</pre>
+    </div>
+
     <div class="key">INCREMENT_PROCESS_STEP_RETRIES</div>
     <div class="value">
-        <pre>UPDATE mu_process_step SET retries = retries + 1
-WHERE process_id = ?
-AND step_id = ?</pre>
+        <pre>UPDATE mu_process_step
+SET retries = retries + 1
+WHERE process_id = ? AND step_id = ?</pre>
     </div>
 </body>
 </html>

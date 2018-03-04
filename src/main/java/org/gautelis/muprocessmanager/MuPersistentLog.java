@@ -417,7 +417,7 @@ public class MuPersistentLog {
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS_BY_PROCID_DETAILED"))) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -491,12 +491,12 @@ public class MuPersistentLog {
 
         // Remove process steps
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"))) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // correlation_id, step_id, class_name, method_name, parameters, retries
-                        int stepId = rs.getInt(2);
+                        // step_id, retries
+                        int stepId = rs.getInt(1);
                         popCompensation(processId, stepId);
                     }
                 }

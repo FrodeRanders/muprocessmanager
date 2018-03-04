@@ -175,7 +175,9 @@ public class AppTest extends TestCase {
                 String correlationId = UUID.randomUUID().toString();
                 if (j[0] % 1000 == 0) {
                     // Sample each thousandth correlation ID
-                    sampledCorrelationIds.add(correlationId);
+                    synchronized (sampledCorrelationIds) {
+                        sampledCorrelationIds.add(correlationId);
+                    }
                 }
 
                 MuProcess process = null;
@@ -240,12 +242,8 @@ public class AppTest extends TestCase {
                 while (sit.hasNext()) {
                     String correlationId;
 
-                    try {
+                    synchronized (sampledCorrelationIds) {
                         correlationId = sit.next();
-                    }
-                    catch (ConcurrentModificationException ignore) {
-                        // Don't care since this is just for visualization
-                        continue;
                     }
 
                     System.out.print("correlationId=\"" + correlationId + "\"");
@@ -258,11 +256,8 @@ public class AppTest extends TestCase {
                             case SUCCESSFUL:
                                 Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
                                 _result.ifPresent(objects -> objects.forEach((v) -> System.out.print(" {" + v + "}")));
-                                try {
+                                synchronized (sampledCorrelationIds) {
                                     sit.remove();
-                                }
-                                catch (ConcurrentModificationException ignore) {
-                                    // Don't care since this is just for visualization
                                 }
                                 break;
 
@@ -276,11 +271,8 @@ public class AppTest extends TestCase {
                                 Optional<Boolean> isReset = mngr.resetProcess(correlationId);
                                 isReset.ifPresent(aBoolean -> System.out.print(" (was " + (aBoolean ? "" : "NOT") + " reset)"));
 
-                                try {
+                                synchronized (sampledCorrelationIds) {
                                     sit.remove();
-                                }
-                                catch (ConcurrentModificationException ignore) {
-                                    // Don't care since this is just for visualization
                                 }
                                 break;
                         }
