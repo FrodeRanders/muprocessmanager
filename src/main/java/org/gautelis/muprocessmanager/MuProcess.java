@@ -100,10 +100,10 @@ public class MuProcess {
      * about Sagas.
      * <p>
      * Appropriate if a micro process mixes activities both with and without the need for compensation.
-     * Even in this case, the mechanisms around {@link MuProcessState process state} works, so that it is possible
+     * Even in this case, the mechanisms around {@link MuActivityState process state} works, so that it is possible
      * to check status of processes and claim process results (for a configurable period of time).
      * <p>
-     * This version of execute does not honour any {@link MuProcessState process state} -- since there
+     * This version of execute does not honour any {@link MuActivityState process state} -- since there
      * can be no compensation for this activity.
      * @param forwardBehaviour the forward behaviour of the activity to execute -- may be a lambda
      * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
@@ -162,7 +162,7 @@ public class MuProcess {
             throw new MuProcessException(info, e);
         }
 
-        final Optional<MuProcessState> preState = activity.getState();
+        final Optional<MuActivityState> preState = activity.getState();
 
         // Log backward activity
         compensationLog.pushCompensation(this, activity, parametersSnapshot, preState);
@@ -220,7 +220,7 @@ public class MuProcess {
             throw new MuProcessException(info, e);
         }
 
-        final Optional<MuProcessState> preState = forwardBehaviour.getState();
+        final Optional<MuActivityState> preState = forwardBehaviour.getState();
 
         // Log backward activity
         compensationLog.pushCompensation(this, backwardBehaviour, parametersSnapshot, preState);
@@ -291,7 +291,7 @@ public class MuProcess {
 
     @Override
     public String toString() {
-        return "Process[" + "correlationId=\"" + correlationId + "\", " + "processId=\"" + processId + "\"" + "]";
+        return "Process[" + "correlationId=\"" + correlationId + "\", " + "processId=" + processId + "]";
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,11 +350,8 @@ public class MuProcess {
                 }
 
                 if (!compensationSuccess) {
-                    if (log.isTraceEnabled()) {
-                        String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\" [continuing]";
-                        log.trace(info);
-                    }
-                    
+                    log.trace("Failed to compensate step {} activity (\"{}\"): correlationId=\"{}\" [continuing]", step, activityName, correlationId);
+
                     if (!acceptCompensationFailure) {
                         // Handling without throwable, i.e. compensation failed in a controlled manner.
                         String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\"";

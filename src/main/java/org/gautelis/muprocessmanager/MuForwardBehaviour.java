@@ -39,7 +39,7 @@ public interface MuForwardBehaviour {
      * if relevant.
      * @return previous state if such a state is relevant
      */
-    default Optional<MuProcessState> getState() { return Optional.empty(); }
+    default Optional<MuActivityState> getState() { return Optional.empty(); }
 
     /**
      * Execute forward behaviour.

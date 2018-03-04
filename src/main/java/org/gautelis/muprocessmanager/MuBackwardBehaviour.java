@@ -24,7 +24,7 @@ import java.util.Optional;
  */
 @FunctionalInterface
 public interface MuBackwardBehaviour {
-    boolean backward(MuActivityParameters args, Optional<MuProcessState> preState);
+    boolean backward(MuActivityParameters args, Optional<MuActivityState> preState);
 
     default String getPersistableMethodName() { return "backward"; }
 }

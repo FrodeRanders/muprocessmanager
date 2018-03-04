@@ -23,6 +23,13 @@
         WHERE status &lt; 5 ORDER BY modified DESC
     </entry>
 
+    <entry key="FETCH_ABANDONED_PROCESS_DETAILS">
+        SELECT p.correlation_id, p.process_id, p.status, p.created, p.modified, s.step_id, s.retries, s.previous_state
+        FROM mu_process p
+        LEFT OUTER JOIN mu_process_step s ON (p.process_id = s.process_id)
+        WHERE p.status = 5
+    </entry>
+
     <entry key="FETCH_PROCESS_RESULT_BY_CORRID">
         SELECT status, result FROM mu_process
         WHERE correlation_id = ?

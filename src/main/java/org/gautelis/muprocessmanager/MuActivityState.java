@@ -17,6 +17,10 @@
  */
 package org.gautelis.muprocessmanager;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.Reader;
 import java.util.HashMap;
 
 /**
@@ -27,7 +31,15 @@ import java.util.HashMap;
  * The value part has to be serializable, as the whole thing is persisted
  * to database ({@link MuPersistentLog} takes care of this) as a JSON object.
  */
-public class MuProcessState extends HashMap<String, Object> {
+public class MuActivityState extends HashMap<String, Object> {
+
+    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+
+    public MuActivityState() {}
+
+    public static MuActivityState fromReader(final Reader reader) {
+        return gson.fromJson(reader, MuActivityState.class);
+    }
 
     @Override
     public String toString() {

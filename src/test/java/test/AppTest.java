@@ -215,16 +215,11 @@ public class AppTest extends TestCase {
 
                 } catch (MuProcessForwardBehaviourException mpfae) {
                     // Forward activity failed, but compensations were successful
-                    String info = "No success, but managed to compensate: " + mpfae.getMessage();
-                    if (log.isTraceEnabled()) {
-                        log.trace(info);
-                    }
+                     log.trace("No success, but managed to compensate: {}", mpfae.getMessage());
+
                 } catch (MuProcessBackwardBehaviourException mpbae) {
                     // Forward activity failed and so did some compensation activities
-                    String info = "Process and compensation failure: " + mpbae.getMessage();
-                    if (log.isTraceEnabled()) {
-                        log.trace(info);
-                    }
+                    log.trace("Process and compensation failure: {}", mpbae.getMessage());
                 }
                 catch (Throwable t) {
                     // Other reasons for failure not necessarily related to the activity
@@ -232,8 +227,7 @@ public class AppTest extends TestCase {
                         process.failed();
                     }
 
-                    String info = "Process failure: " + t.getMessage();
-                    log.warn(info, t);
+                    log.warn("Process failure: {}", t.getMessage(), t);
                 }
             });
         }
@@ -244,9 +238,17 @@ public class AppTest extends TestCase {
                 // Iterate since we will modify collection
                 Iterator<String> sit = sampledCorrelationIds.iterator();
                 while (sit.hasNext()) {
-                    String correlationId = sit.next();
+                    String correlationId;
 
-                    System.out.print("correlationId=" + correlationId);
+                    try {
+                        correlationId = sit.next();
+                    }
+                    catch (ConcurrentModificationException ignore) {
+                        // Don't care since this is just for visualization
+                        continue;
+                    }
+
+                    System.out.print("correlationId=\"" + correlationId + "\"");
                     Optional<MuProcessStatus> _status = mngr.getProcessStatus(correlationId);
                     if (_status.isPresent()) {
                         MuProcessStatus status = _status.get();
@@ -295,5 +297,17 @@ public class AppTest extends TestCase {
         } while (!workQueue.isEmpty());
 
         workQueue.stop();
+
+        System.out.println("\nAbandoned processes:");
+        try {
+            Collection<MuProcessDetails> details = mngr.salvageAbandonedProcesses();
+            for (MuProcessDetails detail : details) {
+                System.out.println(detail.asJson());
+            }
+        }
+        catch (MuProcessException mupp) {
+            String info = mupp.getMessage();
+            log.warn(info);
+        }
     }
 }

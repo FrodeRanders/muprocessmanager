@@ -20,7 +20,7 @@ package test;
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
 import org.gautelis.muprocessmanager.MuProcessResult;
-import org.gautelis.muprocessmanager.MuProcessState;
+import org.gautelis.muprocessmanager.MuActivityState;
 
 import java.util.Optional;
 
@@ -41,8 +41,8 @@ public class FourthActivity implements MuActivity {
     }
 
     @Override
-    public Optional<MuProcessState> getState() {
-        MuProcessState preState = new MuProcessState();
+    public Optional<MuActivityState> getState() {
+        MuActivityState preState = new MuActivityState();
         preState.put("state1", "Fourth activity pre-state");
         preState.put("state2", Math.random());
 
@@ -50,7 +50,7 @@ public class FourthActivity implements MuActivity {
     }
 
     @Override
-    public boolean backward(MuActivityParameters args, Optional<MuProcessState> preState) {
+    public boolean backward(MuActivityParameters args, Optional<MuActivityState> preState) {
 
         // A possibility for an exception
         if (Math.random() < backwardExceptionProbability) {

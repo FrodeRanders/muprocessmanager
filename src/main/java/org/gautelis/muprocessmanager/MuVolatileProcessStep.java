@@ -28,7 +28,7 @@ import java.util.Optional;
 /* package private */ class MuVolatileProcessStep {
 
     private final MuActivityParameters parameters;
-    private Optional<MuProcessState> preState = Optional.empty();
+    private Optional<MuActivityState> preState = Optional.empty();
 
     private MuBackwardBehaviour backwardBehaviour = null;
 

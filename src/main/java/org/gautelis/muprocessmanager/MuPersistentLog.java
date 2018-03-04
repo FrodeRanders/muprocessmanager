@@ -20,7 +20,6 @@ package org.gautelis.muprocessmanager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.gautelis.vopn.db.Database;
-import org.gautelis.vopn.io.Closer;
 import org.gautelis.vopn.lang.DynamicLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +29,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Takes care of persisting compensations to a relational database and subsequently reading
@@ -59,7 +56,7 @@ public class MuPersistentLog {
     private final static int STATUS_SUCCESSFUL = MuProcessStatus.SUCCESSFUL.ordinal();
 
     public interface CompensationRunnable {
-        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuProcessState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
+        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuActivityState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
     }
 
     public interface CleanupRunnable {
@@ -119,12 +116,7 @@ public class MuPersistentLog {
                         int processId = rs.getInt(1);
                         process.setProcessId(processId);
 
-                        if (log.isTraceEnabled()) {
-                            String info = "Persisted process: correlationId=\"" + process.getCorrelationId();
-                            info += "\", processId=" + processId;
-                            log.trace(info);
-                        }
-
+                        log.trace("Persisted process: correlationId=\"{}\", processId={}", process.getCorrelationId(), processId);
                         return processId;
                     }
                     else {
@@ -233,10 +225,7 @@ public class MuPersistentLog {
             throw new MuProcessException(info, sqle);
         }
 
-        if (log.isTraceEnabled()) {
-            String info = "Updated process " + processId + " status " + status;
-            log.trace(info);
-        }
+        log.trace("Updated process {} with status {}", processId, status);
     }
 
     /* package private */ void setProcessStatus(
@@ -280,7 +269,7 @@ public class MuPersistentLog {
                                 // Really odd situation! Why reset (for retrying) when process
                                 // was successful?
 
-                                log.warn("Will NOT reset process: correlationId=\"{}\", processId=\"{}\", status={}",
+                                log.warn("Will NOT reset process: correlationId=\"{}\", processId={}, status={}",
                                         correlationId, processId, status);
                                 doContinue = false;
                                 break;
@@ -312,7 +301,7 @@ public class MuPersistentLog {
                         int retries = rs.getInt(++idx);
 
                         //
-                        log.debug("Removing process step: correlationId=\"{}\", processId=\"{}\", status={}, stepId={}, retries={}",
+                        log.debug("Removing process step: correlationId=\"{}\", processId={}, status={}, stepId={}, retries={}",
                                 correlationId, processId, status, stepId, retries);
 
                         rs.deleteRow();
@@ -331,7 +320,7 @@ public class MuPersistentLog {
         }
         catch (SQLException sqle) {
             try {
-                conn.rollback();
+                if (null != conn) conn.rollback();
             }
             catch (SQLException ignore) {}
 
@@ -347,6 +336,61 @@ public class MuPersistentLog {
             catch (SQLException ignore) {}
         }
     }
+
+    /* package private */ Collection<MuProcessDetails> salvageAbandonedProcesses() throws MuProcessException {
+        List<MuProcessDetails> detailsList = new LinkedList<>();
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_ABANDONED_PROCESS_DETAILS"))) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    MuProcessDetails details = null;
+                    while (rs.next()) {
+                        // correlation_id, process_id, status, p.created, p.modified, step_id, retries, preState
+                        int idx = 0;
+
+                        // Process related
+                        String correlationId = rs.getString(++idx);
+                        int processId = rs.getInt(++idx);
+                        MuProcessStatus status = MuProcessStatus.fromInt(rs.getInt(++idx));
+                        Timestamp created = rs.getTimestamp(++idx);
+                        Timestamp modified = rs.getTimestamp(++idx);
+
+                        if (null == details || details.getProcessId() != processId) {
+                            // New process
+                            details = new MuProcessDetails(correlationId, processId, status, created, modified);
+                            detailsList.add(details);
+                        }
+
+                        // Process step related
+                        int stepId = rs.getInt(++idx);
+                        if (rs.wasNull()) {
+                            // Then there are no steps associated with process.
+                            // This is an effect of the left outer join.
+                            continue;
+                        }
+                        int retries = rs.getInt(++idx);
+
+                        Clob preStateClob = rs.getClob(++idx);
+                        MuActivityState preState = null;
+                        if (!rs.wasNull()) {
+                            preState = MuActivityState.fromReader(preStateClob.getCharacterStream());
+                        }
+
+                        details.addStepDetails(stepId, retries, preState);
+                    }
+                }
+            }
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to fetch abandoned process details: ";
+            info += Database.squeeze(sqle);
+            log.warn(info);
+            throw new MuProcessException(info, sqle);
+        }
+
+        return detailsList;
+    }
+
 
     /* package private */ void markRetry(
         final int processId, final int stepId
@@ -388,13 +432,13 @@ public class MuPersistentLog {
                         Clob stateClob = rs.getClob(++idx);
 
                         //
-                        Optional<MuProcessState> preState;
+                        Optional<MuActivityState> preState;
                         if (rs.wasNull()) {
                             preState = Optional.empty();
                         }
                         else {
                             Reader stateReader = stateClob.getCharacterStream();
-                            MuProcessState state = gson.fromJson(stateReader, MuProcessState.class);
+                            MuActivityState state = gson.fromJson(stateReader, MuActivityState.class);
                             preState = Optional.of(state);
                         }
 
@@ -414,7 +458,7 @@ public class MuPersistentLog {
                             }
                         }
                         else {
-                            String info = "Failed to compensate process (correlationId=\"" + correlationId + "\", processId=\"" + processId + "\",  stepId=" + stepId + "): ";
+                            String info = "Failed to compensate process (correlationId=\"" + correlationId + "\", processId=" + processId + ",  stepId=" + stepId + "): ";
                             info += "Not a MuBackwardActivity! " + className;
                             throw new MuProcessBackwardBehaviourException(info);
                         }
@@ -525,6 +569,8 @@ public class MuPersistentLog {
 
         // Do some reporting
         boolean haveSomethingToDisplay = false;
+        int severity = 0;
+
         StringBuilder statistics = new StringBuilder();
         long total = 0L;
         for (int i = 0; i < numStates; i++) {
@@ -535,12 +581,22 @@ public class MuPersistentLog {
             if (count > 0) {
                 statistics.append("{").append(count).append(" ").append(status).append("} ");
                 haveSomethingToDisplay = true;
+
+                severity = Math.max(severity, i);
             }
         }
         statistics.append("{").append(total).append(" in total}");
 
         if (haveSomethingToDisplay) {
-            statisticsLog.info(statistics.toString());
+            if (severity < MuProcessStatus.COMPENSATION_FAILED.ordinal()) {
+                statisticsLog.debug(statistics.toString());
+            }
+            else if (severity < MuProcessStatus.ABANDONED.ordinal()) {
+                statisticsLog.info(statistics.toString());
+            }
+            else {
+                statisticsLog.warn(statistics.toString());
+            }
         }
     }
 
@@ -572,18 +628,12 @@ public class MuPersistentLog {
     }
 
     /* package private */ void abandon(String correlationId, int processId) throws MuProcessException {
-        if (log.isTraceEnabled()) {
-            String info = "Abandoning process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\": ";
-            log.trace(info);
-        }
+        log.trace("Abandoning process: correlationId=\"{}\", processId={}", correlationId, processId);
         setProcessStatus(processId, MuProcessStatus.ABANDONED);
     }
 
     /* package private */ void remove(String correlationId, int processId) throws MuProcessException {
-        if (log.isTraceEnabled()) {
-            String info = "Removing process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\": ";
-            log.trace(info);
-        }
+        log.trace("Removing process: correlationId=\"{}\", processId={}", correlationId, processId);
 
         Connection conn = null;
         try {
@@ -605,11 +655,11 @@ public class MuPersistentLog {
         }
         catch (SQLException sqle) {
             try {
-                conn.rollback();
+                if (null != conn) conn.rollback();
             }
             catch (SQLException ignore) {}
 
-            String info = "Failed to remove process: correlationId=\"" + correlationId + "\", processId=\"" + processId + "\": ";
+            String info = "Failed to remove process: correlationId=\"" + correlationId + "\", processId=" + processId + ": ";
             info += Database.squeeze(sqle);
             log.warn(info);
             throw new MuProcessException(info, sqle);
@@ -656,7 +706,7 @@ public class MuPersistentLog {
 
     /* package private */ void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
-            final MuActivityParameters parameters, final Optional<MuProcessState> preState
+            final MuActivityParameters parameters, final Optional<MuActivityState> preState
     ) throws MuProcessException {
 
         // Determine class name
@@ -727,7 +777,7 @@ public class MuPersistentLog {
         }
         catch (SQLException sqle) {
             try {
-                conn.rollback();
+                if (null != conn) conn.rollback();
             }
             catch (SQLException ignore) {}
 
