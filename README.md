@@ -18,12 +18,12 @@ business application. Of course you need to understand that in a globally (distr
 environment as well, but that environment makes it easier to reason about. 
 
 ## Background
-[Hector Garcia-Molina and Kenneth Salem presented an article in 1987](https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf)
+[Hector Garcia-Molina and Kenneth Salem presented an article in 1987](http://doi.acm.org/10.1145/38713.38742)
 describing a means to tackle long lived transactions, a situation where it is not 
 feasible to model the transaction using the mechanisms provided by a backing database 
 or the typical transaction manager.
 
-Lately, this pattern aptly dubbed Saga, has become popular when implementing [micro-services](http://microservices.io/patterns/microservices.html).
+Lately this pattern, aptly dubbed Saga, has become popular when implementing [micro-services](http://microservices.io/patterns/microservices.html).
 Let us denote such micro-services that implement a process consisting of a series of individual activities, 
 thus needing transactions in one form or another, a micro-process.  
 
@@ -172,7 +172,7 @@ public class FirstActivity implements MuActivity {
      * activity. 
      */
     @Override
-    public boolean forward(MuActivityParameters args) {
+    public boolean forward(MuActivityParameters args, MuProcessResult result) {
         return !(Math.random() < forwardFailureProbability);
     }
 
@@ -181,9 +181,10 @@ public class FirstActivity implements MuActivity {
      * of this activity.
      */
     @Override
-    public boolean backward(MuActivityParameters args) {
+    public boolean backward(MuActivityParameters args, Optional<MuActivityState> preState) {
         return !(Math.random() < backwardFailureProbability);
     }
+    
 }
 ```
 
