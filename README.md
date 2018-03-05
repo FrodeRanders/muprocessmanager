@@ -17,6 +17,16 @@ The Saga pattern only offer so much and in the end you need to understand how th
 business application. Of course you need to understand that in a globally (distributed) transaction
 environment as well, but that environment makes it easier to reason about. 
 
+Available from Maven Central as:
+```
+<dependency>
+    <groupId>org.gautelis</groupId>
+    <artifactId>muprocessmanager</artifactId>
+    <version>1.4</version>
+</dependency>
+
+```
+
 ## Background
 [Hector Garcia-Molina and Kenneth Salem presented an article in 1987](http://doi.acm.org/10.1145/38713.38742)
 describing a means to tackle long lived transactions, a situation where it is not 
