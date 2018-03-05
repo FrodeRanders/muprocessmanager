@@ -3,11 +3,14 @@ package org.gautelis.muprocessmanager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.text.DateFormat;
 import java.util.*;
 
 public class MuProcessDetails {
 
-    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+    // Time specified relative to local timezone
+    private static final Gson gson =
+            new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").create();
 
     public class MuActivityDetails {
         private final int stepId;
