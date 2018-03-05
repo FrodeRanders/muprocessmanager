@@ -28,9 +28,11 @@ import org.gautelis.vopn.queue.WorkQueue;
 import org.gautelis.vopn.queue.WorkerQueueFactory;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AppTest extends TestCase {
     private static final Logger log = LogManager.getLogger(AppTest.class);
+    private static final Object lock = new Object();
 
     MuProcessManager mngr = null;
 
@@ -169,17 +171,15 @@ public class AppTest extends TestCase {
         final Collection<String> sampledCorrelationIds = new ArrayList<>();
 
         for (int i = 0; i < 100000; i++) {
-            final int[] j = { i };
+            final String correlationId = UUID.randomUUID().toString();
+            if (i % 1000 == 0) {
+                // Sample each thousandth correlation ID
+                synchronized (lock) {
+                    sampledCorrelationIds.add(correlationId);
+                }
+            }
 
             workQueue.execute(() -> {
-                String correlationId = UUID.randomUUID().toString();
-                if (j[0] % 1000 == 0) {
-                    // Sample each thousandth correlation ID
-                    synchronized (sampledCorrelationIds) {
-                        sampledCorrelationIds.add(correlationId);
-                    }
-                }
-
                 MuProcess process = null;
                 try {
                     process = mngr.newProcess(correlationId);
@@ -238,49 +238,39 @@ public class AppTest extends TestCase {
             System.out.println("\nProcess result samples: " + sampledCorrelationIds.size());
             try {
                 // Iterate since we will modify collection
-                Iterator<String> sit = sampledCorrelationIds.iterator();
-                while (sit.hasNext()) {
-                    String correlationId;
+                synchronized (lock) {
+                    Iterator<String> sit = sampledCorrelationIds.iterator();
+                    while (sit.hasNext()) {
+                        String correlationId = sit.next();
 
-                    synchronized (sampledCorrelationIds) {
-                        correlationId = sit.next();
-                    }
+                        final StringBuffer info = new StringBuffer("correlationId=\"").append(correlationId).append("\"");
+                        Optional<MuProcessStatus> _status = mngr.getProcessStatus(correlationId);
+                        if (_status.isPresent()) {
+                            MuProcessStatus status = _status.get();
+                            info.append(" status=").append(status);
 
-                    System.out.print("correlationId=\"" + correlationId + "\"");
-                    Optional<MuProcessStatus> _status = mngr.getProcessStatus(correlationId);
-                    if (_status.isPresent()) {
-                        MuProcessStatus status = _status.get();
-                        System.out.print(" status=" + status);
-
-                        switch (status) {
-                            case SUCCESSFUL:
-                                Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
-                                _result.ifPresent(objects -> objects.forEach((v) -> System.out.print(" {" + v + "}")));
-                                synchronized (sampledCorrelationIds) {
+                            switch (status) {
+                                case SUCCESSFUL:
+                                    Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
+                                    _result.ifPresent(objects -> objects.forEach((v) -> info.append(" {").append(v).append("}")));
                                     sit.remove();
-                                }
-                                break;
+                                    break;
 
-                            case NEW:
-                            case PROGRESSING:
-                                // Check later
-                                break;
+                                case NEW:
+                                case PROGRESSING:
+                                    // Check later
+                                    break;
 
-                            default:
-                                // No idea to recheck, but we will try to reset the process here -- faking a retry
-                                Optional<Boolean> isReset = mngr.resetProcess(correlationId);
-                                isReset.ifPresent(aBoolean -> System.out.print(" (was " + (aBoolean ? "" : "NOT") + " reset)"));
-
-                                synchronized (sampledCorrelationIds) {
+                                default:
+                                    // No idea to recheck, but we will try to reset the process here -- faking a retry
+                                    Optional<Boolean> isReset = mngr.resetProcess(correlationId);
+                                    isReset.ifPresent(aBoolean -> info.append(" (was ").append(aBoolean ? "" : "NOT").append(" reset)"));
                                     sit.remove();
-                                }
-                                break;
+                                    break;
+                            }
+                            System.out.println(info);
                         }
                     }
-                    else {
-                        System.out.print(" (running transaction, status not yet visible) ");
-                    }
-                    System.out.println();
                 }
 
                 Thread.sleep(20 * 1000); // 20 seconds

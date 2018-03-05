@@ -74,8 +74,14 @@ public class MuPersistentLog {
 
         String statement = sqlStatements.getProperty(key);
         if (null == statement || statement.length() == 0) {
+            /*
+             * Make sure we catch this during development!!!
+             */
             String info = "No SQL statement matching key=\"" + key + "\"";
-            throw new MuProcessException(info);
+            MuProcessException syntheticException = new MuProcessException(info);
+            log.error(info, syntheticException);
+            syntheticException.printStackTrace(System.err);
+            throw syntheticException;
         }
 
         // Used during development to prune unused statements and otherwise
@@ -290,7 +296,7 @@ public class MuPersistentLog {
             }
 
             try (PreparedStatement stmt = conn.prepareStatement(
-                    getStatement("FETCH_PROCESS_STEPS_BY_PROCID"),
+                    getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"),
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
                 stmt.setInt(1, processId);
 
