@@ -208,6 +208,32 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.coderplus.maven.plugins</groupId>
+                <artifactId>copy-rename-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-file</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <!-- The default internal database schema is based on the Derby variant -->
+                            <fileSets>
+                                <fileSet>
+                                    <sourceFile>contrib/derby/database-create.sql</sourceFile>
+                                    <destinationFile>src/main/resources/org/gautelis/muprocessmanager/default-database-create.sql</destinationFile>
+                                </fileSet>
+                                <fileSet>
+                                    <sourceFile>contrib/derby/sql-statements.xml</sourceFile>
+                                    <destinationFile>src/main/resources/org/gautelis/muprocessmanager/sql-statements.xml</destinationFile>
+                                </fileSet>
+                            </fileSets>                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

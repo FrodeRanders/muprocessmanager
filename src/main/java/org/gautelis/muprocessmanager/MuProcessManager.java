@@ -460,16 +460,4 @@ public class MuProcessManager {
             manager.execute("default-database-create.sql", new InputStreamReader(is), out);
         }
     }
-
-    /**
-     * Initiates the database with basic content (if needed).
-     * <p>
-     *
-     * @throws Exception
-     */
-    private void initiate(Manager manager, PrintWriter out) throws Exception {
-        try (InputStream is = getClass().getResourceAsStream("default-database-initiate.sql")) {
-            manager.execute("default-database-initiate.sql", new InputStreamReader(is), out);
-        }
-    }
 }
