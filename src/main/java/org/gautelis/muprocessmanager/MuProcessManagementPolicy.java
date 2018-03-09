@@ -2,6 +2,15 @@ package org.gautelis.muprocessmanager;
 
 import org.gautelis.vopn.lang.Configurable;
 
+/**
+ * Policy regulating the micro process manager handling of processes, in terms of specific
+ * configuration of thread pool as well as timings for individual state transitions
+ * (described <a href="file:doc-files/microprocess-manager-states-description.png">here</a>).
+ * <p>
+ * <a href="file:doc-files/microprocess-manager-states-configuration.png">
+ *    <img src="file:doc-files/microprocess-manager-states-configuration.png" alt="configuration">
+ * </a>
+ */
 public interface MuProcessManagementPolicy {
 
     @Configurable(property = "minutes-to-track-process")

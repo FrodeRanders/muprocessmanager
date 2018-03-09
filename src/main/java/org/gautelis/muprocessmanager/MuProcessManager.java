@@ -143,7 +143,7 @@ public class MuProcessManager {
         log.trace("Running scheduled recovery...");
 
         // Prepare collecting statistics for each state and operation
-        final int numStates = MuProcessStatus.values().length;
+        final int numStates = MuProcessState.values().length;
         final long[] recoverCount = new long[numStates];
         final long[] removeCount = new long[numStates];
         final long[] abandonCount = new long[numStates];
@@ -161,7 +161,7 @@ public class MuProcessManager {
 
             compensationLog.recover((correlationId, processId, status, created, modified) -> {
                 observations[0]++; // explicit code
-                MuProcessStatus _status = MuProcessStatus.fromInt(status);
+                MuProcessState _status = MuProcessState.fromInt(status);
 
                 // Check if process has been stuck?
                 Date now = new Date();
@@ -269,7 +269,7 @@ public class MuProcessManager {
         boolean haveSomethingToDisplay = false;
         StringBuilder statistics = new StringBuilder();
         for (int i = 0; i < numStates; i++) {
-            MuProcessStatus status = MuProcessStatus.fromInt(i);
+            MuProcessState status = MuProcessState.fromInt(i);
             if (recoverCount[i] > 0) {
                 statistics.append("{").append(recoverCount[i]).append(" attempted compensations from ").append(status).append("} ");
                 haveSomethingToDisplay = true;
@@ -313,23 +313,23 @@ public class MuProcessManager {
     }
 
     /**
-     * Retrieves process status ({@link MuProcessStatus}) for a process, identified by correlation ID.
-     * {@link MuProcessStatus} is available for a time period after the corresponding {@link MuProcess}
+     * Retrieves process status ({@link MuProcessState}) for a process, identified by correlation ID.
+     * {@link MuProcessState} is available for a time period after the corresponding {@link MuProcess}
      * has vanished.
      * @param correlationId identifies the business request initiating the process. Should remain unchanged if re-trying.
-     * @return {@link MuProcessStatus} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
+     * @return {@link MuProcessState} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
      * @throws MuProcessException if failing to retrieve result
      */
-    public Optional<MuProcessStatus> getProcessStatus(final String correlationId) throws MuProcessException {
+    public Optional<MuProcessState> getProcessStatus(final String correlationId) throws MuProcessException {
         return compensationLog.getProcessStatus(correlationId);
     }
 
     /**
-     * Retrieves process results from {@link MuProcessStatus#SUCCESSFUL} processes.
+     * Retrieves process results from {@link MuProcessState#SUCCESSFUL} processes.
      * @param correlationId identifies the business request initiating the process. Should remain unchanged if re-trying.
      * @return {@link MuProcessResult} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
      * @throws MuProcessException if failing to retrieve result
-     * @throws MuProcessResultsUnavailable if process is not {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}
+     * @throws MuProcessResultsUnavailable if process is not {@link MuProcessState#SUCCESSFUL SUCCESSFUL}
      */
     public Optional<MuProcessResult> getProcessResult(final String correlationId) throws MuProcessException {
         return compensationLog.getProcessResult(correlationId);
@@ -337,7 +337,7 @@ public class MuProcessManager {
 
     /**
      * Resets (possibly existing) process. If a process failed earlier and left some activities
-     * with status {@link MuProcessStatus#COMPENSATION_FAILED COMPENSATION_FAILED}, they have to
+     * with status {@link MuProcessState#COMPENSATION_FAILED COMPENSATION_FAILED}, they have to
      * be removed from background activities of the process manager that may still try to individually
      * compensate them. If this is not done and we issue a new process for the same business request,
      * successful activities may later be undone by the process manager, still trying to compensate

@@ -18,7 +18,6 @@
 package test;
 
 import org.gautelis.muprocessmanager.*;
-import org.gautelis.muprocessmanager.*;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -28,7 +27,6 @@ import org.gautelis.vopn.queue.WorkQueue;
 import org.gautelis.vopn.queue.WorkerQueueFactory;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AppTest extends TestCase {
     private static final Logger log = LogManager.getLogger(AppTest.class);
@@ -244,9 +242,9 @@ public class AppTest extends TestCase {
                         String correlationId = sit.next();
 
                         final StringBuffer info = new StringBuffer("correlationId=\"").append(correlationId).append("\"");
-                        Optional<MuProcessStatus> _status = mngr.getProcessStatus(correlationId);
+                        Optional<MuProcessState> _status = mngr.getProcessStatus(correlationId);
                         if (_status.isPresent()) {
-                            MuProcessStatus status = _status.get();
+                            MuProcessState status = _status.get();
                             info.append(" status=").append(status);
 
                             switch (status) {

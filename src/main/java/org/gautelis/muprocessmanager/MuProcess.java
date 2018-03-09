@@ -257,7 +257,7 @@ public class MuProcess {
      * but the caller gets a timeout and may not now whether the process succeeded.
      *
      * The process may be queried for it's state and the result retrieved if the process was
-     * {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}.
+     * {@link MuProcessState#SUCCESSFUL SUCCESSFUL}.
      */
     public void finished() {
         try {
@@ -285,7 +285,7 @@ public class MuProcess {
         }
     }
 
-    /* package private */ Optional<MuProcessStatus> getProcessStatus() throws MuProcessException {
+    /* package private */ Optional<MuProcessState> getProcessStatus() throws MuProcessException {
         return compensationLog.getProcessStatus(correlationId);
     }
 

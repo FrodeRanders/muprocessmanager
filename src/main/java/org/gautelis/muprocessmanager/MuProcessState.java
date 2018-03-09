@@ -18,10 +18,15 @@
 package org.gautelis.muprocessmanager;
 
 /**
- * Please refer to the description of the success and failure modes in the
- * documentation.
+ * These are the individual states that a process may have.
+ * <p>
+ * This figure gives a description of the state interplay:
+ * <p>
+ * <a href="file:doc-files/microprocess-manager-states-description.png">
+ *    <img src="file:doc-files/microprocess-manager-states-description.png" alt="description">
+ * </a>
  */
-public enum MuProcessStatus {
+public enum MuProcessState {
     NEW(0),
     PROGRESSING(1),
     SUCCESSFUL(2),
@@ -31,7 +36,7 @@ public enum MuProcessStatus {
 
     private final int status;
 
-    MuProcessStatus(int status) {
+    MuProcessState(int status) {
         this.status = status;
     }
 
@@ -39,7 +44,7 @@ public enum MuProcessStatus {
         return status;
     }
 
-    public static MuProcessStatus fromInt(int _status) {
+    public static MuProcessState fromInt(int _status) {
         switch (_status) {
             case 0:
                 return NEW;

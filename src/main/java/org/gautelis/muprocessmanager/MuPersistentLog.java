@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * Takes care of persisting compensations to a relational database and subsequently reading
  * process steps (activities) from the database. Currently compensations are stored (together
- * with the corresponding parameters) as well as {@link MuProcessStatus#SUCCESSFUL SUCCESSFUL}
+ * with the corresponding parameters) as well as {@link MuProcessState#SUCCESSFUL SUCCESSFUL}
  * results.
  * <p>
  * The DDL is found in src/resources/org/gautelis/muprocessmanager/default-database-create.sql.
@@ -53,7 +53,7 @@ public class MuPersistentLog {
 
     private final HashMap<String, Long> sqlStatementCount = new HashMap<>();
 
-    private final static int STATUS_SUCCESSFUL = MuProcessStatus.SUCCESSFUL.ordinal();
+    private final static int STATUS_SUCCESSFUL = MuProcessState.SUCCESSFUL.ordinal();
 
     public interface CompensationRunnable {
         boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuActivityState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
@@ -115,7 +115,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS"), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, process.getCorrelationId());
-                stmt.setInt(2, MuProcessStatus.NEW.toInt());
+                stmt.setInt(2, MuProcessState.NEW.toInt());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -133,14 +133,34 @@ public class MuPersistentLog {
             }
         }
         catch (SQLException sqle) {
-            String info = "Failed to persist process header for correlationId \"" + process.getCorrelationId() + "\": ";
-            info += Database.squeeze(sqle);
-            log.warn(info, sqle);
-            throw new MuProcessException(info, sqle);
+            /*
+             * Failed to persist process header for correlationId "775113c6-8f7a-4f0d-b5fd-9139727ef227":
+             * DerbySQLIntegrityConstraintViolationException [
+             *    The statement was aborted because it would have caused a duplicate key value in a unique
+             *    or primary key constraint or unique index identified by 'MU_PROCESS_CORRID_IX' defined
+             *    on 'MU_PROCESS'.
+             * ], SQLstate(23505), Vendor code(30000)
+             */
+
+            // State: 23xyz - Integrity constraint/key violation
+            //  [SQL Server: Data already exists]
+            //  [Oracle:     Data already exists]
+            //  [DB2:        Constraint violation]
+            if (sqle.getSQLState().startsWith("23")) {
+                String info = "A process already exists for business request with correlation ID \"" + process.getCorrelationId() + "\"";
+                log.trace(info);
+                throw new MuProcessAlreadyExistsException(info, sqle);
+            }
+            else {
+                String info = "Failed to persist process header for correlationId \"" + process.getCorrelationId() + "\": ";
+                info += Database.squeeze(sqle);
+                log.warn(info, sqle);
+                throw new MuProcessException(info, sqle);
+            }
         }
     }
 
-    /* package private */ Optional<MuProcessStatus> getProcessStatus(
+    /* package private */ Optional<MuProcessState> getProcessStatus(
             final String correlationId
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
@@ -151,7 +171,7 @@ public class MuPersistentLog {
                     if (rs.next()) {
                         // status
                         int status = rs.getInt(1);
-                        return Optional.of(MuProcessStatus.fromInt(status));
+                        return Optional.of(MuProcessState.fromInt(status));
                     }
                 }
             }
@@ -182,7 +202,7 @@ public class MuPersistentLog {
                         if (STATUS_SUCCESSFUL != status) {
                             String info = "Results only available for SUCCESSFUL processes: ";
                             info += "correlationId=\"" + correlationId + "\" ";
-                            info += "processStatus=\"" + MuProcessStatus.fromInt(status) + "\"";
+                            info += "processStatus=\"" + MuProcessState.fromInt(status) + "\"";
                             throw new MuProcessResultsUnavailable(info);
                         }
 
@@ -205,7 +225,7 @@ public class MuPersistentLog {
     }
 
     /* package private */ void setProcessStatus(
-            final int processId, final MuProcessStatus status, final MuProcessResult result
+            final int processId, final MuProcessState status, final MuProcessResult result
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
@@ -235,7 +255,7 @@ public class MuPersistentLog {
     }
 
     /* package private */ void setProcessStatus(
-            final int processId, final MuProcessStatus status
+            final int processId, final MuProcessState status
     ) throws MuProcessException {
         setProcessStatus(processId, status, /* no result */ null);
     }
@@ -247,7 +267,7 @@ public class MuPersistentLog {
             conn.setAutoCommit(false);
 
             int processId = MuProcess.PROCESS_ID_NOT_YET_ASSIGNED;
-            MuProcessStatus status = null;
+            MuProcessState status = null;
             boolean doContinue = true;
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_ID_AND_STATUS_BY_CORRID"))) {
@@ -257,7 +277,7 @@ public class MuPersistentLog {
                     if (rs.next()) {
                         int idx = 0;
                         processId = rs.getInt(++idx);
-                        status = MuProcessStatus.fromInt(rs.getInt(++idx));
+                        status = MuProcessState.fromInt(rs.getInt(++idx));
 
                         switch (status) {
                             /*
@@ -357,7 +377,7 @@ public class MuPersistentLog {
                         // Process related
                         String correlationId = rs.getString(++idx);
                         int processId = rs.getInt(++idx);
-                        MuProcessStatus status = MuProcessStatus.fromInt(rs.getInt(++idx));
+                        MuProcessState status = MuProcessState.fromInt(rs.getInt(++idx));
                         Timestamp created = rs.getTimestamp(++idx);
                         Timestamp modified = rs.getTimestamp(++idx);
 
@@ -515,31 +535,31 @@ public class MuPersistentLog {
         }
         finally {
             // Set process status
-            setProcessStatus(processId, MuProcessStatus.SUCCESSFUL, result);
+            setProcessStatus(processId, MuProcessState.SUCCESSFUL, result);
         }
     }
 
     /* package private */ void cleanupAfterSuccessfulCompensation(
             final int processId
     ) throws MuProcessException {
-        setProcessStatus(processId, MuProcessStatus.COMPENSATED);
+        setProcessStatus(processId, MuProcessState.COMPENSATED);
     }
 
     /* package private */ void cleanupAfterFailedCompensation(
             final int processId
     ) throws MuProcessException {
-        setProcessStatus(processId, MuProcessStatus.COMPENSATION_FAILED);
+        setProcessStatus(processId, MuProcessState.COMPENSATION_FAILED);
     }
 
     /* package private */ void cleanupAfterFailure(
             final int processId
     ) throws MuProcessException {
-        setProcessStatus(processId, MuProcessStatus.ABANDONED);
+        setProcessStatus(processId, MuProcessState.ABANDONED);
     }
 
     /* package private */ void dumpStatistics() {
         // Prepare collecting statistics for each state
-        final int numStates = MuProcessStatus.values().length;
+        final int numStates = MuProcessState.values().length;
         long[] statusCount = new long[numStates];
         for (int i = 0; i < numStates; i++) {
             statusCount[i] = 0L;
@@ -583,7 +603,7 @@ public class MuPersistentLog {
             long count = statusCount[i];
             total += count;
 
-            MuProcessStatus status = MuProcessStatus.fromInt(i);
+            MuProcessState status = MuProcessState.fromInt(i);
             if (count > 0) {
                 statistics.append("{").append(count).append(" ").append(status).append("} ");
                 haveSomethingToDisplay = true;
@@ -594,10 +614,10 @@ public class MuPersistentLog {
         statistics.append("{").append(total).append(" in total}");
 
         if (haveSomethingToDisplay) {
-            if (severity < MuProcessStatus.COMPENSATION_FAILED.ordinal()) {
+            if (severity < MuProcessState.COMPENSATION_FAILED.ordinal()) {
                 statisticsLog.debug(statistics.toString());
             }
-            else if (severity < MuProcessStatus.ABANDONED.ordinal()) {
+            else if (severity < MuProcessState.ABANDONED.ordinal()) {
                 statisticsLog.info(statistics.toString());
             }
             else {
@@ -635,7 +655,7 @@ public class MuPersistentLog {
 
     /* package private */ void abandon(String correlationId, int processId) throws MuProcessException {
         log.trace("Abandoning process: correlationId=\"{}\", processId={}", correlationId, processId);
-        setProcessStatus(processId, MuProcessStatus.ABANDONED);
+        setProcessStatus(processId, MuProcessState.ABANDONED);
     }
 
     /* package private */ void remove(String correlationId, int processId) throws MuProcessException {
@@ -696,7 +716,7 @@ public class MuPersistentLog {
             // Potentially check whether process status is NEW or (already) PROGRESSING
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
-                stmt.setInt(++idx, MuProcessStatus.PROGRESSING.toInt());
+                stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
                 stmt.setNull(++idx, Types.CLOB);
                 stmt.setInt(++idx, process.getProcessId());
                 stmt.executeUpdate();
@@ -773,7 +793,7 @@ public class MuPersistentLog {
             // Potentially check whether process status is NEW or (already) PROGRESSING
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
-                stmt.setInt(++idx, MuProcessStatus.PROGRESSING.toInt());
+                stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
                 stmt.setNull(++idx, Types.CLOB);
                 stmt.setInt(++idx, process.getProcessId());
                 stmt.executeUpdate();

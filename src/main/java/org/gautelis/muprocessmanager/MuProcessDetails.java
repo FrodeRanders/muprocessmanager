@@ -20,7 +20,6 @@ package org.gautelis.muprocessmanager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.text.DateFormat;
 import java.util.*;
 
 public class MuProcessDetails {
@@ -55,13 +54,13 @@ public class MuProcessDetails {
 
     private final String correlationId;
     private final int processId;
-    private final MuProcessStatus status;
+    private final MuProcessState status;
     private final Date created;
     private final Date modified;
     private final Collection<MuActivityDetails> activityDetails = new LinkedList<>();
 
     /* package private */ MuProcessDetails(
-            final String correlationId, final int processId, final MuProcessStatus status, final Date created, final Date modified
+            final String correlationId, final int processId, final MuProcessState status, final Date created, final Date modified
     ) {
         this.correlationId = correlationId;
         this.processId = processId;
@@ -78,7 +77,7 @@ public class MuProcessDetails {
         return processId;
     }
 
-    public MuProcessStatus getStatus() {
+    public MuProcessState getStatus() {
         return status;
     }
 
