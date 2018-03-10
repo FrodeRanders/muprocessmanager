@@ -128,7 +128,7 @@ ORDER BY step_id DESC</pre>
 
     <div class="key">FETCH_PROCESS_STEPS_BY_PROCID_COARSE</div>
     <div class="value">
-        <pre>SELECT step.step_id, step.retries
+        <pre>SELECT step.process_id, step.step_id, step.retries
 FROM mu_process_step step
 WHERE step.process_id = ?</pre>
     </div>
