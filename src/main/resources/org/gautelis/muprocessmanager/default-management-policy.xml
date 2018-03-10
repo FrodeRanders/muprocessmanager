@@ -15,11 +15,11 @@
     <entry key="number-of-recovery-threads">4</entry>
 
     <!-- Minutes to retain process information and, in case process was successful
-         (having status SUCCESSFUL), the process result. -->
+         (having state SUCCESSFUL), the process result. -->
     <entry key="minutes-to-track-process">5</entry>
 
     <!-- If the process dies abruptly without synchronously finishing or failing,
-         the process may have status PROGRESSING (thus seemingly be progressing).
+         the process may have state PROGRESSING (thus seemingly be progressing).
          The process manager will look for progressing processes that have not
          been touched for a while. This configuration indicates how long this
          time span may be. -->

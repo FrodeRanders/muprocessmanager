@@ -6,7 +6,7 @@
           There exists corresponding documentation in src/main/java/eu/ensure/muprocessmanager/doc-files/sql-statements.html
     </comment>
     <entry key="STORE_PROCESS">
-        INSERT INTO mu_process (correlation_id, status)
+        INSERT INTO mu_process (correlation_id, state)
         VALUES (?,?)
     </entry>
 
@@ -16,53 +16,53 @@
     </entry>
 
     <entry key="FETCH_ABANDONED_PROCESSES">
-        SELECT correlation_id, process_id, status, created, modified
+        SELECT correlation_id, process_id, state, created, modified
         FROM mu_process
-        WHERE status >= 5
+        WHERE state >= 5
         ORDER BY modified DESC
     </entry>
 
     <entry key="FETCH_PROCESSES">
-        SELECT correlation_id, process_id, status, created, modified
+        SELECT correlation_id, process_id, state, created, modified
         FROM mu_process
-        WHERE status &lt; 5
+        WHERE state &lt; 5
         ORDER BY modified DESC
     </entry>
 
     <entry key="FETCH_ABANDONED_PROCESS_DETAILS">
-        SELECT p.correlation_id, p.process_id, p.status, p.created, p.modified, s.step_id, s.retries, s.previous_state
+        SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
         FROM mu_process p
         LEFT OUTER JOIN mu_process_step s
           ON (p.process_id = s.process_id)
-        WHERE p.status = 5
+        WHERE p.state = 5
     </entry>
 
     <entry key="FETCH_PROCESS_RESULT_BY_CORRID">
-        SELECT status, result
+        SELECT state, result
         FROM mu_process
         WHERE correlation_id = ?
     </entry>
 
-    <entry key="FETCH_PROCESS_STATUS_BY_CORRID">
-        SELECT status
+    <entry key="FETCH_PROCESS_STATE_BY_CORRID">
+        SELECT state
         FROM mu_process
         WHERE correlation_id = ?
     </entry>
 
-    <entry key="FETCH_PROCESS_ID_AND_STATUS_BY_CORRID">
-        SELECT process_id, status
+    <entry key="FETCH_PROCESS_ID_AND_STATE_BY_CORRID">
+        SELECT process_id, state
         FROM mu_process
         WHERE correlation_id = ?
     </entry>
 
     <entry key="COUNT_PROCESSES">
-        SELECT COUNT(*), status
+        SELECT COUNT(*), state
         FROM mu_process
-        GROUP BY status
+        GROUP BY state
     </entry>
 
     <entry key="UPDATE_PROCESS">
-        UPDATE mu_process SET status = ?, result = ?, modified = CURRENT_TIMESTAMP
+        UPDATE mu_process SET state = ?, result = ?, modified = CURRENT_TIMESTAMP
         WHERE process_id = ?
     </entry>
 
@@ -91,7 +91,7 @@
     </entry>
 
     <entry key="FETCH_PROCESS_STEPS_BY_PROCID_COARSE">
-        SELECT step.step_id, step.retries
+        SELECT step.process_id, step.step_id, step.retries
         FROM mu_process_step step
         WHERE step.process_id = ?
     </entry>

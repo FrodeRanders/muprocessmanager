@@ -1,4 +1,4 @@
----------------------------------------------------------------
+﻿﻿---------------------------------------------------------------
 -- Copyright (C) 2017 Frode Randers
 -- All rights reserved
 --
@@ -17,6 +17,13 @@
 
 ---------------------------------------------------------------
 -- Database schema: PostgreSQL
+--
+-- Remember to grant privileges to the specific database user:
+--
+--    GRANT ALL PRIVILEGES ON TABLE mu_process TO muproc;
+--    GRANT ALL PRIVILEGES ON TABLE mu_process_step TO muproc;
+--    GRANT ALL PRIVILEGES ON TABLE mu_process_process_id_seq TO muproc;
+--
 ---------------------------------------------------------------
 
 ---------------------------------------------------------------
@@ -28,7 +35,7 @@ CREATE TABLE mu_process (
 
   correlation_id VARCHAR(255) NOT NULL, -- for now
 
-  status INTEGER NOT NULL DEFAULT 0, -- 0=new, 1=progressing, 2=successful, 3=compensated, 4=compensation-failed, 5=abandoned
+  state INTEGER NOT NULL DEFAULT 0, -- 0=new, 1=progressing, 2=successful, 3=compensated, 4=compensation-failed, 5=abandoned
 
   result TEXT DEFAULT NULL,
 
@@ -48,7 +55,7 @@ CREATE TABLE mu_process_step (
   PRIMARY KEY (process_id, step_id),
 
   CONSTRAINT mu_p_s_process_ex
-    FOREIGN KEY (process_id) REFERENCES mu_process(process_id),
+  FOREIGN KEY (process_id) REFERENCES mu_process(process_id),
 
   class_name VARCHAR(255) NOT NULL,  -- qualified class name must fit
   method_name VARCHAR(255) NOT NULL, -- method name must fit

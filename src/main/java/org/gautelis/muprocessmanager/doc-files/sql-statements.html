@@ -25,7 +25,7 @@
 
     <div class="key">STORE_PROCESS</div>
     <div class="value">
-        <pre>INSERT INTO mu_process (correlation_id, status)
+        <pre>INSERT INTO mu_process (correlation_id, state)
 VALUES (?,?)</pre>
      </div>
 
@@ -37,64 +37,64 @@ WHERE process_id = ?</pre>
 
     <div class="key">FETCH_ABANDONED_PROCESSES</div>
     <div class="value">
-        <pre>SELECT correlation_id, process_id, status, created, modified
+        <pre>SELECT correlation_id, process_id, state, created, modified
 FROM mu_process
-WHERE status >= 5
+WHERE state >= 5
 ORDER BY modified DESC</pre>
-       <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
+       <p>The value of state used in this statement corresponds to the numeral value of <a href="../MuProcessState.html">ABANDONED</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESSES</div>
     <div class="value">
-        <pre>SELECT correlation_id, process_id, status, created, modified
+        <pre>SELECT correlation_id, process_id, state, created, modified
 FROM mu_process
-WHERE status &lt; 5
+WHERE state &lt; 5
 ORDER BY modified DESC</pre>
-        <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
+        <p>The value of state used in this statement corresponds to the numeral value of <a href="../MuProcessState.html">ABANDONED</a>.</p>
     </div>
 
     <div class="key">FETCH_ABANDONED_PROCESS_DETAILS</div>>
     <div class="value">
-        <pre>SELECT p.correlation_id, p.process_id, p.status, p.created, p.modified, s.step_id, s.retries, s.previous_state
+        <pre>SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
 FROM mu_process p
 LEFT OUTER JOIN mu_process_step s
   ON (p.process_id = s.process_id)
-WHERE p.status = 5</pre>
-        <p>The value of status used in this statement corresponds to the numeral value of <a href="../MuProcessStatus.html">ABANDONED</a>.</p>
+WHERE p.state = 5</pre>
+        <p>The value of state used in this statement corresponds to the numeral value of <a href="../MuProcessState.html">ABANDONED</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESS_RESULT_BY_CORRID</div>
     <div class="value">
-        <pre>SELECT status, result
+        <pre>SELECT state, result
 FROM mu_process
 WHERE correlation_id = ?</pre>
     </div>
 
-    <div class="key">FETCH_PROCESS_STATUS_BY_CORRID</div>
+    <div class="key">FETCH_PROCESS_STATE_BY_CORRID</div>
     <div class="value">
-        <pre>SELECT status
+        <pre>SELECT state
 FROM mu_process
 WHERE correlation_id = ?</pre>
     </div>
 
-    <div class="key">FETCH_PROCESS_ID_AND_STATUS_BY_CORRID</div>>
+    <div class="key">FETCH_PROCESS_ID_AND_STATE_BY_CORRID</div>>
     <div class="value">
-        <pre>SELECT process_id, status
+        <pre>SELECT process_id, state
 FROM mu_process
 WHERE correlation_id = ?</pre>
     </div>
 
     <div class="key">COUNT_PROCESSES</div>
     <div class="value">
-        <pre>SELECT COUNT(*), status
+        <pre>SELECT COUNT(*), state
 FROM mu_process
-GROUP BY status</pre>
+GROUP BY state</pre>
     </div>
 
     <div class="key">UPDATE_PROCESS</div>
     <div class="value">
         <pre>UPDATE mu_process
-SET status = ?, result = ?, modified = CURRENT_TIMESTAMP
+SET state = ?, result = ?, modified = CURRENT_TIMESTAMP
 WHERE process_id = ?</pre>
     </div>
 

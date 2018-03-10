@@ -54,17 +54,17 @@ public class MuProcessDetails {
 
     private final String correlationId;
     private final int processId;
-    private final MuProcessState status;
+    private final MuProcessState state;
     private final Date created;
     private final Date modified;
     private final Collection<MuActivityDetails> activityDetails = new LinkedList<>();
 
     /* package private */ MuProcessDetails(
-            final String correlationId, final int processId, final MuProcessState status, final Date created, final Date modified
+            final String correlationId, final int processId, final MuProcessState state, final Date created, final Date modified
     ) {
         this.correlationId = correlationId;
         this.processId = processId;
-        this.status = status;
+        this.state = state;
         this.created = created;
         this.modified = modified;
     }
@@ -77,8 +77,8 @@ public class MuProcessDetails {
         return processId;
     }
 
-    public MuProcessState getStatus() {
-        return status;
+    public MuProcessState getState() {
+        return state;
     }
 
     public Date getCreated() {

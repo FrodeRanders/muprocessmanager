@@ -53,14 +53,14 @@ public class MuPersistentLog {
 
     private final HashMap<String, Long> sqlStatementCount = new HashMap<>();
 
-    private final static int STATUS_SUCCESSFUL = MuProcessState.SUCCESSFUL.ordinal();
+    private final static int STATE_SUCCESSFUL = MuProcessState.SUCCESSFUL.ordinal();
 
     public interface CompensationRunnable {
         boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuActivityState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
     }
 
     public interface CleanupRunnable {
-        void run(String correlationId, int processId, int status, java.util.Date created, java.util.Date modified) throws MuProcessException;
+        void run(String correlationId, int processId, int state, java.util.Date created, java.util.Date modified) throws MuProcessException;
     }
 
     /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements) {
@@ -160,26 +160,26 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ Optional<MuProcessState> getProcessStatus(
+    /* package private */ Optional<MuProcessState> getProcessState(
             final String correlationId
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STATUS_BY_CORRID"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STATE_BY_CORRID"))) {
                 stmt.setString(1, correlationId);
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        // status
-                        int status = rs.getInt(1);
-                        return Optional.of(MuProcessState.fromInt(status));
+                        // state
+                        int state = rs.getInt(1);
+                        return Optional.of(MuProcessState.fromInt(state));
                     }
                 }
             }
         }
         catch (SQLException sqle) {
-            String info = "Failed to query process status: ";
+            String info = "Failed to query process state: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
 
@@ -195,20 +195,20 @@ public class MuPersistentLog {
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        // status, result
+                        // state, result
                         int idx = 0;
-                        int status = rs.getInt(++idx);
+                        int state = rs.getInt(++idx);
 
-                        if (STATUS_SUCCESSFUL != status) {
+                        if (STATE_SUCCESSFUL != state) {
                             String info = "Results only available for SUCCESSFUL processes: ";
                             info += "correlationId=\"" + correlationId + "\" ";
-                            info += "processStatus=\"" + MuProcessState.fromInt(status) + "\"";
+                            info += "processState=\"" + MuProcessState.fromInt(state) + "\"";
                             throw new MuProcessResultsUnavailable(info);
                         }
 
-                        Clob resultClob = rs.getClob(++idx);
+                        Reader result = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            return Optional.of(MuProcessResult.fromReader(resultClob.getCharacterStream()));
+                            return Optional.of(MuProcessResult.fromReader(result));
                         }
                     }
                 }
@@ -217,21 +217,21 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to fetch process result: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
 
         return Optional.empty();
     }
 
-    /* package private */ void setProcessStatus(
-            final int processId, final MuProcessState status, final MuProcessResult result
+    /* package private */ void setProcessState(
+            final int processId, final MuProcessState state, final MuProcessResult result
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
-                stmt.setInt(++idx, status.toInt());
+                stmt.setInt(++idx, state.toInt());
                 if (null == result || result.isEmpty()) {
                     stmt.setNull(++idx, Types.CLOB);
                 }
@@ -245,19 +245,19 @@ public class MuPersistentLog {
             }
         }
         catch (SQLException sqle) {
-            String info = "Failed to set process status: ";
+            String info = "Failed to set process state: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
 
-        log.trace("Updated process {} with status {}", processId, status);
+        log.trace("Updated process {} with state {}", processId, state);
     }
 
-    /* package private */ void setProcessStatus(
-            final int processId, final MuProcessState status
+    /* package private */ void setProcessState(
+            final int processId, final MuProcessState state
     ) throws MuProcessException {
-        setProcessStatus(processId, status, /* no result */ null);
+        setProcessState(processId, state, /* no result */ null);
     }
 
     /* package private */ Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
@@ -267,19 +267,19 @@ public class MuPersistentLog {
             conn.setAutoCommit(false);
 
             int processId = MuProcess.PROCESS_ID_NOT_YET_ASSIGNED;
-            MuProcessState status = null;
+            MuProcessState state = null;
             boolean doContinue = true;
 
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_ID_AND_STATUS_BY_CORRID"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_ID_AND_STATE_BY_CORRID"))) {
                 stmt.setString(1, correlationId);
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         int idx = 0;
                         processId = rs.getInt(++idx);
-                        status = MuProcessState.fromInt(rs.getInt(++idx));
+                        state = MuProcessState.fromInt(rs.getInt(++idx));
 
-                        switch (status) {
+                        switch (state) {
                             /*
                              * Cases where it does _not_ make sense to reset process -- at least not right away.
                              *
@@ -295,8 +295,8 @@ public class MuPersistentLog {
                                 // Really odd situation! Why reset (for retrying) when process
                                 // was successful?
 
-                                log.warn("Will NOT reset process: correlationId=\"{}\", processId={}, status={}",
-                                        correlationId, processId, status);
+                                log.warn("Will NOT reset process: correlationId=\"{}\", processId={}, state={}",
+                                        correlationId, processId, state);
                                 doContinue = false;
                                 break;
 
@@ -322,13 +322,24 @@ public class MuPersistentLog {
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
+                        /*
+                         * 'process_id' need to be selected even though we know it, since we are using a updateable
+                         *  result set. At least this is a requirement on PostgreSQL:
+                         *    "ResultSet is not updateable.  The query that generated this result set must select
+                         *    only one table, and must select all primary keys from that table. See the JDBC 2.1
+                         *    API Specification, section 5.6 for more details."
+                         *
+                         *  We read the process_id field, so as to not haphazardly 'optimize' the SQL statement
+                         *  away (since we don't need it)
+                         */
                         int idx = 0;
+                        int ignored = rs.getInt(++idx);
                         int stepId = rs.getInt(++idx);
                         int retries = rs.getInt(++idx);
 
                         //
-                        log.debug("Removing process step: correlationId=\"{}\", processId={}, status={}, stepId={}, retries={}",
-                                correlationId, processId, status, stepId, retries);
+                        log.debug("Removing process step: correlationId=\"{}\", processId={}, state={}, stepId={}, retries={}",
+                                correlationId, processId, state, stepId, retries);
 
                         rs.deleteRow();
                     }
@@ -352,7 +363,7 @@ public class MuPersistentLog {
 
             String info = "Failed to reset process: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
         finally {
@@ -371,19 +382,19 @@ public class MuPersistentLog {
                 try (ResultSet rs = stmt.executeQuery()) {
                     MuProcessDetails details = null;
                     while (rs.next()) {
-                        // correlation_id, process_id, status, p.created, p.modified, step_id, retries, preState
+                        // correlation_id, process_id, state, p.created, p.modified, step_id, retries, preState
                         int idx = 0;
 
                         // Process related
                         String correlationId = rs.getString(++idx);
                         int processId = rs.getInt(++idx);
-                        MuProcessState status = MuProcessState.fromInt(rs.getInt(++idx));
+                        MuProcessState state = MuProcessState.fromInt(rs.getInt(++idx));
                         Timestamp created = rs.getTimestamp(++idx);
                         Timestamp modified = rs.getTimestamp(++idx);
 
                         if (null == details || details.getProcessId() != processId) {
                             // New process
-                            details = new MuProcessDetails(correlationId, processId, status, created, modified);
+                            details = new MuProcessDetails(correlationId, processId, state, created, modified);
                             detailsList.add(details);
                         }
 
@@ -396,10 +407,10 @@ public class MuPersistentLog {
                         }
                         int retries = rs.getInt(++idx);
 
-                        Clob preStateClob = rs.getClob(++idx);
                         MuActivityState preState = null;
+                        Reader preStateReader = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            preState = MuActivityState.fromReader(preStateClob.getCharacterStream());
+                            preState = MuActivityState.fromReader(preStateReader);
                         }
 
                         details.addStepDetails(stepId, retries, preState);
@@ -410,7 +421,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to fetch abandoned process details: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
 
@@ -433,7 +444,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to increment process step retries: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
     }
@@ -453,19 +464,30 @@ public class MuPersistentLog {
                         int stepId = rs.getInt(++idx);
                         String className = rs.getString(++idx);
                         String methodName = rs.getString(++idx);
-                        Clob paramClob = rs.getClob(++idx);
-                        int retries = rs.getInt(++idx);
-                        Clob stateClob = rs.getClob(++idx);
 
-                        //
-                        Optional<MuActivityState> preState;
-                        if (rs.wasNull()) {
-                            preState = Optional.empty();
+                        // We need to consume the character stream right away, since the next call to
+                        // rs.getCharacterStream() may effectively sabotage it's state. This is the
+                        // case with the Derby JDBC implementation (but not with the PostgreSQL one).
+                        MuActivityParameters parameters;
+                        Reader paramReader = rs.getCharacterStream(++idx);
+                        if (!rs.wasNull()) {
+                            parameters = gson.fromJson(paramReader, MuActivityParameters.class);
                         }
                         else {
-                            Reader stateReader = stateClob.getCharacterStream();
+                            parameters = new MuActivityParameters();
+                        }
+
+                        int retries = rs.getInt(++idx);
+
+                        // Just as well to consume the stream now
+                        Optional<MuActivityState> preState;
+                        Reader stateReader = rs.getCharacterStream(++idx);
+                        if (!rs.wasNull()) {
                             MuActivityState state = gson.fromJson(stateReader, MuActivityState.class);
                             preState = Optional.of(state);
+                        }
+                        else {
+                            preState = Optional.empty();
                         }
 
                         //
@@ -474,8 +496,6 @@ public class MuPersistentLog {
                             Class[] parameterTypes = { MuActivityParameters.class, Optional.class };
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
 
-                            Reader paramReader = paramClob.getCharacterStream();
-                            MuActivityParameters parameters = gson.fromJson(paramReader, MuActivityParameters.class);
                             if (runnable.run(activity, method, parameters, preState, stepId, retries)) {
                                 popCompensation(processId, stepId);
                             }
@@ -495,6 +515,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to query compensation: ";
             info += Database.squeeze(sqle);
+            log.warn(info, sqle);
             throw new MuProcessBackwardBehaviourException(info, sqle);
         }
         catch (ClassNotFoundException cnfe) {
@@ -531,38 +552,39 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to query compensation: ";
             info += Database.squeeze(sqle);
+            log.warn(info, sqle);
             throw new MuProcessBackwardBehaviourException(info, sqle);
         }
         finally {
-            // Set process status
-            setProcessStatus(processId, MuProcessState.SUCCESSFUL, result);
+            // Set process state
+            setProcessState(processId, MuProcessState.SUCCESSFUL, result);
         }
     }
 
     /* package private */ void cleanupAfterSuccessfulCompensation(
             final int processId
     ) throws MuProcessException {
-        setProcessStatus(processId, MuProcessState.COMPENSATED);
+        setProcessState(processId, MuProcessState.COMPENSATED);
     }
 
     /* package private */ void cleanupAfterFailedCompensation(
             final int processId
     ) throws MuProcessException {
-        setProcessStatus(processId, MuProcessState.COMPENSATION_FAILED);
+        setProcessState(processId, MuProcessState.COMPENSATION_FAILED);
     }
 
     /* package private */ void cleanupAfterFailure(
             final int processId
     ) throws MuProcessException {
-        setProcessStatus(processId, MuProcessState.ABANDONED);
+        setProcessState(processId, MuProcessState.ABANDONED);
     }
 
     /* package private */ void dumpStatistics() {
         // Prepare collecting statistics for each state
         final int numStates = MuProcessState.values().length;
-        long[] statusCount = new long[numStates];
+        long[] stateCount = new long[numStates];
         for (int i = 0; i < numStates; i++) {
-            statusCount[i] = 0L;
+            stateCount[i] = 0L;
         }
 
         //
@@ -570,13 +592,13 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("COUNT_PROCESSES"))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // count, status
+                        // count, state
                         int count = rs.getInt(1);
-                        int status = rs.getInt(2);
+                        int state = rs.getInt(2);
 
                         // Assemble some statistics
-                        if (status >= 0 && status < numStates) { // as it should be
-                            statusCount[status] = count;
+                        if (state >= 0 && state < numStates) { // as it should be
+                            stateCount[state] = count;
                         }
                     }
                 }
@@ -585,7 +607,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to count process headers: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
         }
         catch (MuProcessException mpe) {
             String info = "Cannot dump statistics: ";
@@ -600,12 +622,12 @@ public class MuPersistentLog {
         StringBuilder statistics = new StringBuilder();
         long total = 0L;
         for (int i = 0; i < numStates; i++) {
-            long count = statusCount[i];
+            long count = stateCount[i];
             total += count;
 
-            MuProcessState status = MuProcessState.fromInt(i);
+            MuProcessState state = MuProcessState.fromInt(i);
             if (count > 0) {
-                statistics.append("{").append(count).append(" ").append(status).append("} ");
+                statistics.append("{").append(count).append(" ").append(state).append("} ");
                 haveSomethingToDisplay = true;
 
                 severity = Math.max(severity, i);
@@ -633,15 +655,15 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESSES"))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // correlation_id, process_id, status, created, modified
+                        // correlation_id, process_id, state, created, modified
                         int idx = 0;
                         String correlationId = rs.getString(++idx);
                         int processId = rs.getInt(++idx);
-                        int status = rs.getInt(++idx);
+                        int state = rs.getInt(++idx);
                         Timestamp created = rs.getTimestamp(++idx);
                         Timestamp modified = rs.getTimestamp(++idx);
 
-                        runnable.run(correlationId, processId, status, created, modified);
+                        runnable.run(correlationId, processId, state, created, modified);
                     }
                 }
             }
@@ -649,13 +671,13 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to query process headers: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
         }
     }
 
     /* package private */ void abandon(String correlationId, int processId) throws MuProcessException {
         log.trace("Abandoning process: correlationId=\"{}\", processId={}", correlationId, processId);
-        setProcessStatus(processId, MuProcessState.ABANDONED);
+        setProcessState(processId, MuProcessState.ABANDONED);
     }
 
     /* package private */ void remove(String correlationId, int processId) throws MuProcessException {
@@ -687,7 +709,7 @@ public class MuPersistentLog {
 
             String info = "Failed to remove process: correlationId=\"" + correlationId + "\", processId=" + processId + ": ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
         finally {
@@ -713,7 +735,7 @@ public class MuPersistentLog {
         }
 
         try (Connection conn = dataSource.getConnection()) {
-            // Potentially check whether process status is NEW or (already) PROGRESSING
+            // Potentially check whether process state is NEW or (already) PROGRESSING
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
                 stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
@@ -725,7 +747,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to touch process header: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
     }
@@ -790,7 +812,7 @@ public class MuPersistentLog {
                 stmt.executeUpdate();
             }
 
-            // Potentially check whether process status is NEW or (already) PROGRESSING
+            // Potentially check whether process state is NEW or (already) PROGRESSING
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
                 int idx = 0;
                 stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
@@ -809,7 +831,7 @@ public class MuPersistentLog {
 
             String info = "Failed to persist process step: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
         }
         finally {
@@ -835,7 +857,7 @@ public class MuPersistentLog {
         catch (SQLException sqle) {
             String info = "Failed to remove process step: ";
             info += Database.squeeze(sqle);
-            log.warn(info);
+            log.warn(info, sqle);
             throw new MuProcessBackwardBehaviourException(info, sqle);
         }
     }

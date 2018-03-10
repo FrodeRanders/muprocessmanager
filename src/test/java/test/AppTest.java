@@ -242,12 +242,12 @@ public class AppTest extends TestCase {
                         String correlationId = sit.next();
 
                         final StringBuffer info = new StringBuffer("correlationId=\"").append(correlationId).append("\"");
-                        Optional<MuProcessState> _status = mngr.getProcessStatus(correlationId);
-                        if (_status.isPresent()) {
-                            MuProcessState status = _status.get();
-                            info.append(" status=").append(status);
+                        Optional<MuProcessState> _state = mngr.getProcessState(correlationId);
+                        if (_state.isPresent()) {
+                            MuProcessState state = _state.get();
+                            info.append(" state=").append(state);
 
-                            switch (status) {
+                            switch (state) {
                                 case SUCCESSFUL:
                                     Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
                                     _result.ifPresent(objects -> objects.forEach((v) -> info.append(" {").append(v).append("}")));

@@ -101,7 +101,7 @@ public class MuProcess {
      * <p>
      * Appropriate if a micro process mixes activities both with and without the need for compensation.
      * Even in this case, the mechanisms around {@link MuActivityState process state} works, so that it is possible
-     * to check status of processes and claim process results (for a configurable period of time).
+     * to check state of processes and claim process results (for a configurable period of time).
      * <p>
      * This version of execute does not honour any {@link MuActivityState process state} -- since there
      * can be no compensation for this activity.
@@ -285,8 +285,8 @@ public class MuProcess {
         }
     }
 
-    /* package private */ Optional<MuProcessState> getProcessStatus() throws MuProcessException {
-        return compensationLog.getProcessStatus(correlationId);
+    /* package private */ Optional<MuProcessState> getProcessState() throws MuProcessException {
+        return compensationLog.getProcessState(correlationId);
     }
 
     @Override

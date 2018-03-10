@@ -34,18 +34,18 @@ public enum MuProcessState {
     COMPENSATION_FAILED(4),
     ABANDONED(5);
 
-    private final int status;
+    private final int state;
 
-    MuProcessState(int status) {
-        this.status = status;
+    MuProcessState(int state) {
+        this.state = state;
     }
 
     public int toInt() {
-        return status;
+        return state;
     }
 
-    public static MuProcessState fromInt(int _status) {
-        switch (_status) {
+    public static MuProcessState fromInt(int _state) {
+        switch (_state) {
             case 0:
                 return NEW;
 
