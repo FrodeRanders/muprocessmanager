@@ -23,6 +23,8 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
+import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.gautelis.vopn.queue.WorkQueue;
 import org.gautelis.vopn.queue.WorkerQueueFactory;
 
@@ -89,7 +91,7 @@ public class AppTest extends TestCase {
         MuVolatileProcess process = mngr.newVolatileProcess();
 
         try {
-            MuActivityParameters parameters = new MuActivityParameters();
+            MuNativeActivityParameters parameters = new MuNativeActivityParameters();
             parameters.put("arg1", "param1");
             process.execute(
                     (p, r) -> {
@@ -182,24 +184,32 @@ public class AppTest extends TestCase {
                 try {
                     process = mngr.newProcess(correlationId);
 
-                    MuActivityParameters parameters = new MuActivityParameters();
+                    MuNativeActivityParameters parameters = new MuNativeActivityParameters();
                     parameters.put("weight", 100.0 * Math.random());
                     process.execute(
                             (p, r) -> {
-                                double weight = (double) p.get("weight");
-                                double realWeight = 0.83 * weight;
-                                r.add(realWeight);
+                                if (p.isNative() && r.isNative()) {
+                                    MuNativeActivityParameters np = (MuNativeActivityParameters) p;
+                                    MuNativeProcessResult nr = (MuNativeProcessResult) r;
+                                    double weight = (double) np.get("weight");
+                                    double realWeight = 0.83 * weight;
+                                    nr.add(realWeight);
+                                }
                                 return !(Math.random() < /* forward failure probability */ 0.01);
-
                             }, parameters
                     );
 
                     parameters.put("hat-size", 42);
                     process.execute(
                             (p, r) -> {
-                                double weight = (double) r.remove(0);
-                                double stepTwoResult = weight * (int) p.get("hat-size");
-                                return r.add(stepTwoResult);
+                                if (p.isNative() && r.isNative()) {
+                                    MuNativeActivityParameters np = (MuNativeActivityParameters) p;
+                                    MuNativeProcessResult nr = (MuNativeProcessResult) r;
+                                    double weight = (double) nr.remove(0);
+                                    double stepTwoResult = weight * (int) np.get("hat-size");
+                                    nr.add(stepTwoResult);
+                                }
+                                return true;
                             },
                             new SecondActivityCompensation(),
                             parameters
@@ -250,7 +260,12 @@ public class AppTest extends TestCase {
                             switch (state) {
                                 case SUCCESSFUL:
                                     Optional<MuProcessResult> _result = mngr.getProcessResult(correlationId);
-                                    _result.ifPresent(objects -> objects.forEach((v) -> info.append(" {").append(v).append("}")));
+                                    _result.ifPresent(objects -> {
+                                        if (objects.isNative()) {
+                                            MuNativeProcessResult nativeResult = (MuNativeProcessResult) objects;
+                                            nativeResult.forEach((v) -> info.append(" {").append(v).append("}"));
+                                        }
+                                    });
                                     sit.remove();
                                     break;
 

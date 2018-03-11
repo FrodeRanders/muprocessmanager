@@ -19,6 +19,7 @@ package org.gautelis.muprocessmanager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.gautelis.muprocessmanager.payload.*;
 import org.gautelis.vopn.db.Database;
 import org.gautelis.vopn.lang.DynamicLoader;
 import org.slf4j.Logger;
@@ -45,7 +46,6 @@ public class MuPersistentLog {
     private static final Logger log = LoggerFactory.getLogger(MuPersistentLog.class);
     private static final Logger statisticsLog = LoggerFactory.getLogger("STATISTICS");
 
-    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private static final DynamicLoader<MuBackwardBehaviour> loader = new DynamicLoader<>("compensation activity");
 
     private final DataSource dataSource;
@@ -54,6 +54,7 @@ public class MuPersistentLog {
     private final HashMap<String, Long> sqlStatementCount = new HashMap<>();
 
     private final static int STATE_SUCCESSFUL = MuProcessState.SUCCESSFUL.ordinal();
+    private final boolean assumeNativeProcessDataFlow;
 
     public interface CompensationRunnable {
         boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuActivityState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
@@ -63,12 +64,13 @@ public class MuPersistentLog {
         void run(String correlationId, int processId, int state, java.util.Date created, java.util.Date modified) throws MuProcessException;
     }
 
-    /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements) {
+    /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements, final boolean assumeNativeProcessDataFlow) {
         this.dataSource = dataSource;
         this.sqlStatements = sqlStatements;
+        this.assumeNativeProcessDataFlow = assumeNativeProcessDataFlow;
     }
 
-    static int i = 0;
+    private int i = 0; // for development purposes -- ignore please :)
 
     private String getStatement(String key) throws MuProcessException {
 
@@ -208,7 +210,12 @@ public class MuPersistentLog {
 
                         Reader result = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            return Optional.of(MuProcessResult.fromReader(result));
+                            if (assumeNativeProcessDataFlow) {
+                                return Optional.of(MuNativeProcessResult.fromReader(result));
+                            }
+                            else {
+                                return Optional.of(MuForeignProcessResult.fromReader(result));
+                            }
                         }
                     }
                 }
@@ -238,7 +245,7 @@ public class MuPersistentLog {
                 else {
                     // No need to explicitly Cloner.clone() result, since we
                     // are implicitly cloning by persisting to database.
-                    stmt.setCharacterStream(++idx, new StringReader(gson.toJson(result)));
+                    stmt.setCharacterStream(++idx, result.toReader());
                 }
                 stmt.setInt(++idx, processId);
                 stmt.executeUpdate();
@@ -410,7 +417,12 @@ public class MuPersistentLog {
                         MuActivityState preState = null;
                         Reader preStateReader = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            preState = MuActivityState.fromReader(preStateReader);
+                            if (assumeNativeProcessDataFlow) {
+                                preState = MuNativeActivityState.fromReader(preStateReader);
+                            }
+                            else {
+                                preState = MuForeignActivityState.fromReader(preStateReader);
+                            }
                         }
 
                         details.addStepDetails(stepId, retries, preState);
@@ -471,10 +483,15 @@ public class MuPersistentLog {
                         MuActivityParameters parameters;
                         Reader paramReader = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            parameters = gson.fromJson(paramReader, MuActivityParameters.class);
+                            if (assumeNativeProcessDataFlow) {
+                                parameters = MuNativeActivityParameters.fromReader(paramReader);
+                            }
+                            else {
+                                parameters = MuForeignActivityParameters.fromReader(paramReader);
+                            }
                         }
                         else {
-                            parameters = new MuActivityParameters();
+                            parameters = new MuNoActivityParameters();
                         }
 
                         int retries = rs.getInt(++idx);
@@ -483,7 +500,13 @@ public class MuPersistentLog {
                         Optional<MuActivityState> preState;
                         Reader stateReader = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            MuActivityState state = gson.fromJson(stateReader, MuActivityState.class);
+                            MuActivityState state;
+                            if (assumeNativeProcessDataFlow) {
+                                state = MuNativeActivityState.fromReader(stateReader);
+                            }
+                            else {
+                                state = MuForeignActivityState.fromReader(stateReader);
+                            }
                             preState = Optional.of(state);
                         }
                         else {
@@ -802,9 +825,9 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, process.getCurrentStep());
                 stmt.setString(++idx, className);
                 stmt.setString(++idx, methodName);
-                stmt.setCharacterStream(++idx, new StringReader(gson.toJson(parameters)));
+                stmt.setCharacterStream(++idx, parameters.toReader());
                 if (preState.isPresent()) {
-                    stmt.setCharacterStream(++idx, new StringReader(gson.toJson(preState)));
+                    stmt.setCharacterStream(++idx, preState.get().toReader());
                 }
                 else {
                     stmt.setNull(++idx, Types.CLOB);

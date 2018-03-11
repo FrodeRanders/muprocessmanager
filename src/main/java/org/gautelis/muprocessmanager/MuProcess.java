@@ -17,6 +17,10 @@
  */
 package org.gautelis.muprocessmanager;
 
+import org.gautelis.muprocessmanager.payload.MuForeignActivityParameters;
+import org.gautelis.muprocessmanager.payload.MuForeignProcessResult;
+import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
+import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.gautelis.vopn.io.Cloner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,16 +52,26 @@ public class MuProcess {
 
     //
     private final boolean acceptCompensationFailure;
+    private final boolean assumeNativeProcessDataFlow;
 
     //
-    final MuProcessResult result = new MuProcessResult();
+    final MuProcessResult result;;
 
     /* package private */ MuProcess(
-            final String correlationId, MuPersistentLog compensationLog, final boolean acceptCompensationFailure
+            final String correlationId, MuPersistentLog compensationLog,
+            final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow
     ) {
         this.correlationId = correlationId;
         this.compensationLog = compensationLog;
         this.acceptCompensationFailure = acceptCompensationFailure;
+        this.assumeNativeProcessDataFlow = assumeNativeProcessDataFlow;
+
+        if (assumeNativeProcessDataFlow) {
+            result = new MuNativeProcessResult();
+        }
+        else {
+            result = new MuForeignProcessResult();
+        }
     }
 
     public boolean getAcceptCompensationFailure() {

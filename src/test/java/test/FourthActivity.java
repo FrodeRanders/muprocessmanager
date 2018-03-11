@@ -21,6 +21,9 @@ import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
 import org.gautelis.muprocessmanager.MuProcessResult;
 import org.gautelis.muprocessmanager.MuActivityState;
+import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
+import org.gautelis.muprocessmanager.payload.MuNativeActivityState;
+import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 
 import java.util.Optional;
 
@@ -34,15 +37,19 @@ public class FourthActivity implements MuActivity {
 
     @Override
     public boolean forward(MuActivityParameters args, MuProcessResult result) {
-        double piApprox = (double) args.get("pi-kinda");
-        double hatSize = (double) result.remove(0);
-        result.add(piApprox * hatSize);
+        if (args.isNative() && result.isNative()) {
+            MuNativeActivityParameters nargs = (MuNativeActivityParameters)args;
+            MuNativeProcessResult nresult = (MuNativeProcessResult)result;
+            double piApprox = (double) nargs.get("pi-kinda");
+            double hatSize = (double) nresult.remove(0);
+            nresult.add(piApprox * hatSize);
+        }
         return !(Math.random() < forwardFailureProbability);
     }
 
     @Override
     public Optional<MuActivityState> getState() {
-        MuActivityState preState = new MuActivityState();
+        MuNativeActivityState preState = new MuNativeActivityState();
         preState.put("state1", "Fourth activity pre-state");
         preState.put("state2", Math.random());
 

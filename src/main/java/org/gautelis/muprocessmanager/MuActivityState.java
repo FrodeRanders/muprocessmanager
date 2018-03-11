@@ -17,36 +17,28 @@
  */
 package org.gautelis.muprocessmanager;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.io.Reader;
-import java.util.HashMap;
 
 /**
  * Wraps previous state (whatever that may be) before acted upon by an {@link MuForwardBehaviour activity},
- * and possibly reinstated by a {@link MuBackwardBehaviour compensation}. This is simply a collection of
- * key and value pairs.
+ * and possibly reinstated by a {@link MuBackwardBehaviour compensation}.
  * <p>
  * The value part has to be serializable, as the whole thing is persisted
  * to database ({@link MuPersistentLog} takes care of this) as a JSON object.
  */
-public class MuActivityState extends HashMap<String, Object> {
+public interface MuActivityState {
 
-    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-
-    public MuActivityState() {}
-
-    public static MuActivityState fromReader(final Reader reader) {
-        return gson.fromJson(reader, MuActivityState.class);
+    default boolean isEmpty() {
+        return true;
     }
 
-    @Override
-    public String toString() {
-        StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("[");
-        forEach((k, v) -> buf.append("{key=\"").append(k).append("\" value=\"").append(v).append("\"}"));
-        buf.append("]");
-        return buf.toString();
+    default boolean isNative() {
+        return false;
     }
+
+    /**
+     * Creates a JSON stream from a MuActivityState
+     * @return Reader a JSON stream made from this object
+     */
+    Reader toReader();
 }

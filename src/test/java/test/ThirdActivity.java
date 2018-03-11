@@ -21,6 +21,8 @@ import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
 import org.gautelis.muprocessmanager.MuProcessResult;
 import org.gautelis.muprocessmanager.MuActivityState;
+import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
+import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 
 import java.util.Optional;
 
@@ -33,10 +35,15 @@ public class ThirdActivity implements MuActivity {
 
     @Override
     public boolean forward(MuActivityParameters args, MuProcessResult results) {
-        boolean cutInHalf = (boolean)args.get("shrink-head");
-        if (cutInHalf) {
-            double stepTwoResult = (double) results.remove(0);
-            results.add(stepTwoResult / 2.0);
+        if (args.isNative() && results.isNative()) {
+            MuNativeActivityParameters nargs = (MuNativeActivityParameters) args;
+            MuNativeProcessResult nresults = (MuNativeProcessResult) results;
+
+            boolean cutInHalf = (boolean) nargs.get("shrink-head");
+            if (cutInHalf) {
+                double stepTwoResult = (double) nresults.remove(0);
+                nresults.add(stepTwoResult / 2.0);
+            }
         }
         return !(Math.random() < forwardFailureProbability);
     }

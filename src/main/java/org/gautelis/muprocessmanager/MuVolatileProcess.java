@@ -17,6 +17,8 @@
  */
 package org.gautelis.muprocessmanager;
 
+import org.gautelis.muprocessmanager.payload.MuForeignProcessResult;
+import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,15 +38,26 @@ public class MuVolatileProcess {
     private static final Logger log = LoggerFactory.getLogger(MuVolatileProcess.class);
 
     private final boolean acceptCompensationFailure;
+    private final boolean assumeNativeProcessDataFlow;
 
     private Stack<MuVolatileProcessStep> stepStack = new Stack<>();
 
     //
-    final MuProcessResult result = new MuProcessResult();
+    private final MuProcessResult result;
 
 
-    /* package private */ MuVolatileProcess(final boolean acceptCompensationFailure) {
+    /* package private */ MuVolatileProcess(
+            final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow
+    ) {
         this.acceptCompensationFailure = acceptCompensationFailure;
+        this.assumeNativeProcessDataFlow = assumeNativeProcessDataFlow;
+
+        if (assumeNativeProcessDataFlow) {
+            result = new MuNativeProcessResult();
+        }
+        else {
+            result = new MuForeignProcessResult();
+        }
     }
 
     /**

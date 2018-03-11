@@ -47,6 +47,7 @@ public class MuProcessManager {
 
     //
     private final boolean acceptCompensationFailure;
+    private final boolean assumeNativeProcessDataFlow;
 
     // Timers
     private Timer dumpStatisticsTimer = null;
@@ -64,10 +65,11 @@ public class MuProcessManager {
 
 
     private MuProcessManager(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
-        compensationLog = new MuPersistentLog(dataSource, sqlStatements);
-        this.policy = policy;
-
         acceptCompensationFailure = policy.acceptCompensationFailure();
+        assumeNativeProcessDataFlow = policy.assumeNativeProcessDataFlow();
+
+        compensationLog = new MuPersistentLog(dataSource, sqlStatements, assumeNativeProcessDataFlow);
+        this.policy = policy;
 
         // Queue used to recover 'unattended' processes
         recoverWorkQueue = WorkerQueueFactory.getWorkQueue(
@@ -297,7 +299,7 @@ public class MuProcessManager {
      * @return a volatile {@link MuVolatileProcess}.
      */
     public MuVolatileProcess newVolatileProcess() {
-        return new MuVolatileProcess(acceptCompensationFailure);
+        return new MuVolatileProcess(acceptCompensationFailure, assumeNativeProcessDataFlow);
     }
 
     /**
@@ -309,7 +311,7 @@ public class MuProcessManager {
      * @return a persisted {@link MuProcess}
      */
     public MuProcess newProcess(final String correlationId) {
-        return new MuProcess(correlationId, compensationLog, acceptCompensationFailure);
+        return new MuProcess(correlationId, compensationLog, acceptCompensationFailure, assumeNativeProcessDataFlow);
     }
 
     /**

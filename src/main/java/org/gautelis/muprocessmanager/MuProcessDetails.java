@@ -26,7 +26,7 @@ public class MuProcessDetails {
 
     // Time specified relative to local timezone
     private static final Gson gson =
-            new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").create();
+            new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").create();
 
     public class MuActivityDetails {
         private final int stepId;

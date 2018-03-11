@@ -1,5 +1,6 @@
 package org.gautelis.muprocessmanager;
 
+import org.gautelis.muprocessmanager.payload.MuForeignActivityParameters;
 import org.gautelis.vopn.lang.Configurable;
 
 /**
@@ -33,4 +34,23 @@ public interface MuProcessManagementPolicy {
 
     @Configurable(property = "number-of-recovery-threads")
     int numberOfRecoveryThreads();
+
+    /**
+     *
+     * @return <strong>true</strong> if the manager may assume that we have a 'native data' process flow, suitable for Java
+     * process flows, -or- <strong>false</strong> if the process manager should not make any assumptions about the
+     * data flowing through a process (other than it being JSON).
+     * <p>
+     * In the native case, the manager will use
+     * <ul>
+     *     <li>{@link org.gautelis.muprocessmanager.payload.MuNativeActivityParameters native activity parameters}</li>
+     * </ul>
+     * <p>
+     * In the foreign case, the manager will use
+     * <ul>
+     *     <li>{@link org.gautelis.muprocessmanager.payload.MuForeignActivityParameters foreign activity parameters}</li>
+     * </ul>
+     */
+    @Configurable(property = "assume-native-process-data-flow", value = "true")
+    boolean assumeNativeProcessDataFlow();
 }

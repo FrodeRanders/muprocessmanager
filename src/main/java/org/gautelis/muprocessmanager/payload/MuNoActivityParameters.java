@@ -15,28 +15,43 @@
  * limitations under the License.
  *
  */
-package org.gautelis.muprocessmanager;
+package org.gautelis.muprocessmanager.payload;
+
+import org.gautelis.muprocessmanager.MuActivity;
+import org.gautelis.muprocessmanager.MuActivityParameters;
 
 import java.io.Reader;
+import java.io.Serializable;
+import java.io.StringReader;
 
 /**
- * Wraps results from a {@link MuProcess}.
- * <p>
- * The individual parts have to be serializable, as the whole thing is persisted
- * to database ({@link MuPersistentLog} takes care of this) as a JSON object.
+ * Wraps empty parameters to a {@link MuActivity}.
  */
-public interface MuProcessResult {
-    default boolean isEmpty() {
+public class MuNoActivityParameters implements MuActivityParameters, Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public boolean isEmpty() {
         return true;
     }
 
-    default boolean isNative() {
+    public boolean isNative() {
         return false;
     }
 
     /**
-     * Creates a JSON stream from a MuProcessResult
+     * Creates a JSON stream from a MuActivityParameters
+     *
      * @return Reader a JSON stream made from this object
      */
-    Reader toReader();
+    public Reader toReader() {
+        return new StringReader("");
+    }
+
+    /**
+     * Retrns internal representation as JSON
+     * @return JSON representation
+     */
+    public String asJson() {
+        return "";
+    }
 }

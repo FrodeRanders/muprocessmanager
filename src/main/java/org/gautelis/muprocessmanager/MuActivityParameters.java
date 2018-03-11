@@ -17,23 +17,32 @@
  */
 package org.gautelis.muprocessmanager;
 
+import java.io.Reader;
 import java.util.HashMap;
 
 /**
- * Wraps parameters to a {@link MuActivity}. This is simply a collection of
- * key and value pairs.
- * <p>
- * The value part has to be serializable, as the whole thing is persisted
- * to database ({@link MuPersistentLog} takes care of this) as a JSON object.
+ * Wraps parameters to a {@link MuActivity}.
  */
-public class MuActivityParameters extends HashMap<String, Object> {
+public interface MuActivityParameters {
 
-    @Override
-    public String toString() {
-        StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("[");
-        forEach((k, v) -> buf.append("{key=\"").append(k).append("\" value=\"").append(v).append("\"}"));
-        buf.append("]");
-        return buf.toString();
+    default boolean isEmpty() {
+        return true;
     }
+
+    default boolean isNative() {
+        return false;
+    }
+
+    /**
+     * Creates a JSON stream from a MuActivityParameters
+     *
+     * @return Reader a JSON stream made from this object
+     */
+    Reader toReader();
+
+    /**
+     * Retrns internal representation as JSON
+     * @return JSON representation
+     */
+    String asJson();
 }
