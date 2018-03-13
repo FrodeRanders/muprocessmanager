@@ -18,6 +18,7 @@
 package org.gautelis.muprocessmanager;
 
 import org.gautelis.vopn.db.Database;
+import org.gautelis.vopn.db.DatabaseException;
 import org.gautelis.vopn.db.utils.Derby;
 import org.gautelis.vopn.db.utils.Manager;
 import org.gautelis.vopn.db.utils.Options;
@@ -153,7 +154,7 @@ public class MuProcessManager {
             recoverCount[i] = removeCount[i] = abandonCount[i] = 0L;
         }
 
-        final long[] observations = { 0L }; // in order to increment below
+        final long[] observations = {0L}; // in order to increment below
 
         //
         try {
@@ -205,7 +206,7 @@ public class MuProcessManager {
                             });
                         }
                     }
-                        break;
+                    break;
 
                     case SUCCESSFUL:
                     case COMPENSATED:
@@ -224,8 +225,7 @@ public class MuProcessManager {
                             log.trace("Abandoning process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
                             compensationLog.abandon(correlationId, processId);
                             abandonCount[state]++;
-                        }
-                        else {
+                        } else {
                             boolean isRipeForRecompensation = modified.before(new Date(now.getTime() - processRecompensationTime));
 
                             if (isRipeForRecompensation) {
@@ -260,8 +260,7 @@ public class MuProcessManager {
             // Having run recover() once, we have at least tried to recompensate
             // processes in COMPENSATION_FAILED once.
             justStarted = false;
-        }
-        catch (MuProcessException mpe) {
+        } catch (MuProcessException mpe) {
             String info = "Scheduled recovery failed: ";
             info += mpe.getMessage();
             log.info(info, mpe);
@@ -296,6 +295,7 @@ public class MuProcessManager {
      * Creates a new volatile process, a process that handles volatile activities that will not be
      * persisted. May be used to handle synchronous process execution, including Saga-style compensation.
      * Does not survive a power off.
+     *
      * @return a volatile {@link MuVolatileProcess}.
      */
     public MuVolatileProcess newVolatileProcess() {
@@ -307,6 +307,7 @@ public class MuProcessManager {
      * persisted to database. Handles synchronous process executions, including Saga-style compensation,
      * but will also survive a power off after which the compensations are run asynchronously without
      * a running process and in the background.
+     *
      * @param correlationId a correlation ID identifying the business request.
      * @return a persisted {@link MuProcess}
      */
@@ -318,6 +319,7 @@ public class MuProcessManager {
      * Retrieves process state ({@link MuProcessState}) for a process, identified by correlation ID.
      * {@link MuProcessState} is available for a time period after the corresponding {@link MuProcess}
      * has vanished.
+     *
      * @param correlationId identifies the business request initiating the process. Should remain unchanged if re-trying.
      * @return {@link MuProcessState} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
      * @throws MuProcessException if failing to retrieve result
@@ -328,9 +330,10 @@ public class MuProcessManager {
 
     /**
      * Retrieves process results from {@link MuProcessState#SUCCESSFUL} processes.
+     *
      * @param correlationId identifies the business request initiating the process. Should remain unchanged if re-trying.
      * @return {@link MuProcessResult} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
-     * @throws MuProcessException if failing to retrieve result
+     * @throws MuProcessException          if failing to retrieve result
      * @throws MuProcessResultsUnavailable if process is not {@link MuProcessState#SUCCESSFUL SUCCESSFUL}
      */
     public Optional<MuProcessResult> getProcessResult(final String correlationId) throws MuProcessException {
@@ -349,6 +352,7 @@ public class MuProcessManager {
      * (as identified by the correlation ID) in preparation for a new process with the same intent.
      * <p>
      * This method is not supposed to be issued while a running synchronous process exists.
+     *
      * @param correlationId correlation ID identifying the business request initiating the process
      * @return true if a matching process was found and reset, false if no matching process was found
      * @throws MuProcessException upon failure
@@ -359,6 +363,7 @@ public class MuProcessManager {
 
     /**
      * Salvages abandoned processes, returning details of processes and their activities;
+     *
      * @return a collection of process details.
      * @throws MuProcessException upon failure.
      */
@@ -370,9 +375,10 @@ public class MuProcessManager {
 
     /**
      * Returns a {@link MuProcessManager} that uses an external database for persisting process information.
-     * @param dataSource a datasource for an external database.
+     *
+     * @param dataSource    a datasource for an external database.
      * @param sqlStatements a lookup table containing SQL statements, see <a href="file:doc-files/sql-statements.html">SQL statements reference</a>.
-     * @param policy the process management policy for the operation.
+     * @param policy        the process management policy for the operation.
      * @return {@link MuProcessManager}
      */
     public static MuProcessManager getManager(
@@ -384,71 +390,57 @@ public class MuProcessManager {
     /**
      * Returns a {@link MuProcessManager} that uses an external database for persisting process information.
      * Will use default SQL statements and policy.
+     *
      * @param dataSource a datasource for an external database
      * @return {@link MuProcessManager}
      * @throws MuProcessException if failing to load default SQL statements or policy
      */
     public static MuProcessManager getManager(DataSource dataSource) throws MuProcessException {
-        try (InputStream sqlIs = MuProcessManager.class.getResourceAsStream("sql-statements.xml")) {
-            final Properties sqlStatements = new Properties();
-            sqlStatements.loadFromXML(sqlIs);
-
-            try (InputStream policyIs = MuProcessManagementPolicy.class.getResourceAsStream("default-management-policy.xml")) {
-                final Properties policyProperties = new Properties();
-                policyProperties.loadFromXML(policyIs);
-
-                MuProcessManagementPolicy policy = ConfigurationTool.bindProperties(MuProcessManagementPolicy.class, policyProperties);
-                return getManager(dataSource, sqlStatements, policy);
-            }
-        }
-        catch (IOException ioe) {
-            String info = "Failed to load database resources: ";
-            info += ioe.getMessage();
-            log.warn(info, ioe);
-
-            throw new MuProcessException(info, ioe);
-        }
-    }
-
-    private static MuProcessManager getManager(Database.Configuration config) throws MuProcessException {
-        try {
-            DataSource dataSource = Derby.getDataSource("mu_process_manager", config);
-
-            MuProcessManager manager = getManager(dataSource);
-
-            Options options = Options.getDefault();
-            options.debug = DEBUG;
-            Manager instance = new Derby(dataSource, options);
-
-            manager.create(instance, new PrintWriter(System.out));
-            return manager;
-
-        } catch (Throwable t) {
-            String info = "Failed to create process manager: ";
-            info += t.getMessage();
-            throw new MuProcessException(info, t);
-        }
+        return getManager(dataSource, getDefaultSqlStatements(), getDefaultManagementPolicy());
     }
 
     /**
      * Returns a {@link MuProcessManager} that internally uses an embedded Apache Derby database
      * for persisting process information. Appropriate during development and non-critical operation,
      * but consider using {@link MuProcessManager#getManager(DataSource, Properties, MuProcessManagementPolicy)} instead.
+     *
      * @return {@link MuProcessManager}
      * @throws MuProcessException if failing to prepare local database.
      */
     public static MuProcessManager getManager() throws MuProcessException {
-        Properties properties = new Properties();
         try {
-            try (InputStream is = MuProcessManager.class.getResourceAsStream("default-database-configuration.xml")) {
-                properties.loadFromXML(is);
-            }
-        } catch (IOException ioe) {
+            Database.Configuration databaseConfiguration = getDefaultDatabaseConfiguration();
+            DataSource dataSource = Derby.getDataSource("mu_process_manager", databaseConfiguration);
+            prepareInternalDatabase(dataSource);;
+
+            return getManager(dataSource);
+
+        } catch (DatabaseException de) {
+            String info = "Failed to create data source: ";
+            info += de.getMessage();
+            throw new MuProcessException(info, de);
+
+        } catch (MuProcessException mpe) {
             String info = "Failed to create process manager: No embedded database configuration: ";
-            info += ioe.getMessage();
-            throw new MuProcessException(info, ioe);
+            info += mpe.getMessage();
+            throw new MuProcessException(info, mpe);
+
         }
-        return getManager(Database.getConfiguration(properties));
+    }
+
+    public static void prepareInternalDatabase(DataSource dataSource) throws MuProcessException {
+        try {
+            Options options = Options.getDefault();
+            options.debug = DEBUG;
+            Manager instance = new Derby(dataSource, options);
+
+            create(instance, new PrintWriter(System.out));
+
+        } catch (Throwable t) {
+            String info = "Failed to prepare internal database: ";
+            info += t.getMessage();
+            throw new MuProcessException(info, t);
+        }
     }
 
     /**
@@ -457,9 +449,97 @@ public class MuProcessManager {
      *
      * @throws Exception
      */
-    private void create(Manager manager, PrintWriter out) throws Exception {
-        try (InputStream is = getClass().getResourceAsStream("default-database-create.sql")) {
+    private static void create(Manager manager, PrintWriter out) throws Exception {
+        try (InputStream is = MuProcessManager.class.getResourceAsStream("default-database-create.sql")) {
             manager.execute("default-database-create.sql", new InputStreamReader(is), out);
         }
+    }
+
+    public static Database.Configuration getDatabaseConfiguration(Class clazz, String resource) throws MuProcessException {
+        if (null == clazz) {
+            throw new IllegalArgumentException("class");
+        }
+
+        try (InputStream is = clazz.getResourceAsStream(resource)) {
+            if (null == is) {
+                String info = "Unknown resource: class=\"" + clazz.getName() + "\", resource=\"" + resource + "\"";
+                throw new IllegalArgumentException(info);
+            }
+            Properties properties = new Properties();
+            properties.loadFromXML(is);
+            return Database.getConfiguration(properties);
+
+        } catch (IOException ioe) {
+            String info = "Failed to load database configuration: ";
+            info += ioe.getMessage();
+            throw new MuProcessException(info, ioe);
+        }
+    }
+
+    public static Database.Configuration getDefaultDatabaseConfiguration() throws MuProcessException {
+        return getDatabaseConfiguration(MuProcessManager.class, "default-database-configuration.xml");
+    }
+
+    public static DataSource getDefaultDataSource(String applicationName) throws MuProcessException {
+        Database.Configuration defaultDatabaseConfiguration = getDefaultDatabaseConfiguration();
+        try  {
+            return Derby.getDataSource(applicationName, defaultDatabaseConfiguration);
+
+        } catch (DatabaseException de) {
+            String info = "Failed to establish internal datasource: ";
+            info += de.getMessage();
+            throw new MuProcessException(info, de);
+        }
+    }
+
+    public static Properties getSqlStatements(Class clazz, String resource) throws MuProcessException {
+        if (null == clazz) {
+            throw new IllegalArgumentException("class");
+        }
+
+        try (InputStream is = clazz.getResourceAsStream(resource)) {
+            if (null == is) {
+                String info = "Unknown resource: class=\"" + clazz.getName() + "\", resource=\"" + resource + "\"";
+                throw new IllegalArgumentException(info);
+            }
+            final Properties sqlStatements = new Properties();
+            sqlStatements.loadFromXML(is);
+            return sqlStatements;
+        }
+        catch (IOException ioe) {
+            String info = "Failed to load SQL statements: ";
+            info += ioe.getMessage();
+            throw new MuProcessException(info, ioe);
+        }
+    }
+
+    public static Properties getDefaultSqlStatements() throws MuProcessException {
+        return getSqlStatements(MuProcessManager.class, "sql-statements.xml");
+    }
+
+    public static MuProcessManagementPolicy getManagmentPolicy(Class clazz, String resource) throws MuProcessException {
+        if (null == clazz) {
+            throw new IllegalArgumentException("class");
+        }
+
+        try (InputStream is = clazz.getResourceAsStream(resource)) {
+            if (null == is) {
+                String info = "Unknown resource: class=\"" + clazz.getName() + "\", resource=\"" + resource + "\"";
+                throw new IllegalArgumentException(info);
+            }
+            final Properties policyProperties = new Properties();
+            policyProperties.loadFromXML(is);
+
+            return ConfigurationTool.bindProperties(MuProcessManagementPolicy.class, policyProperties);
+        }
+        catch (IOException ioe) {
+            String info = "Failed to load process management policy: ";
+            info += ioe.getMessage();
+            throw new MuProcessException(info, ioe);
+        }
+    }
+
+    public static MuProcessManagementPolicy getDefaultManagementPolicy() throws MuProcessException {
+        return getManagmentPolicy(MuProcessManager.class, "default-management-policy.xml");
     }
 }

@@ -57,6 +57,7 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return null == json || json.length() == 0;
     }
@@ -87,7 +88,7 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("\"").append(json).append("\"");
+        buf.append("(\"").append(json).append("\")");
         return buf.toString();
     }
 }

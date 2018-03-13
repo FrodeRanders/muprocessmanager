@@ -54,6 +54,7 @@ public class MuForeignActivityState implements MuActivityState, Serializable {
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return null == json || json.length() == 0;
     }
@@ -71,14 +72,20 @@ public class MuForeignActivityState implements MuActivityState, Serializable {
      * Creates a JSON stream from a MuActivityState
      * @return Reader a JSON stream made from this object
      */
+    @Override
     public Reader toReader() {
         return new StringReader(json);
     }
 
     @Override
+    public String asJson() {
+        return json;
+    }
+
+    @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("\"").append(json).append("\"");
+        buf.append("(\"").append(json).append("\")");
         return buf.toString();
     }
 }

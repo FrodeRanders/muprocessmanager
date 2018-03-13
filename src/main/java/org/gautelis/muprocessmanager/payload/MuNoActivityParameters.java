@@ -30,10 +30,12 @@ import java.io.StringReader;
 public class MuNoActivityParameters implements MuActivityParameters, Serializable {
     private static final long serialVersionUID = 1L;
 
+    @Override
     public boolean isEmpty() {
         return true;
     }
 
+    @Override
     public boolean isNative() {
         return false;
     }
@@ -43,6 +45,7 @@ public class MuNoActivityParameters implements MuActivityParameters, Serializabl
      *
      * @return Reader a JSON stream made from this object
      */
+    @Override
     public Reader toReader() {
         return new StringReader("");
     }
@@ -51,6 +54,7 @@ public class MuNoActivityParameters implements MuActivityParameters, Serializabl
      * Retrns internal representation as JSON
      * @return JSON representation
      */
+    @Override
     public String asJson() {
         return "";
     }

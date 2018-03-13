@@ -39,4 +39,7 @@
          each state. This logging is directed to a particular statistics log -->
     <entry key="seconds-between-logging-statistics">60</entry>
 
+    <!--Assume that we have a 'native data' process flow, suitable for Java
+        process flows -->
+    <entry key="assume-native-process-data-flow">true</entry>
 </properties>

@@ -76,6 +76,7 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
     /**
      * See {@link HashMap#isEmpty()}
      */
+    @Override
     public boolean isEmpty() {
         return parameters.isEmpty();
     }
@@ -95,6 +96,7 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
      * Creates a JSON stream from a MuActivityParameters
      * @return Reader a JSON stream made from this object
      */
+    @Override
     public Reader toReader() {
         return new StringReader(asJson());
     }
@@ -103,6 +105,7 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
      * Retrns internal representation as JSON
      * @return JSON representation
      */
+    @Override
     public String asJson() {
         return gson.toJson(parameters);
     }

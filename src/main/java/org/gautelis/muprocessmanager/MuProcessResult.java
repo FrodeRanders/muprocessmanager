@@ -39,4 +39,10 @@ public interface MuProcessResult {
      * @return Reader a JSON stream made from this object
      */
     Reader toReader();
+
+    /**
+     * Retrns internal representation as JSON
+     * @return JSON representation
+     */
+    String asJson();
 }

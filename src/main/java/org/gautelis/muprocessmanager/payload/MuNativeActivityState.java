@@ -52,6 +52,7 @@ public class MuNativeActivityState implements MuActivityState, Serializable {
         this.state = state;
     }
 
+    @Override
     public boolean isNative() {
         return true;
     }
@@ -80,6 +81,7 @@ public class MuNativeActivityState implements MuActivityState, Serializable {
     /**
      * See {@link HashMap#isEmpty()}
      */
+    @Override
     public boolean isEmpty() {
         return state.isEmpty();
     }
@@ -99,8 +101,18 @@ public class MuNativeActivityState implements MuActivityState, Serializable {
      * Creates a JSON stream from a MuActivityState
      * @return Reader a JSON stream made from this object
      */
+    @Override
     public Reader toReader() {
         return new StringReader(gson.toJson(state));
+    }
+
+    /**
+     * Retrns internal representation as JSON
+     * @return JSON representation
+     */
+    @Override
+    public String asJson() {
+        return gson.toJson(state);
     }
 
     @Override

@@ -56,6 +56,7 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
         this.result = result;
     }
 
+    @Override
     public boolean isNative() {
         return true;
     }
@@ -91,6 +92,7 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
     /**
      * See {@link ArrayList#isEmpty()}
      */
+    @Override
     public boolean isEmpty() {
         return result.isEmpty();
     }
@@ -110,8 +112,18 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
      * Creates a JSON stream from a MuProcessResult
      * @return Reader a JSON stream made from this object
      */
+    @Override
     public Reader toReader() {
         return new StringReader(gson.toJson(result));
+    }
+
+    /**
+     * Retrns internal representation as JSON
+     * @return JSON representation
+     */
+    @Override
+    public String asJson() {
+        return gson.toJson(result);
     }
 
     @Override

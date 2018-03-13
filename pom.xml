@@ -230,7 +230,8 @@
                                     <sourceFile>contrib/derby/sql-statements.xml</sourceFile>
                                     <destinationFile>src/main/resources/org/gautelis/muprocessmanager/sql-statements.xml</destinationFile>
                                 </fileSet>
-                            </fileSets>                        </configuration>
+                            </fileSets>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -58,6 +58,7 @@ public class MuForeignProcessResult implements MuProcessResult, Serializable {
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return null == json || json.length() == 0;
     }
@@ -75,14 +76,20 @@ public class MuForeignProcessResult implements MuProcessResult, Serializable {
      * Creates a JSON stream from a MuProcessResult
      * @return Reader a JSON stream made from this object
      */
+    @Override
     public Reader toReader() {
         return new StringReader(json);
     }
 
     @Override
+    public String asJson() {
+        return json;
+    }
+
+    @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("\"").append(json).append("\"");
+        buf.append("(\"").append(json).append("\")");
         return buf.toString();
     }
 }
