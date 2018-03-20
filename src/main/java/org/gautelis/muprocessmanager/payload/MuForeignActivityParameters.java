@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.gautelis.muprocessmanager.payload;
 import org.apache.commons.io.IOUtils;
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuOrchestrationParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,19 +36,19 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
     private static final long serialVersionUID = 1L;
     private static final Logger log = LoggerFactory.getLogger(MuForeignActivityParameters.class);
 
-    private String json = null;
+    private String foreignData = null;
 
-    public MuForeignActivityParameters() {
-        this.json = "";
+    public MuForeignActivityParameters(String foreignData) {
+        this.foreignData = foreignData;
     }
 
-    public MuForeignActivityParameters(String json) {
-        this.json = json;
+    public MuForeignActivityParameters() {
+        this("");
     }
 
     public MuForeignActivityParameters(Reader reader) {
         try {
-            json = IOUtils.toString(reader);
+            foreignData = IOUtils.toString(reader);
         }
         catch (IOException ioe) {
             // Highly unexpected
@@ -59,7 +60,7 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
 
     @Override
     public boolean isEmpty() {
-        return null == json || json.length() == 0;
+        return null == foreignData || foreignData.length() == 0;
     }
 
     /**
@@ -77,18 +78,22 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
      */
     @Override
     public Reader toReader() {
-        return new StringReader(json);
+        return new StringReader(toJson());
     }
 
+    /**
+     * Returns internal representation as JSON (which in this case _is_ the internal representation)
+     * @return JSON
+     */
     @Override
-    public String asJson() {
-        return json;
+    public String toJson() {
+        return foreignData;
     }
 
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("(\"").append(json).append("\")");
+        buf.append("(\"").append(foreignData).append("\")");
         return buf.toString();
     }
 }

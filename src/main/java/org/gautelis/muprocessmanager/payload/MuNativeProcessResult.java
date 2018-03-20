@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,19 +41,20 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
 
     private static final Gson gson = new GsonBuilder().create();
 
-    private final ArrayList<Object> result;
+    /* package private */ static class ActivityResults extends ArrayList<Object> {}
+    private final ActivityResults results;
 
     public MuNativeProcessResult() {
-        result = new ArrayList<>();
+        results = new ActivityResults();
     }
 
     public MuNativeProcessResult(Object... result) {
         this();
-        this.result.addAll(Arrays.asList(result));
+        this.results.addAll(Arrays.asList(result));
     }
 
-    public MuNativeProcessResult(ArrayList<Object> result) {
-        this.result = result;
+    public MuNativeProcessResult(ActivityResults results) {
+        this.results = results;
     }
 
     @Override
@@ -65,28 +66,28 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
      * See {@link ArrayList#add(Object)}
      */
     public void add(Object value) {
-        result.add(value);
+        results.add(value);
     }
 
     /**
      * See {@link ArrayList#remove(int)}
      */
     public Object remove(int i) {
-        return result.remove(i);
+        return results.remove(i);
     }
 
     /**
      * See {@link ArrayList#get(int)}
      */
     public Object get(int index) {
-        return result.get(index);
+        return results.get(index);
     }
 
     /**
      * See {@link ArrayList#forEach(Consumer)}
      */
     public void forEach(Consumer<Object> action) {
-        result.forEach(action);
+        results.forEach(action);
     }
 
     /**
@@ -94,7 +95,7 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
      */
     @Override
     public boolean isEmpty() {
-        return result.isEmpty();
+        return results.isEmpty();
     }
 
     /**
@@ -104,7 +105,7 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
      */
     public static MuNativeProcessResult fromReader(final Reader reader) {
         @SuppressWarnings("unchecked")
-        MuNativeProcessResult result = new MuNativeProcessResult(gson.fromJson(reader, ArrayList.class));
+        MuNativeProcessResult result = new MuNativeProcessResult(gson.fromJson(reader, ActivityResults.class));
         return result;
     }
 
@@ -114,23 +115,23 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
      */
     @Override
     public Reader toReader() {
-        return new StringReader(gson.toJson(result));
+        return new StringReader(toJson());
     }
 
     /**
-     * Retrns internal representation as JSON
+     * Returns internal representation as JSON
      * @return JSON representation
      */
     @Override
-    public String asJson() {
-        return gson.toJson(result);
+    public String toJson() {
+        return gson.toJson(results);
     }
 
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
         buf.append("[");
-        result.forEach((v) -> buf.append("{").append(v).append("}"));
+        results.forEach((v) -> buf.append("{").append(v).append("}"));
         buf.append("]");
         return buf.toString();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  */
 package org.gautelis.muprocessmanager;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.gautelis.vopn.io.Cloner;
 
 import java.io.IOException;
@@ -27,20 +28,14 @@ import java.util.Optional;
  */
 /* package private */ class MuVolatileProcessStep {
 
-    private final MuActivityParameters parameters;
-    private Optional<MuActivityState> preState = Optional.empty();
+    private final String correlationId;
+    private final MuActivityParameters activityParameters;
 
     private MuBackwardBehaviour backwardBehaviour = null;
 
-    /* package private */ MuVolatileProcessStep(final MuActivityParameters parameters) throws MuProcessException {
-        try {
-            this.parameters = Cloner.clone(parameters);
-        }
-        catch (IOException | ClassNotFoundException e) {
-            String info = "Could not clone activity parameters for process step: ";
-            info += e.getMessage();
-            throw new MuProcessException(info, e);
-        }
+    /* package private */ MuVolatileProcessStep(String correlationId, final MuActivityParameters activityParameters) throws MuProcessException {
+        this.correlationId = correlationId;
+        this.activityParameters = activityParameters;
     }
 
     /* package private */ boolean execute(
@@ -49,12 +44,11 @@ import java.util.Optional;
     ) {
         backwardBehaviour = backward;
 
-        preState = forward.getState();
-
         // Run forward transaction
         boolean success;
         try {
-            success = forward.forward(parameters, result);
+            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
+            success = forward.forward(context);
         }
         catch (Throwable t) {
             success = false;
@@ -67,7 +61,8 @@ import java.util.Optional;
         // Run backward transaction
         boolean success;
         try {
-            success = backwardBehaviour.backward(parameters, preState);
+            MuBackwardActivityContext context = new MuBackwardActivityContext(correlationId, activityParameters, null, null);
+            success = backwardBehaviour.backward(context);
         }
         catch (Throwable t) {
             success = false;

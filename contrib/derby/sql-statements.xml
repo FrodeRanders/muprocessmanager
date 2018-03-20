@@ -67,8 +67,8 @@
     </entry>
 
     <entry key="STORE_PROCESS_STEP">
-        INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, parameters, previous_state)
-        VALUES (?,?,?,?,?,?)
+        INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, activity_params, orchestr_params, previous_state)
+        VALUES (?,?,?,?,?,?,?)
     </entry>
 
     <entry key="REMOVE_PROCESS_STEP">
@@ -82,7 +82,7 @@
     </entry>
 
     <entry key="FETCH_PROCESS_STEPS_BY_PROCID_DETAILED">
-        SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.parameters, step.retries, step.previous_state
+        SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
         FROM mu_process_step step
         INNER JOIN mu_process proc
           ON proc.process_id = step.process_id

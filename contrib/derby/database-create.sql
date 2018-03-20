@@ -1,5 +1,5 @@
 ---------------------------------------------------------------
--- Copyright (C) 2017 Frode Randers
+-- Copyright (C) 2017-2018 Frode Randers
 -- All rights reserved
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,8 +51,8 @@ CREATE TABLE mu_process_step (
 
   class_name VARCHAR(255) NOT NULL,  -- qualified class name must fit
   method_name VARCHAR(255) NOT NULL, -- method name must fit
-  parameters CLOB NOT NULL,
-
+  activity_params CLOB NOT NULL,
+  orchestr_params CLOB DEFAULT NULL,
   previous_state CLOB DEFAULT NULL,
 
   retries INTEGER NOT NULL DEFAULT 0,

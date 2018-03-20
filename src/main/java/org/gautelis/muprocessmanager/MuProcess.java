@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,8 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.gautelis.muprocessmanager.payload.MuForeignActivityParameters;
+import org.apache.commons.lang3.SerializationUtils;
 import org.gautelis.muprocessmanager.payload.MuForeignProcessResult;
-import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
 import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.gautelis.vopn.io.Cloner;
 import org.slf4j.Logger;
@@ -120,21 +119,22 @@ public class MuProcess {
      * This version of execute does not honour any {@link MuActivityState process state} -- since there
      * can be no compensation for this activity.
      * @param forwardBehaviour the forward behaviour of the activity to execute -- may be a lambda
-     * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @param activityParameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
      * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
      * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
      */
     public void execute(
             final MuForwardBehaviour forwardBehaviour,
-            final MuActivityParameters parameters
+            final MuActivityParameters activityParameters
     ) throws MuProcessException {
-
-        compensationLog.touchProcessHeader(this);
 
         // Run forward action
         boolean forwardSuccess;
         try {
-            forwardSuccess = forwardBehaviour.forward(parameters, result);
+            compensationLog.touchProcess(this);
+
+            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
+            forwardSuccess = forwardBehaviour.forward(context);
         }
         catch (Throwable t) {
             String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
@@ -158,36 +158,105 @@ public class MuProcess {
      * Executes an {@link MuActivity activity} in a {@link MuProcess process},
      * using the behaviour laid forth in <a href="https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf">this article</a> about Sagas.
      * @param activity the activity to execute
-     * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @param activityParameters business parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @param orchestrationParameters orchestration parameters to the 'backward' behaviour of the activity.
      * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
      * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
      */
     public void execute(
             final MuActivity activity,
-            final MuActivityParameters parameters
+            final MuActivityParameters activityParameters,
+            final MuOrchestrationParameters orchestrationParameters
     ) throws MuProcessException {
 
-        MuActivityParameters parametersSnapshot;
-        try {
-            parametersSnapshot = Cloner.clone(parameters);
-        }
-        catch (IOException | ClassNotFoundException e) {
-            String info = this + ": Failed to make snapshot of activity parameters for " + activity.getClass().getName();
-            throw new MuProcessException(info, e);
-        }
-
         final Optional<MuActivityState> preState = activity.getState();
-
-        // Log backward activity
-        compensationLog.pushCompensation(this, activity, parametersSnapshot, preState);
 
         // Run forward action
         boolean forwardSuccess;
         try {
-            forwardSuccess = activity.forward(parameters, result);
+            // Log backward activity
+            if (preState.isPresent()) {
+                compensationLog.pushCompensation(this, activity, activityParameters, orchestrationParameters, preState.get());
+            }
+            else {
+                compensationLog.pushCompensation(this, activity, activityParameters, orchestrationParameters);
+            }
+            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
+            forwardSuccess = activity.forward(context);
         }
         catch (Throwable t) {
             String info = this + ": Forward activity (\"" + activity.getClass().getName() + "\") step " + currentStep + " failed: ";
+            info += t.getMessage();
+            log.info(info, t);
+
+            forwardSuccess = false;
+        }
+
+        if (!forwardSuccess) {
+            // So we failed. Now run backward actions, and throw exception corresponding to
+            // relevant syndrome:
+            //     - failed, but managed to compensate
+            //     - failed and so did compensation(s)
+            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+        }
+    }
+
+    /**
+     * Executes an {@link MuActivity activity} in a {@link MuProcess process},
+     * using the behaviour laid forth in <a href="https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf">this article</a> about Sagas.
+     * @param activity the activity to execute
+     * @param activityParameters business parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
+     * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
+     */
+    public void execute(
+            final MuActivity activity,
+            final MuActivityParameters activityParameters
+    ) throws MuProcessException {
+        execute(activity, activityParameters, null);
+    }
+
+    /**
+     * Executes an activity, by means of the two constituents {@link MuForwardBehaviour forward behaviour}
+     * and {@link MuBackwardBehaviour backward behaviour}, using the behaviour laid forth in
+     * <a href="https://pdfs.semanticscholar.org/1155/490b99d6a2501f7bf79e4456a5c6c2bc153a.pdf">this article</a>
+     * about Sagas.
+     * @param forwardBehaviour the forward behaviour of the activity to execute -- may be a lambda
+     * @param backwardBehaviour the backward behaviour of the activity to execute -- may <strong>NOT</strong> be a lambda since we need to know what class to instantiate object from during compensation
+     * @param activityParameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @param orchestrationParameters orchestration parameters to the 'backward' behaviour of the activity.
+     * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
+     * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
+     */
+    public void execute(
+            final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
+            final MuActivityParameters activityParameters, final MuOrchestrationParameters orchestrationParameters
+    ) throws MuProcessException {
+
+        String backwardClassName = backwardBehaviour.getClass().getName();
+        if (backwardClassName.contains(LAMBDA_INDICATION)) {
+            String info = "Backward behaviour can not be a lambda: " + backwardClassName;
+            throw new MuProcessException(info);
+        }
+
+        final Optional<MuActivityState> preState = forwardBehaviour.getState();
+
+        // Run forward action
+        boolean forwardSuccess;
+        try {
+            // Log backward activity
+            if (preState.isPresent()) {
+                compensationLog.pushCompensation(this, backwardBehaviour, activityParameters, orchestrationParameters, preState.get());
+            }
+            else {
+                compensationLog.pushCompensation(this, backwardBehaviour, activityParameters, orchestrationParameters);
+            }
+
+            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
+            forwardSuccess = forwardBehaviour.forward(context);
+        }
+        catch (Throwable t) {
+            String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
             info += t.getMessage();
             log.info(info, t);
 
@@ -210,55 +279,15 @@ public class MuProcess {
      * about Sagas.
      * @param forwardBehaviour the forward behaviour of the activity to execute -- may be a lambda
      * @param backwardBehaviour the backward behaviour of the activity to execute -- may <strong>NOT</strong> be a lambda since we need to know what class to instantiate object from during compensation
-     * @param parameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
+     * @param activityParameters parameters to the 'forward' as well as the 'backward' behaviour of the activity.
      * @throws MuProcessForwardBehaviourException if forward behaviour failed, but all compensations were successful
      * @throws MuProcessBackwardBehaviourException if forward behaviour failed and also at least some compensation behaviour
      */
     public void execute(
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
-            final MuActivityParameters parameters
+            final MuActivityParameters activityParameters
     ) throws MuProcessException {
-
-        String backwardClassName = backwardBehaviour.getClass().getName();
-        if (backwardClassName.contains(LAMBDA_INDICATION)) {
-            String info = "Backward behaviour can not be a lambda: " + backwardClassName;
-            throw new MuProcessException(info);
-        }
-
-        MuActivityParameters parametersSnapshot;
-        try {
-            parametersSnapshot = Cloner.clone(parameters);
-        }
-        catch (IOException | ClassNotFoundException e) {
-            String info = this + ": Failed to make snapshot of activity parameters for " + backwardClassName;
-            throw new MuProcessException(info, e);
-        }
-
-        final Optional<MuActivityState> preState = forwardBehaviour.getState();
-
-        // Log backward activity
-        compensationLog.pushCompensation(this, backwardBehaviour, parametersSnapshot, preState);
-
-        // Run forward action
-        boolean forwardSuccess;
-        try {
-            forwardSuccess = forwardBehaviour.forward(parameters, result);
-        }
-        catch (Throwable t) {
-            String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
-            info += t.getMessage();
-            log.info(info, t);
-
-            forwardSuccess = false;
-        }
-
-        if (!forwardSuccess) {
-            // So we failed. Now run backward actions, and throw exception corresponding to
-            // relevant syndrome:
-            //     - failed, but managed to compensate
-            //     - failed and so did compensation(s)
-            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
-        }
+        execute(forwardBehaviour, backwardBehaviour, activityParameters, null);
     }
 
     /**
@@ -338,14 +367,14 @@ public class MuProcess {
 
         List<FailedCompensation> failedCompensations = new LinkedList<>();
         try {
-            compensationLog.compensate(processId, (activity, method, parameters, preState, step, retries) -> {
+            compensationLog.compensate(processId, (activity, method, context, step, retries) -> {
                 boolean compensationSuccess;
 
                 String activityName = activity.getClass().getName();
 
                 try {
                     // Run backward transaction
-                    compensationSuccess = (boolean) method.invoke(activity, parameters, preState);
+                    compensationSuccess = (boolean) method.invoke(activity, context);
 
                     // Record failure, if needed
                     if (!compensationSuccess) {
@@ -364,7 +393,7 @@ public class MuProcess {
                 }
 
                 if (!compensationSuccess) {
-                    log.trace("Failed to compensate step {} activity (\"{}\"): correlationId=\"{}\" [continuing]", step, activityName, correlationId);
+                    log.trace("Failed to compensate step {} activity (\"{}\"): correlationId=\"{}\"", step, activityName, correlationId);
 
                     if (!acceptCompensationFailure) {
                         // Handling without throwable, i.e. compensation failed in a controlled manner.

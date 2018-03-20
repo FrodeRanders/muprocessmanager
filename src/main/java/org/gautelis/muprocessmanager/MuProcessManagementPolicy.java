@@ -1,5 +1,6 @@
 package org.gautelis.muprocessmanager;
 
+import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
 import org.gautelis.muprocessmanager.payload.MuForeignActivityParameters;
 import org.gautelis.vopn.lang.Configurable;
 
@@ -43,12 +44,12 @@ public interface MuProcessManagementPolicy {
      * <p>
      * In the native case, the manager will use
      * <ul>
-     *     <li>{@link org.gautelis.muprocessmanager.payload.MuNativeActivityParameters native activity parameters}</li>
+     *     <li>{@link MuNativeActivityParameters native activity parameters}</li>
      * </ul>
      * <p>
      * In the foreign case, the manager will use
      * <ul>
-     *     <li>{@link org.gautelis.muprocessmanager.payload.MuForeignActivityParameters foreign activity parameters}</li>
+     *     <li>{@link MuForeignActivityParameters foreign activity parameters}</li>
      * </ul>
      */
     @Configurable(property = "assume-native-process-data-flow", value = "true")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,11 +74,11 @@ public class MuForeignActivityState implements MuActivityState, Serializable {
      */
     @Override
     public Reader toReader() {
-        return new StringReader(json);
+        return new StringReader(toJson());
     }
 
     @Override
-    public String asJson() {
+    public String toJson() {
         return json;
     }
 

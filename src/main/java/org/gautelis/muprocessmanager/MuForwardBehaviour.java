@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,13 @@ import java.util.Optional;
 @FunctionalInterface
 public interface MuForwardBehaviour {
     /**
+     * Execute forward behaviour.
+     * @param context {@link MuForwardActivityContext context} for the activity
+     * @return true if successful, false otherwise
+     */
+    boolean forward(MuForwardActivityContext context);
+
+    /**
      * Retrieve pre-state, i.e. state before the invocation of the forward action
      * and possibly the state we want to revert to by means of a compensation.
      * <p>
@@ -40,12 +47,4 @@ public interface MuForwardBehaviour {
      * @return previous state if such a state is relevant
      */
     default Optional<MuActivityState> getState() { return Optional.empty(); }
-
-    /**
-     * Execute forward behaviour.
-     * @param arguments arguments to the forward transaction
-     * @param result results of the forward transaction
-     * @return true if successful, false otherwise
-     */
-    boolean forward(MuActivityParameters arguments, final MuProcessResult result);
 }

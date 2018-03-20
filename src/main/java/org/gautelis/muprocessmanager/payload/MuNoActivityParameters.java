@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,12 @@ package org.gautelis.muprocessmanager.payload;
 
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuOrchestrationParameters;
 
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
+import java.util.Optional;
 
 /**
  * Wraps empty parameters to a {@link MuActivity}.
@@ -55,7 +57,21 @@ public class MuNoActivityParameters implements MuActivityParameters, Serializabl
      * @return JSON representation
      */
     @Override
-    public String asJson() {
+    public String toJson() {
         return "";
+    }
+
+    public void putOrchestrationParameter(String key, String value) {
+    }
+
+    public Optional<String> getOrchestrationParameter(String key) {
+        return Optional.empty();
+    }
+
+    public MuOrchestrationParameters getOrchestrationParameters() {
+        return new MuOrchestrationParameters();
+    }
+
+    public void putOrchestrationParameter(MuOrchestrationParameters parameters) {
     }
 }

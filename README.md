@@ -168,7 +168,8 @@ in this case a simple dummy load with probabilistic failure behaviour:
 package test;
 
 import org.gautelis.muprocessmanager.MuActivity;
-import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuForwardActivityContext;
+import org.gautelis.muprocessmanager.MuBackwardActivityContext;
 
 public class FirstActivity implements MuActivity {
 
@@ -182,7 +183,7 @@ public class FirstActivity implements MuActivity {
      * activity. 
      */
     @Override
-    public boolean forward(MuActivityParameters args, MuProcessResult result) {
+    public boolean forward(MuForwardActivityContext context) {
         return !(Math.random() < forwardFailureProbability);
     }
 
@@ -191,7 +192,7 @@ public class FirstActivity implements MuActivity {
      * of this activity.
      */
     @Override
-    public boolean backward(MuActivityParameters args, Optional<MuActivityState> preState) {
+    public boolean backward(MuBackwardActivityContext context) {
         return !(Math.random() < backwardFailureProbability);
     }
     

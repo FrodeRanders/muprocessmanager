@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,6 @@
  */
 package org.gautelis.muprocessmanager;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.gautelis.muprocessmanager.payload.*;
 import org.gautelis.vopn.db.Database;
 import org.gautelis.vopn.lang.DynamicLoader;
@@ -27,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.Reader;
-import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
@@ -57,7 +54,7 @@ public class MuPersistentLog {
     private final boolean assumeNativeProcessDataFlow;
 
     public interface CompensationRunnable {
-        boolean run(MuBackwardBehaviour activity, Method method, MuActivityParameters parameters, Optional<MuActivityState> preState, int step, int retries) throws MuProcessBackwardBehaviourException;
+        boolean run(MuBackwardBehaviour activity, Method method, MuBackwardActivityContext context, int step, int retries) throws MuProcessBackwardBehaviourException;
     }
 
     public interface CleanupRunnable {
@@ -86,10 +83,12 @@ public class MuPersistentLog {
             throw syntheticException;
         }
 
-        // Used during development to prune unused statements and otherwise
-        // harmless since constantly false conditional blocks are removed at
-        // compile time (as per the Java specification)
         if (false) {
+            //---------------------------------------------------------------------------
+            // Used during development to prune unused statements and otherwise
+            // harmless since constantly false conditional blocks are removed at
+            // compile time (as per the Java specification)
+            //---------------------------------------------------------------------------
             sqlStatementCount.put(key, 1L + sqlStatementCount.getOrDefault(key, 0L));
 
             if (++i % 100000 == 0) {
@@ -149,7 +148,7 @@ public class MuPersistentLog {
             //  [Oracle:     Data already exists]
             //  [DB2:        Constraint violation]
             if (sqle.getSQLState().startsWith("23")) {
-                String info = "A process already exists for business request with correlation ID \"" + process.getCorrelationId() + "\"";
+                String info = "A process already exists for this business request: correlation ID \"" + process.getCorrelationId() + "\"";
                 log.trace(info);
                 throw new MuProcessAlreadyExistsException(info, sqle);
             }
@@ -425,7 +424,7 @@ public class MuPersistentLog {
                             }
                         }
 
-                        details.addStepDetails(stepId, retries, preState);
+                        details.addActivityDetails(stepId, retries, preState);
                     }
                 }
             }
@@ -470,56 +469,81 @@ public class MuPersistentLog {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // correlation_id, step_id, class_name, method_name, parameters, retries
+                        // correlation_id, step_id, class_name, method_name
                         int idx = 0;
                         String correlationId = rs.getString(++idx);
                         int stepId = rs.getInt(++idx);
                         String className = rs.getString(++idx);
                         String methodName = rs.getString(++idx);
 
-                        // We need to consume the character stream right away, since the next call to
-                        // rs.getCharacterStream() may effectively sabotage it's state. This is the
-                        // case with the Derby JDBC implementation (but not with the PostgreSQL one).
-                        MuActivityParameters parameters;
-                        Reader paramReader = rs.getCharacterStream(++idx);
+                        // activity parameters
+                        //   We need to consume the character stream right away, since the next call to
+                        //   rs.getCharacterStream() may effectively sabotage it's state. This is the
+                        //   case with the Derby JDBC implementation (but not with the PostgreSQL version).
+                        MuActivityParameters activityParameters;
+                        Reader activityParamReader = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
                             if (assumeNativeProcessDataFlow) {
-                                parameters = MuNativeActivityParameters.fromReader(paramReader);
+                                activityParameters = MuNativeActivityParameters.fromReader(activityParamReader);
                             }
                             else {
-                                parameters = MuForeignActivityParameters.fromReader(paramReader);
+                                activityParameters = MuForeignActivityParameters.fromReader(activityParamReader);
                             }
                         }
                         else {
-                            parameters = new MuNoActivityParameters();
+                            activityParameters = new MuNoActivityParameters();
                         }
 
+                        // orchestration parameters
+                        //   Consume the stream
+                        MuOrchestrationParameters orchestrationParameters = null;
+                        Reader orchestrationParamReader = rs.getCharacterStream(++idx);
+                        if (!rs.wasNull()) {
+                            orchestrationParameters =
+                                    MuOrchestrationParameters.fromReader(orchestrationParamReader);
+                        }
+
+                        //
                         int retries = rs.getInt(++idx);
 
-                        // Just as well to consume the stream now
-                        Optional<MuActivityState> preState;
+                        // pre-state
+                        //   Consume the stream
+                        MuActivityState preState = null;
                         Reader stateReader = rs.getCharacterStream(++idx);
                         if (!rs.wasNull()) {
-                            MuActivityState state;
                             if (assumeNativeProcessDataFlow) {
-                                state = MuNativeActivityState.fromReader(stateReader);
+                                preState = MuNativeActivityState.fromReader(stateReader);
                             }
                             else {
-                                state = MuForeignActivityState.fromReader(stateReader);
+                                preState = MuForeignActivityState.fromReader(stateReader);
                             }
-                            preState = Optional.of(state);
-                        }
-                        else {
-                            preState = Optional.empty();
                         }
 
                         //
                         MuBackwardBehaviour activity = loader.load(className);
                         if (activity != null) {
-                            Class[] parameterTypes = { MuActivityParameters.class, Optional.class };
+                            if (false) {
+                                 //---------------------------------------------------------------------------
+                                 // Used during development to trap inadvertent changes to signature of
+                                 // MuBackwardBehaviour#backward, since we have a non-compile time detectable
+                                 // dependency below. This if-statement is never meant to be run but is
+                                 // harmless since constantly false conditional blocks are removed at
+                                 // compile time (as per the Java specification)
+                                 //---------------------------------------------------------------------------
+                                MuBackwardBehaviour trapChangesToInterface = new MuBackwardBehaviour() {
+                                    @Override
+                                    public boolean backward(MuBackwardActivityContext context) {
+                                        return false;
+                                    }
+                                };
+                            }
+                            Class[] parameterTypes = { MuBackwardActivityContext.class };
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
 
-                            if (runnable.run(activity, method, parameters, preState, stepId, retries)) {
+                            MuBackwardActivityContext context =
+                                    new MuBackwardActivityContext(correlationId, activityParameters, orchestrationParameters, preState);
+
+                            if (runnable.run(activity, method, context, stepId, retries)) {
                                 popCompensation(processId, stepId);
                             }
                             else {
@@ -747,7 +771,7 @@ public class MuPersistentLog {
     //    Methods called from MuProcess and tightly integrated with the MuProcess lifecycle
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /* package private */ void touchProcessHeader(
+    /* package private */ void touchProcess(
             final MuProcess process
     ) throws MuProcessException {
 
@@ -777,7 +801,9 @@ public class MuPersistentLog {
 
     /* package private */ void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
-            final MuActivityParameters parameters, final Optional<MuActivityState> preState
+            final MuActivityParameters activityParameters,
+            final MuOrchestrationParameters orchestrationParameters,
+            final MuActivityState preState
     ) throws MuProcessException {
 
         // Determine class name
@@ -788,7 +814,22 @@ public class MuPersistentLog {
         String methodName = activity.getPersistableMethodName();
 
         try {
-            clazz.getMethod(activity.getPersistableMethodName(), MuActivityParameters.class, Optional.class);
+            if (false) {
+                //---------------------------------------------------------------------------
+                // Used during development to trap inadvertent changes to signature of
+                // MuBackwardBehaviour#backward, since we have a non-compile time detectable
+                // dependency below. This if-statement is never meant to be run but is
+                // harmless since constantly false conditional blocks are removed at
+                // compile time (as per the Java specification)
+                //---------------------------------------------------------------------------
+                MuBackwardBehaviour trapChangesToInterface = new MuBackwardBehaviour() {
+                    @Override
+                    public boolean backward(MuBackwardActivityContext context) {
+                        return false;
+                    }
+                };
+            }
+            clazz.getMethod(activity.getPersistableMethodName(), MuBackwardActivityContext.class);
         }
         catch (NoSuchMethodException nsme) {
             // Not ever expected to happen in production! Can potentially happen in development though,
@@ -823,11 +864,25 @@ public class MuPersistentLog {
                 int idx = 0;
                 stmt.setInt(++idx, process.getProcessId());
                 stmt.setInt(++idx, process.getCurrentStep());
+
+                // class::method of compensation
                 stmt.setString(++idx, className);
                 stmt.setString(++idx, methodName);
-                stmt.setCharacterStream(++idx, parameters.toReader());
-                if (preState.isPresent()) {
-                    stmt.setCharacterStream(++idx, preState.get().toReader());
+
+                // activity parameters
+                stmt.setCharacterStream(++idx, activityParameters.toReader());
+
+                // orchestration parameters (if applicable)
+                if (null != orchestrationParameters && !orchestrationParameters.isEmpty()) {
+                    stmt.setCharacterStream(++idx, orchestrationParameters.toReader());
+                }
+                else {
+                    stmt.setNull(++idx, Types.CLOB);
+                }
+
+                // pre-state (if applicable)
+                if (null != preState && !preState.isEmpty()) {
+                    stmt.setCharacterStream(++idx, preState.toReader());
                 }
                 else {
                     stmt.setNull(++idx, Types.CLOB);
@@ -863,6 +918,21 @@ public class MuPersistentLog {
             }
             catch (SQLException ignore) {}
         }
+    }
+
+    /* package private */ void pushCompensation(
+            final MuProcess process, final MuBackwardBehaviour activity,
+            final MuActivityParameters activityParameters,
+            final MuOrchestrationParameters orchestrationParameters
+    ) throws MuProcessException {
+        pushCompensation(process, activity, activityParameters, orchestrationParameters, null);
+    }
+
+    /* package private */ void pushCompensation(
+            final MuProcess process, final MuBackwardBehaviour activity,
+            final MuActivityParameters activityParameters
+    ) throws MuProcessException {
+        pushCompensation(process, activity, activityParameters, null, null);
     }
 
     private void popCompensation(

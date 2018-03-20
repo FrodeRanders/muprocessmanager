@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -93,7 +93,7 @@ public class MuProcessDetails {
         return Collections.unmodifiableCollection(activityDetails);
     }
 
-    /* package private */ void addStepDetails(int stepId, int retries, MuActivityState preState) {
+    /* package private */ void addActivityDetails(int stepId, int retries, MuActivityState preState) {
         activityDetails.add(new MuActivityDetails(stepId, retries, preState));
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import java.util.Stack;
 public class MuVolatileProcess {
     private static final Logger log = LoggerFactory.getLogger(MuVolatileProcess.class);
 
+    private final String correlationId;
     private final boolean acceptCompensationFailure;
     private final boolean assumeNativeProcessDataFlow;
 
@@ -47,8 +48,9 @@ public class MuVolatileProcess {
 
 
     /* package private */ MuVolatileProcess(
-            final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow
+            final String correlationId, final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow
     ) {
+        this.correlationId = correlationId;
         this.acceptCompensationFailure = acceptCompensationFailure;
         this.assumeNativeProcessDataFlow = assumeNativeProcessDataFlow;
 
@@ -73,7 +75,7 @@ public class MuVolatileProcess {
             final MuActivityParameters parameters
     ) throws MuProcessException {
 
-        MuVolatileProcessStep step = new MuVolatileProcessStep(parameters);
+        MuVolatileProcessStep step = new MuVolatileProcessStep(correlationId, parameters);
         stepStack.push(step);
 
         boolean forwardSuccess;

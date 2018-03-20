@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,13 @@
 package org.gautelis.muprocessmanager;
 
 import java.io.Reader;
-import java.util.HashMap;
+import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * Wraps parameters to a {@link MuActivity}.
  */
-public interface MuActivityParameters {
+public interface MuActivityParameters extends Serializable {
 
     default boolean isEmpty() {
         return true;
@@ -44,5 +45,5 @@ public interface MuActivityParameters {
      * Retrns internal representation as JSON
      * @return JSON representation
      */
-    String asJson();
+    String toJson();
 }

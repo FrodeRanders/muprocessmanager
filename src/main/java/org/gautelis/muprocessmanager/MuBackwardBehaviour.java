@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,17 @@
  */
 package org.gautelis.muprocessmanager;
 
-import java.util.Optional;
-
 /**
  * A representation of the compensation behaviour of a {@link MuActivity}.
  */
 @FunctionalInterface
 public interface MuBackwardBehaviour {
-    boolean backward(MuActivityParameters args, Optional<MuActivityState> preState);
+    /**
+     * Execute backward behaviour.
+     * @param context {@link MuBackwardActivityContext context} for the activity
+     * @return true if successful, false otherwise
+     */
+    boolean backward(MuBackwardActivityContext context);
 
     default String getPersistableMethodName() { return "backward"; }
 }

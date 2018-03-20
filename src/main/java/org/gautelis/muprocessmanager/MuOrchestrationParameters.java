@@ -15,14 +15,10 @@
  * limitations under the License.
  *
  */
-package org.gautelis.muprocessmanager.payload;
+package org.gautelis.muprocessmanager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.gautelis.muprocessmanager.MuActivityState;
-import org.gautelis.muprocessmanager.MuBackwardBehaviour;
-import org.gautelis.muprocessmanager.MuForwardBehaviour;
-import org.gautelis.muprocessmanager.MuPersistentLog;
 
 import java.io.Reader;
 import java.io.Serializable;
@@ -31,94 +27,87 @@ import java.util.HashMap;
 import java.util.function.BiConsumer;
 
 /**
- * Wraps previous state (whatever that may be) before acted upon by an {@link MuForwardBehaviour activity},
- * and possibly reinstated by a {@link MuBackwardBehaviour compensation}.
+ * Wraps orchestration parameters.
  * <p>
  * The value part has to be serializable, as the whole thing is persisted
  * to database ({@link MuPersistentLog} takes care of this) as a JSON object.
  */
-public class MuNativeActivityState implements MuActivityState, Serializable {
+public class MuOrchestrationParameters implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().create();
 
-    private final HashMap<String, Object> state;
+    private static class OrchestrationParameters extends HashMap<String, String> {}
+    private final OrchestrationParameters parameters;
 
-    public MuNativeActivityState() {
-        state = new HashMap<>();
+    public MuOrchestrationParameters() {
+        this.parameters =  new OrchestrationParameters();
     }
 
-    public MuNativeActivityState(HashMap<String, Object> state) {
-        this.state = state;
-    }
-
-    @Override
-    public boolean isNative() {
-        return true;
+    public MuOrchestrationParameters(HashMap<String, String> parameters) {
+        this();
+        this.parameters.putAll(parameters);
     }
 
     /**
      * See {@link HashMap#put(Object, Object)}
      */
-    public void put(String key, Object value) {
-        state.put(key, value);
+    public void put(String key, String value) {
+        parameters.put(key, value);
     }
 
     /**
      * See {@link HashMap#get(Object)}
      */
-    public Object get(String key) {
-        return state.get(key);
+    public String get(String key) {
+        return parameters.get(key);
     }
 
     /**
      * See {@link HashMap#forEach(BiConsumer)}
      */
-    public void forEach(BiConsumer<String, Object> action) {
-        state.forEach(action);
+    public void forEach(BiConsumer<String, String> action) {
+        parameters.forEach(action);
     }
 
     /**
      * See {@link HashMap#isEmpty()}
      */
-    @Override
     public boolean isEmpty() {
-        return state.isEmpty();
+        return parameters.isEmpty();
     }
 
     /**
-     * Creates a MuActivityState from a JSON stream.
+     * Creates a MuActivityParameters from a JSON stream.
      * @param reader JSON stream
      * @return MuActivityParameters made from JSON stream
      */
-    public static MuNativeActivityState fromReader(final Reader reader) {
+    public static MuOrchestrationParameters fromReader(Reader reader) {
         @SuppressWarnings("unchecked")
-        MuNativeActivityState state = new MuNativeActivityState(gson.fromJson(reader, HashMap.class));
-        return state;
+        MuOrchestrationParameters parameters = new MuOrchestrationParameters(gson.fromJson(reader, OrchestrationParameters.class));
+        return parameters;
     }
 
     /**
-     * Creates a JSON stream from a MuActivityState
+     * Creates a JSON stream from a MuActivityParameters
      * @return Reader a JSON stream made from this object
      */
-    @Override
     public Reader toReader() {
-        return new StringReader(gson.toJson(state));
+        return new StringReader(toJson());
     }
 
     /**
      * Retrns internal representation as JSON
      * @return JSON representation
      */
-    @Override
     public String toJson() {
-        return gson.toJson(state);
+        return gson.toJson(parameters);
     }
 
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
         buf.append("[");
-        state.forEach((k, v) -> buf.append("{key=\"").append(k).append("\" value=\"").append(v).append("\"}"));
+        parameters.forEach((k, v) -> buf.append("{key=\"").append(k).append("\" value=\"").append(v).append("\"}"));
         buf.append("]");
         return buf.toString();
     }

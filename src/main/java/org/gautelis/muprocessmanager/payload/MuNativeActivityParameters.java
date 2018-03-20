@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuOrchestrationParameters;
 import org.gautelis.muprocessmanager.MuPersistentLog;
 
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /**
@@ -39,14 +41,14 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().create();
 
-    private final HashMap<String, Object> parameters;
+    private final HashMap<String, Object> nativeParameters;
 
     public MuNativeActivityParameters() {
-        this.parameters =  new HashMap<>();
+        this.nativeParameters = new HashMap<>();
     }
 
-    public MuNativeActivityParameters(HashMap<String, Object> parameters) {
-        this.parameters = parameters;
+    public MuNativeActivityParameters(HashMap<String, Object> nativeParameters) {
+        this.nativeParameters = nativeParameters;
     }
 
     @Override
@@ -56,21 +58,21 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
      * See {@link HashMap#put(Object, Object)}
      */
     public void put(String key, Object value) {
-        parameters.put(key, value);
+        nativeParameters.put(key, value);
     }
 
     /**
      * See {@link HashMap#get(Object)}
      */
     public Object get(String key) {
-        return parameters.get(key);
+        return nativeParameters.get(key);
     }
 
     /**
      * See {@link HashMap#forEach(BiConsumer)}
      */
     public void forEach(BiConsumer<String, Object> action) {
-        parameters.forEach(action);
+        nativeParameters.forEach(action);
     }
 
     /**
@@ -78,7 +80,7 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
      */
     @Override
     public boolean isEmpty() {
-        return parameters.isEmpty();
+        return nativeParameters.isEmpty();
     }
 
     /**
@@ -98,7 +100,7 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
      */
     @Override
     public Reader toReader() {
-        return new StringReader(asJson());
+        return new StringReader(toJson());
     }
 
     /**
@@ -106,15 +108,15 @@ public class MuNativeActivityParameters implements MuActivityParameters, Seriali
      * @return JSON representation
      */
     @Override
-    public String asJson() {
-        return gson.toJson(parameters);
+    public String toJson() {
+        return gson.toJson(nativeParameters);
     }
 
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
         buf.append("[");
-        parameters.forEach((k, v) -> buf.append("{key=\"").append(k).append("\" value=\"").append(v).append("\"}"));
+        nativeParameters.forEach((k, v) -> buf.append("{key=\"").append(k).append("\" value=\"").append(v).append("\"}"));
         buf.append("]");
         return buf.toString();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
 package test;
 
 import org.gautelis.muprocessmanager.MuActivity;
-import org.gautelis.muprocessmanager.MuActivityParameters;
-import org.gautelis.muprocessmanager.MuProcessResult;
 import org.gautelis.muprocessmanager.MuActivityState;
+import org.gautelis.muprocessmanager.MuBackwardActivityContext;
+import org.gautelis.muprocessmanager.MuForwardActivityContext;
 import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
 import org.gautelis.muprocessmanager.payload.MuNativeActivityState;
 import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
@@ -36,13 +36,13 @@ public class FourthActivity implements MuActivity {
     public FourthActivity() {}
 
     @Override
-    public boolean forward(MuActivityParameters args, MuProcessResult result) {
-        if (args.isNative() && result.isNative()) {
-            MuNativeActivityParameters nargs = (MuNativeActivityParameters)args;
-            MuNativeProcessResult nresult = (MuNativeProcessResult)result;
-            double piApprox = (double) nargs.get("pi-kinda");
-            double hatSize = (double) nresult.remove(0);
-            nresult.add(piApprox * hatSize);
+    public boolean forward(MuForwardActivityContext context) {
+        if (context.usesNativeDataFlow()) {
+            MuNativeActivityParameters parameters = (MuNativeActivityParameters)context.getActivityParameters();
+            MuNativeProcessResult result = (MuNativeProcessResult)context.getResult();
+            double piApprox = (double) parameters.get("pi-kinda");
+            double hatSize = (double) result.remove(0);
+            result.add(piApprox * hatSize);
         }
         return !(Math.random() < forwardFailureProbability);
     }
@@ -57,7 +57,7 @@ public class FourthActivity implements MuActivity {
     }
 
     @Override
-    public boolean backward(MuActivityParameters args, Optional<MuActivityState> preState) {
+    public boolean backward(MuBackwardActivityContext context) {
 
         // A possibility for an exception
         if (Math.random() < backwardExceptionProbability) {

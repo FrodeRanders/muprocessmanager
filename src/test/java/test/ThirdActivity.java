@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,10 @@
 package test;
 
 import org.gautelis.muprocessmanager.MuActivity;
-import org.gautelis.muprocessmanager.MuActivityParameters;
-import org.gautelis.muprocessmanager.MuProcessResult;
-import org.gautelis.muprocessmanager.MuActivityState;
+import org.gautelis.muprocessmanager.MuBackwardActivityContext;
+import org.gautelis.muprocessmanager.MuForwardActivityContext;
 import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
 import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
-
-import java.util.Optional;
 
 public class ThirdActivity implements MuActivity {
 
@@ -34,22 +31,22 @@ public class ThirdActivity implements MuActivity {
     public ThirdActivity() {}
 
     @Override
-    public boolean forward(MuActivityParameters args, MuProcessResult results) {
-        if (args.isNative() && results.isNative()) {
-            MuNativeActivityParameters nargs = (MuNativeActivityParameters) args;
-            MuNativeProcessResult nresults = (MuNativeProcessResult) results;
+    public boolean forward(MuForwardActivityContext context) {
+        if (context.usesNativeDataFlow()) {
+            MuNativeActivityParameters parameters = (MuNativeActivityParameters) context.getActivityParameters();
+            MuNativeProcessResult results = (MuNativeProcessResult) context.getResult();
 
-            boolean cutInHalf = (boolean) nargs.get("shrink-head");
+            boolean cutInHalf = (boolean) parameters.get("shrink-head");
             if (cutInHalf) {
-                double stepTwoResult = (double) nresults.remove(0);
-                nresults.add(stepTwoResult / 2.0);
+                double stepTwoResult = (double) results.remove(0);
+                results.add(stepTwoResult / 2.0);
             }
         }
         return !(Math.random() < forwardFailureProbability);
     }
 
     @Override
-    public boolean backward(MuActivityParameters args, Optional<MuActivityState> preState) {
+    public boolean backward(MuBackwardActivityContext context) {
         return !(Math.random() < backwardFailureProbability);
     }
 }

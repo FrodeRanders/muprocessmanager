@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,8 @@
  */
 package test;
 
-import org.gautelis.muprocessmanager.MuActivityParameters;
+import org.gautelis.muprocessmanager.MuBackwardActivityContext;
 import org.gautelis.muprocessmanager.MuBackwardBehaviour;
-import org.gautelis.muprocessmanager.MuActivityState;
-
-import java.util.Optional;
 
 public class SecondActivityCompensation implements MuBackwardBehaviour {
 
@@ -31,7 +28,7 @@ public class SecondActivityCompensation implements MuBackwardBehaviour {
     public SecondActivityCompensation() {}
 
     @Override
-    public boolean backward(MuActivityParameters args, Optional<MuActivityState> preState) {
+    public boolean backward(MuBackwardActivityContext context) {
         // A possibility for an exception
         if (Math.random() < backwardExceptionProbability) {
             throw new NullPointerException("just an example of a nasty failure"); // utter failure

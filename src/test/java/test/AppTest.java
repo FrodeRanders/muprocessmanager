@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Frode Randers
+ * Copyright (C) 2017-2018 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@
  */
 package test;
 
-import org.gautelis.muprocessmanager.*;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gautelis.muprocessmanager.*;
 import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
 import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.gautelis.vopn.queue.WorkQueue;
@@ -81,25 +81,25 @@ public class AppTest extends TestCase {
     }
 
 
-    public void testVolatileProcess()
-    {
+    public void testVolatileProcess() {
         if (null == mngr) {
             fail("No MuProcessManager available: Is another process using our database?");
         }
 
         System.out.println("\n---- MuVolatileProcess test ----");
-        MuVolatileProcess process = mngr.newVolatileProcess();
+        final String correlationId = UUID.randomUUID().toString();
+        MuVolatileProcess process = mngr.newVolatileProcess(correlationId);
 
         try {
             MuNativeActivityParameters parameters = new MuNativeActivityParameters();
             parameters.put("arg1", "param1");
             process.execute(
-                    (p, r) -> {
-                        System.out.println("First forward activity: " + p);
+                    c -> {
+                        System.out.println("First forward activity: " + c.getActivityParameters());
                         return true;
                     },
-                    (p, s) -> {
-                        System.out.println("First backward activity: " + p);
+                    c -> {
+                        System.out.println("First backward activity: " + c.getActivityParameters());
                         return true;
                     },
                     parameters
@@ -107,12 +107,12 @@ public class AppTest extends TestCase {
 
             parameters.put("arg2", 42);
             process.execute(
-                    (p, r) -> {
-                        System.out.println("Second forward activity: " + p);
+                    c -> {
+                        System.out.println("Second forward activity: " + c.getActivityParameters());
                         return true;
                     },
-                    (p, s) -> {
-                        System.out.println("Second backward activity: " + p);
+                    c -> {
+                        System.out.println("Second backward activity: " + c.getActivityParameters());
                         return true;
                     },
                     parameters
@@ -120,8 +120,8 @@ public class AppTest extends TestCase {
 
             parameters.put("arg3", true);
             process.execute(
-                    (p, r) -> {
-                        System.out.println("Third forward activity: " + p);
+                    c -> {
+                        System.out.println("Third forward activity: " + c.getActivityParameters());
                         if (/* failure? */ true) {
                             System.out.println("Simulated FAILURE");
                             return false; // i.e. FAILURE
@@ -129,8 +129,8 @@ public class AppTest extends TestCase {
                             return true;
                         }
                     },
-                    (p, s) -> {
-                        System.out.println("Third backward activity: " + p);
+                    c -> {
+                        System.out.println("Third backward activity: " + c.getActivityParameters());
                         return false; // Even compensation failed
                     },
                     parameters
@@ -138,12 +138,12 @@ public class AppTest extends TestCase {
 
             parameters.put("arg4", 22/7.0);
             process.execute(
-                    (p, r) -> {
-                        System.out.println("Fourth forward activity: " + p);
+                    c -> {
+                        System.out.println("Fourth forward activity: " + c.getActivityParameters());
                         return true;
                     },
-                    (p, s) -> {
-                        System.out.println("Fourth backward activity: " + p);
+                    c -> {
+                        System.out.println("Fourth backward activity: " + c.getActivityParameters());
                         return true;
                     },
                     parameters
@@ -187,10 +187,11 @@ public class AppTest extends TestCase {
                     MuNativeActivityParameters parameters = new MuNativeActivityParameters();
                     parameters.put("weight", 100.0 * Math.random());
                     process.execute(
-                            (p, r) -> {
-                                if (p.isNative() && r.isNative()) {
-                                    MuNativeActivityParameters np = (MuNativeActivityParameters) p;
-                                    MuNativeProcessResult nr = (MuNativeProcessResult) r;
+                            c -> {
+
+                                if (c.usesNativeDataFlow()) {
+                                    MuNativeActivityParameters np = (MuNativeActivityParameters) c.getActivityParameters();
+                                    MuNativeProcessResult nr = (MuNativeProcessResult) c.getResult();
                                     double weight = (double) np.get("weight");
                                     double realWeight = 0.83 * weight;
                                     nr.add(realWeight);
@@ -201,10 +202,10 @@ public class AppTest extends TestCase {
 
                     parameters.put("hat-size", 42);
                     process.execute(
-                            (p, r) -> {
-                                if (p.isNative() && r.isNative()) {
-                                    MuNativeActivityParameters np = (MuNativeActivityParameters) p;
-                                    MuNativeProcessResult nr = (MuNativeProcessResult) r;
+                            c -> {
+                                if (c.usesNativeDataFlow()) {
+                                    MuNativeActivityParameters np = (MuNativeActivityParameters) c.getActivityParameters();
+                                    MuNativeProcessResult nr = (MuNativeProcessResult) c.getResult();
                                     double weight = (double) nr.remove(0);
                                     double stepTwoResult = weight * (int) np.get("hat-size");
                                     nr.add(stepTwoResult);
