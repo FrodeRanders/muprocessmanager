@@ -264,7 +264,7 @@ public class AppTest extends TestCase {
                                     _result.ifPresent(objects -> {
                                         if (objects.isNative()) {
                                             MuNativeProcessResult nativeResult = (MuNativeProcessResult) objects;
-                                            nativeResult.forEach((v) -> info.append(" {").append(v).append("}"));
+                                            nativeResult.forEach((v) -> info.append(" result=").append(v));
                                         }
                                     });
                                     sit.remove();

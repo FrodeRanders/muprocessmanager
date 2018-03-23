@@ -117,7 +117,8 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS"), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, process.getCorrelationId());
                 stmt.setInt(2, MuProcessState.NEW.toInt());
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
+
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
                         int processId = rs.getInt(1);
@@ -128,6 +129,7 @@ public class MuPersistentLog {
                     }
                     else {
                         String info = "Failed to determine auto-generated process id";
+                        log.error(info); // This is nothing we can recover from
                         throw new MuProcessException(info);
                     }
                 }
@@ -168,7 +170,7 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STATE_BY_CORRID"))) {
                 stmt.setString(1, correlationId);
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     if (rs.next()) {
                         // state
                         int state = rs.getInt(1);
@@ -194,7 +196,7 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_RESULT_BY_CORRID"))) {
                 stmt.setString(1, correlationId);
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     if (rs.next()) {
                         // state, result
                         int idx = 0;
@@ -247,7 +249,7 @@ public class MuPersistentLog {
                     stmt.setCharacterStream(++idx, result.toReader());
                 }
                 stmt.setInt(++idx, processId);
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
         }
         catch (SQLException sqle) {
@@ -279,7 +281,7 @@ public class MuPersistentLog {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_ID_AND_STATE_BY_CORRID"))) {
                 stmt.setString(1, correlationId);
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     if (rs.next()) {
                         int idx = 0;
                         processId = rs.getInt(++idx);
@@ -326,7 +328,7 @@ public class MuPersistentLog {
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
                 stmt.setInt(1, processId);
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         /*
                          * 'process_id' need to be selected even though we know it, since we are using a updateable
@@ -354,7 +356,7 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS"))) {
                 stmt.setInt(1, processId);
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
 
             conn.commit();
@@ -385,7 +387,7 @@ public class MuPersistentLog {
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_ABANDONED_PROCESS_DETAILS"))) {
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     MuProcessDetails details = null;
                     while (rs.next()) {
                         // correlation_id, process_id, state, p.created, p.modified, step_id, retries, preState
@@ -449,7 +451,7 @@ public class MuPersistentLog {
                 int idx = 0;
                 stmt.setInt(++idx, processId);
                 stmt.setInt(++idx, stepId);
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
         }
         catch (SQLException sqle) {
@@ -467,7 +469,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS_BY_PROCID_DETAILED"))) {
                 stmt.setInt(1, processId);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         // correlation_id, step_id, class_name, method_name
                         int idx = 0;
@@ -543,8 +545,9 @@ public class MuPersistentLog {
                             MuBackwardActivityContext context =
                                     new MuBackwardActivityContext(correlationId, activityParameters, orchestrationParameters, preState);
 
+                            //
                             if (runnable.run(activity, method, context, stepId, retries)) {
-                                popCompensation(processId, stepId);
+                                popCompensation(conn, processId, stepId);
                             }
                             else {
                                 markRetry(processId, stepId);
@@ -587,11 +590,11 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"))) {
                 stmt.setInt(1, processId);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         // step_id, retries
                         int stepId = rs.getInt(1);
-                        popCompensation(processId, stepId);
+                        popCompensation(conn, processId, stepId);
                     }
                 }
             }
@@ -637,7 +640,7 @@ public class MuPersistentLog {
         //
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("COUNT_PROCESSES"))) {
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         // count, state
                         int count = rs.getInt(1);
@@ -700,7 +703,7 @@ public class MuPersistentLog {
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESSES"))) {
-                try (ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         // correlation_id, process_id, state, created, modified
                         int idx = 0;
@@ -737,12 +740,12 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEPS"))) {
                 stmt.setInt(1, processId);
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS"))) {
                 stmt.setInt(1, processId);
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
 
             conn.commit();
@@ -788,7 +791,7 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
                 stmt.setNull(++idx, Types.CLOB);
                 stmt.setInt(++idx, process.getProcessId());
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
         }
         catch (SQLException sqle) {
@@ -887,7 +890,7 @@ public class MuPersistentLog {
                 else {
                     stmt.setNull(++idx, Types.CLOB);
                 }
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
 
             // Potentially check whether process state is NEW or (already) PROGRESSING
@@ -896,7 +899,7 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
                 stmt.setNull(++idx, Types.CLOB);
                 stmt.setInt(++idx, process.getProcessId());
-                stmt.executeUpdate();
+                Database.executeUpdate(stmt);
             }
 
             conn.commit();
@@ -936,16 +939,14 @@ public class MuPersistentLog {
     }
 
     private void popCompensation(
-            final int processId, final int stepId
+            Connection conn, final int processId, final int stepId
     ) throws MuProcessException {
 
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEP"))) {
-                int idx = 0;
-                stmt.setInt(++idx, processId);
-                stmt.setInt(++idx, stepId);
-                stmt.executeUpdate();
-            }
+        try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEP"))) {
+            int idx = 0;
+            stmt.setInt(++idx, processId);
+            stmt.setInt(++idx, stepId);
+            Database.executeUpdate(stmt);
         }
         catch (SQLException sqle) {
             String info = "Failed to remove process step: ";
