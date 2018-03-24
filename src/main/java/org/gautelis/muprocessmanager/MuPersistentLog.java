@@ -349,7 +349,7 @@ public class MuPersistentLog {
                          *    API Specification, section 5.6 for more details."
                          *
                          *  We read the process_id field, so as to not haphazardly 'optimize' the SQL statement
-                         *  away (since we don't need it)
+                         *  away (since we seemingly don't need it)
                          */
                         int idx = 0;
                         int ignored = rs.getInt(++idx);
@@ -357,7 +357,7 @@ public class MuPersistentLog {
                         int retries = rs.getInt(++idx);
 
                         //
-                        log.debug("Removing process step: correlationId=\"{}\", processId={}, state={}, stepId={}, retries={}",
+                        log.trace("Removing process step (on reset): correlationId=\"{}\", processId={}, state={}, stepId={}, retries={}",
                                 correlationId, processId, state, stepId, retries);
 
                         rs.deleteRow();
