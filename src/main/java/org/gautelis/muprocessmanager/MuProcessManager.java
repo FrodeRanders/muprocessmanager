@@ -368,8 +368,8 @@ public class MuProcessManager {
      * @return a collection of process details.
      * @throws MuProcessException upon failure.
      */
-    public Collection<MuProcessDetails> salvageAbandonedProcesses() throws MuProcessException {
-        return compensationLog.salvageAbandonedProcesses();
+    public Collection<MuProcessDetails> getAbandonedProcessesDetails() throws MuProcessException {
+        return compensationLog.getAbandonedProcessesDetails();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -296,7 +296,7 @@ public class AppTest extends TestCase {
 
         System.out.println("\nAbandoned processes:");
         try {
-            Collection<MuProcessDetails> details = mngr.salvageAbandonedProcesses();
+            Collection<MuProcessDetails> details = mngr.getAbandonedProcessesDetails();
             for (MuProcessDetails detail : details) {
                 System.out.println(detail.asJson());
             }

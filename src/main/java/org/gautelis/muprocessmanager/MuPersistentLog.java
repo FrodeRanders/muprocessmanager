@@ -256,7 +256,9 @@ public class MuPersistentLog {
                     stmt.setCharacterStream(++idx, result.toReader());
                 }
                 stmt.setInt(++idx, processId);
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process corresponding to processId={}, when storing process state and result", processId);
+                }
             }
         }
         catch (SQLException sqle) {
@@ -367,7 +369,9 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS"))) {
                 stmt.setInt(1, processId);
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process corresponding to processId={}, when removing process (on reset)", processId);
+                }
             }
 
             conn.commit();
@@ -393,7 +397,7 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ Collection<MuProcessDetails> salvageAbandonedProcesses() throws MuProcessException {
+    /* package private */ Collection<MuProcessDetails> getAbandonedProcessesDetails() throws MuProcessException {
         List<MuProcessDetails> detailsList = new LinkedList<>();
 
         try (Connection conn = dataSource.getConnection()) {
@@ -465,7 +469,9 @@ public class MuPersistentLog {
                 int idx = 0;
                 stmt.setInt(++idx, processId);
                 stmt.setInt(++idx, stepId);
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process step corresponding to processId={} stepId={}, when increasing retries", processId, stepId);
+                }
             }
         }
         catch (SQLException sqle) {
@@ -767,12 +773,14 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEPS"))) {
                 stmt.setInt(1, processId);
-                Database.executeUpdate(stmt);
+                Database.executeUpdate(stmt); // A process may not have any steps...
             }
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS"))) {
                 stmt.setInt(1, processId);
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process corresponding to processId={}, when removing process", processId);
+                }
             }
 
             conn.commit();
@@ -818,7 +826,9 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
                 stmt.setNull(++idx, Types.CLOB);
                 stmt.setInt(++idx, process.getProcessId());
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process  corresponding to processId={}, when touching process", process.getProcessId());
+                }
             }
         }
         catch (SQLException sqle) {
@@ -917,7 +927,9 @@ public class MuPersistentLog {
                 else {
                     stmt.setNull(++idx, Types.CLOB);
                 }
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process step corresponding to processId={} stepId={} stored, when storing process step", process.getProcessId(), process.getCurrentStep());
+                }
             }
 
             // Potentially check whether process state is NEW or (already) PROGRESSING
@@ -926,7 +938,9 @@ public class MuPersistentLog {
                 stmt.setInt(++idx, MuProcessState.PROGRESSING.toInt());
                 stmt.setNull(++idx, Types.CLOB);
                 stmt.setInt(++idx, process.getProcessId());
-                Database.executeUpdate(stmt);
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug("No process corresponding to processId={}, when storing process step", process.getProcessId());
+                }
             }
 
             conn.commit();
@@ -973,7 +987,9 @@ public class MuPersistentLog {
             int idx = 0;
             stmt.setInt(++idx, processId);
             stmt.setInt(++idx, stepId);
-            Database.executeUpdate(stmt);
+            if (0 == Database.executeUpdate(stmt)) {
+                log.debug("No process step corresponding to processId={} stepId={}, when popping compensation", processId, stepId);
+            }
         }
         catch (SQLException sqle) {
             String info = "Failed to remove process step: ";
