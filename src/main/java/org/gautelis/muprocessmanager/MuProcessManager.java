@@ -93,7 +93,7 @@ public class MuProcessManager {
 
                 @Override
                 public void run() {
-                    compensationLog.dumpStatistics();
+                    compensationLog.dumpStatistics(recoverWorkQueue);
                 }
             };
             dumpStatisticsTimer = new Timer("statistics");
@@ -284,7 +284,8 @@ public class MuProcessManager {
                 haveSomethingToDisplay = true;
             }
         }
-        statistics.append("{").append(observations[0]).append(" observed in total}");
+        statistics.append("{").append(observations[0]).append(" observed in total} ");
+        statistics.append("{").append(recoverWorkQueue.size()).append(" in queue} ");
 
         if (haveSomethingToDisplay) {
             log.info(statistics.toString());

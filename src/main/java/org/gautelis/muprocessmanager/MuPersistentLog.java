@@ -20,6 +20,7 @@ package org.gautelis.muprocessmanager;
 import org.gautelis.muprocessmanager.payload.*;
 import org.gautelis.vopn.db.Database;
 import org.gautelis.vopn.lang.DynamicLoader;
+import org.gautelis.vopn.queue.WorkQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -648,7 +649,7 @@ public class MuPersistentLog {
         setProcessState(processId, MuProcessState.ABANDONED);
     }
 
-    /* package private */ void dumpStatistics() {
+    /* package private */ void dumpStatistics(WorkQueue workQueue) {
         // Prepare collecting statistics for each state
         final int numStates = MuProcessState.values().length;
         long[] stateCount = new long[numStates];
@@ -705,7 +706,8 @@ public class MuPersistentLog {
                 severity = Math.max(severity, i);
             }
         }
-        statistics.append("{").append(total).append(" in total}");
+        statistics.append("{").append(total).append(" in total} ");
+        statistics.append("{").append(workQueue.size()).append(" in queue} ");
 
         if (haveSomethingToDisplay) {
             if (severity < MuProcessState.COMPENSATION_FAILED.ordinal()) {
