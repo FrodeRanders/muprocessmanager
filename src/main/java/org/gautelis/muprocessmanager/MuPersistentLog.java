@@ -167,7 +167,10 @@ public class MuPersistentLog {
             final String correlationId
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STATE_BY_CORRID"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_STATE_BY_CORRID"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 stmt.setString(1, correlationId);
 
                 try (ResultSet rs = Database.executeQuery(stmt)) {
@@ -193,7 +196,10 @@ public class MuPersistentLog {
             final String correlationId
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_RESULT_BY_CORRID"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_RESULT_BY_CORRID"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 stmt.setString(1, correlationId);
 
                 try (ResultSet rs = Database.executeQuery(stmt)) {
@@ -278,7 +284,10 @@ public class MuPersistentLog {
             MuProcessState state = null;
             boolean doContinue = true;
 
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_ID_AND_STATE_BY_CORRID"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_ID_AND_STATE_BY_CORRID"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 stmt.setString(1, correlationId);
 
                 try (ResultSet rs = Database.executeQuery(stmt)) {
@@ -325,7 +334,8 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"),
-                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)
+            ) {
                 stmt.setInt(1, processId);
 
                 try (ResultSet rs = Database.executeQuery(stmt)) {
@@ -386,7 +396,10 @@ public class MuPersistentLog {
         List<MuProcessDetails> detailsList = new LinkedList<>();
 
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_ABANDONED_PROCESS_DETAILS"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_ABANDONED_PROCESS_DETAILS"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     MuProcessDetails details = null;
                     while (rs.next()) {
@@ -467,11 +480,14 @@ public class MuPersistentLog {
     ) throws MuProcessException {
 
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS_BY_PROCID_DETAILED"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_STEPS_BY_PROCID_DETAILED"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
-                        // correlation_id, step_id, class_name, method_name
+                        // correlation_id, step_id, class_name, method_name, activity_params, orchestr_params, retries, previous_state
                         int idx = 0;
                         String correlationId = rs.getString(++idx);
                         int stepId = rs.getInt(++idx);
@@ -588,12 +604,15 @@ public class MuPersistentLog {
 
         // Remove process steps
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
-                        // step_id, retries
-                        int stepId = rs.getInt(1);
+                        // process_id, step_id, retries
+                        int stepId = rs.getInt(2);
                         popCompensation(conn, processId, stepId);
                     }
                 }
@@ -639,7 +658,10 @@ public class MuPersistentLog {
 
         //
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("COUNT_PROCESSES"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("COUNT_PROCESSES"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         // count, state
@@ -702,7 +724,10 @@ public class MuPersistentLog {
             final CleanupRunnable runnable
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getStatement("FETCH_PROCESSES"))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESSES"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
                         // correlation_id, process_id, state, created, modified
