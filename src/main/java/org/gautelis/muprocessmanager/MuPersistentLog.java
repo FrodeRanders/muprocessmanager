@@ -20,6 +20,7 @@ package org.gautelis.muprocessmanager;
 import org.gautelis.muprocessmanager.payload.*;
 import org.gautelis.vopn.db.Database;
 import org.gautelis.vopn.lang.DynamicLoader;
+import org.gautelis.vopn.lang.Stacktrace;
 import org.gautelis.vopn.queue.WorkQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,6 +163,35 @@ public class MuPersistentLog {
                 throw new MuProcessException(info, sqle);
             }
         }
+    }
+
+    /* package private */ Optional<Integer> countProcessSteps(
+            final int processId
+    ) throws MuProcessException {
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("COUNT_PROCESS_STEPS"),
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            ) {
+                stmt.setInt(1, processId);
+
+                try (ResultSet rs = Database.executeQuery(stmt)) {
+                    if (rs.next()) {
+                        // state
+                        int stepCount = rs.getInt(1);
+                        return Optional.of(stepCount);
+                    }
+                }
+            }
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to count process steps: ";
+            info += Database.squeeze(sqle);
+            log.warn(info, sqle);
+            throw new MuProcessException(info, sqle);
+        }
+
+        return Optional.empty();
     }
 
     /* package private */ Optional<MuProcessState> getProcessState(
@@ -763,6 +793,11 @@ public class MuPersistentLog {
         setProcessState(processId, MuProcessState.ABANDONED);
     }
 
+    /*
+     *  Part of effort to study repeated removal of processes:
+     *  private static HashMap<Integer, Exception> debugRemovalHistory = new HashMap<>();
+     */
+
     /* package private */ void remove(String correlationId, int processId) throws MuProcessException {
         log.trace("Removing process: correlationId=\"{}\", processId={}", correlationId, processId);
 
@@ -778,8 +813,29 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS"))) {
                 stmt.setInt(1, processId);
+
+                /*
+                 * Part of effort to study repeated removal of processes:
+                 * if (!debugRemovalHistory.containsKey(processId)) {
+                 *     debugRemovalHistory.put(processId, new Exception("first remove"));
+                 * } else {
+                 *     Exception then = debugRemovalHistory.get(processId);
+                 *     Exception now = new Exception("already removed");
+                 *
+                 *     String info = "Process " + processId + " has already been removed:\n";
+                 *     info += Stacktrace.asString(then);
+                 *     info += "when attempting to remove\n";
+                 *     info += Stacktrace.asString(now);
+                 *     log.debug(info);
+                 * }
+                 */
+
                 if (0 == Database.executeUpdate(stmt)) {
-                    log.debug("No process corresponding to processId={}, when removing process", processId);
+                    // Acceptable since all cases are related to removing ripe processes
+                    // (in any of states NEW (but stuck), SUCCESSFUL or COMPENSATED).
+                    // Efforts were made to study this behaviour, so this is indeed an
+                    // acceptable behaviour -- if not exactly great.
+                    log.trace("No process corresponding to processId={}, when removing process", processId);
                 }
             }
 

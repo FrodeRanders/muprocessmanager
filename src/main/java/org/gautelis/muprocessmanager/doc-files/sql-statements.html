@@ -41,7 +41,8 @@ WHERE process_id = ?</pre>
 FROM mu_process
 WHERE state >= 5
 ORDER BY modified DESC</pre>
-       <p>The value of state used in this statement corresponds to the numeral value of <a href="../MuProcessState.html">ABANDONED</a>.</p>
+       <p>The value of state used in this statement corresponds to the numeral value of
+           <a href="../MuProcessState.html">ABANDONED</a> as visualized in <a href="microprocess-manager-states-description.png">this figure</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESSES</div>
@@ -50,17 +51,19 @@ ORDER BY modified DESC</pre>
 FROM mu_process
 WHERE state &lt; 5
 ORDER BY modified DESC</pre>
-        <p>The value of state used in this statement corresponds to the numeral value of <a href="../MuProcessState.html">ABANDONED</a>.</p>
+        <p>The value of state used in this statement corresponds to the numeral value of
+            <a href="../MuProcessState.html">ABANDONED</a> as visualized in <a href="microprocess-manager-states-description.png">this figure</a>.</p>
     </div>
 
-    <div class="key">FETCH_ABANDONED_PROCESS_DETAILS</div>>
+    <div class="key">FETCH_ABANDONED_PROCESS_DETAILS</div>
     <div class="value">
         <pre>SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
 FROM mu_process p
 LEFT OUTER JOIN mu_process_step s
   ON (p.process_id = s.process_id)
 WHERE p.state = 5</pre>
-        <p>The value of state used in this statement corresponds to the numeral value of <a href="../MuProcessState.html">ABANDONED</a>.</p>
+        <p>The value of state used in this statement corresponds to the numeral value of
+            <a href="../MuProcessState.html">ABANDONED</a> as visualized in <a href="microprocess-manager-states-description.png">this figure</a>.</p>
     </div>
 
     <div class="key">FETCH_PROCESS_RESULT_BY_CORRID</div>
@@ -89,6 +92,13 @@ WHERE correlation_id = ?</pre>
         <pre>SELECT COUNT(*), state
 FROM mu_process
 GROUP BY state</pre>
+    </div>
+
+    <div class="key">COUNT_PROCESS_STEPS</div>
+    <div class="value">
+        <pre>SELECT COUNT(*)
+FROM mu_process_step
+WHERE process_id = ?</pre>
     </div>
 
     <div class="key">UPDATE_PROCESS</div>
@@ -136,7 +146,7 @@ WHERE step.process_id = ?</pre>
     <div class="key">INCREMENT_PROCESS_STEP_RETRIES</div>
     <div class="value">
         <pre>UPDATE mu_process_step
-SET retries = retries + 1
+SET retries = retries + 1, modified = CURRENT_TIMESTAMP
 WHERE process_id = ? AND step_id = ?</pre>
     </div>
 </body>

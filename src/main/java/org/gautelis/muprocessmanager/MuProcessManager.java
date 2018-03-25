@@ -175,9 +175,18 @@ public class MuProcessManager {
                     case NEW:
                         if (isRipeForRemoval) {
                             // Automatically remove after timeout
-                            log.trace("Removing stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
-                            compensationLog.remove(correlationId, processId);
-                            removeCount[state]++;
+                            recoverWorkQueue.execute(() -> {
+                                try {
+                                    log.debug("Removing stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+                                    compensationLog.remove(correlationId, processId);
+                                    removeCount[state]++;
+
+                                } catch (MuProcessException mpe) {
+                                    String info = "Failed to remove stuck process: ";
+                                    info += mpe.getMessage();
+                                    log.info(info, mpe);
+                                }
+                            });
                         }
                         break;
 
@@ -185,7 +194,7 @@ public class MuProcessManager {
                         boolean assumedStuck = modified.before(new Date(now.getTime() - processAssumedStuckTime));
 
                         if (assumedStuck) {
-                            log.trace("Recovering stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+                            log.debug("Recovering stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
 
                             // Attempt compensation
                             recoverWorkQueue.execute(() -> {
@@ -212,9 +221,18 @@ public class MuProcessManager {
                     case COMPENSATED:
                         if (isRipeForRemoval) {
                             // Automatically remove after timeout
-                            log.trace("Removing retired process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
-                            compensationLog.remove(correlationId, processId);
-                            removeCount[state]++;
+                            recoverWorkQueue.execute(() -> {
+                                try {
+                                    log.trace("Removing retired process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+                                    compensationLog.remove(correlationId, processId);
+                                    removeCount[state]++;
+
+                                } catch (MuProcessException mpe) {
+                                    String info = "Failed to remove retired process: ";
+                                    info += mpe.getMessage();
+                                    log.info(info, mpe);
+                                }
+                            });
                         }
                         break;
 
@@ -222,9 +240,27 @@ public class MuProcessManager {
                         // First time through, try to recompensate once
                         if (!justStarted && isRipeForRemoval) {
                             // Automatically abandon after timeout
-                            log.trace("Abandoning process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
-                            compensationLog.abandon(correlationId, processId);
-                            abandonCount[state]++;
+                            recoverWorkQueue.execute(() -> {
+                                try {
+                                    Optional<Integer> stepCount = compensationLog.countProcessSteps(processId);
+                                    if (stepCount.isPresent() && stepCount.get() > 0) {
+                                        log.debug("Abandoning process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+                                        compensationLog.abandon(correlationId, processId);
+                                        abandonCount[state]++;
+
+                                    } else {
+                                        // Since there are no process steps, and thus no pending compensations, we will mark this process as
+                                        // compensated
+                                        log.debug("Marking process as compensated: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+                                        compensationLog.cleanupAfterSuccessfulCompensation(processId);
+                                        recoverCount[state]++;
+                                    }
+                                } catch (MuProcessException mpe) {
+                                    String info = "Failed to abandon process: ";
+                                    info += mpe.getMessage();
+                                    log.info(info, mpe);
+                                }
+                            });
                         } else {
                             boolean isRipeForRecompensation = modified.before(new Date(now.getTime() - processRecompensationTime));
 

@@ -59,11 +59,11 @@ CREATE TABLE mu_process_step (
 
   class_name VARCHAR(255) NOT NULL,  -- qualified class name must fit
   method_name VARCHAR(255) NOT NULL, -- method name must fit
-  parameters TEXT NOT NULL,
-  orchestration_params TEXT DEFAULT NULL,
+  activity_params TEXT NOT NULL,
+  orchestr_params TEXT DEFAULT NULL,
   previous_state TEXT DEFAULT NULL,
 
   retries INTEGER NOT NULL DEFAULT 0,
-  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
