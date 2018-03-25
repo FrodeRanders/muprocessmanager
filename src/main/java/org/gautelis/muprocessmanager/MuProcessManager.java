@@ -195,6 +195,7 @@ public class MuProcessManager {
                                 // exceptions
                                 try {
                                     // Ignored returned exception -- we don't want to throw anything here
+                                    // since we are running compensation asynchronously
                                     MuProcess.compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
                                     recoverCount[state]++;
 
@@ -240,8 +241,8 @@ public class MuProcessManager {
                                         abandonCount[state]++;
 
                                     } else {
-                                        // Since there are no process steps, and thus no pending compensations, we will mark this process as
-                                        // compensated
+                                        // Since there are no process steps, and thus no pending compensations,
+                                        // we will mark this process as compensated
                                         log.debug("Marking process as compensated: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
                                         compensationLog.cleanupAfterSuccessfulCompensation(processId);
                                         recoverCount[state]++;
@@ -321,7 +322,7 @@ public class MuProcessManager {
      * Creates a new volatile process, a process that handles volatile activities that will not be
      * persisted. May be used to handle synchronous process execution, including Saga-style compensation.
      * Does not survive a power off.
-     *
+     * @param correlationId a correlation ID identifying the business request.
      * @return a volatile {@link MuVolatileProcess}.
      */
     public MuVolatileProcess newVolatileProcess(final String correlationId) {

@@ -37,9 +37,9 @@ import java.util.*;
  * with the corresponding parameters) as well as {@link MuProcessState#SUCCESSFUL SUCCESSFUL}
  * results.
  * <p>
- * The DDL is found in src/resources/org/gautelis/muprocessmanager/default-database-create.sql.
+ * The DDL is found in contrib/$dbms/database-create.sql.
  * <p>
- * The DML is found in src/resources/org/gautelis/muprocessmanager/sql-statements.xml.
+ * The DML is found in contrib/$dbms/sql-statements.xml.
  */
 public class MuPersistentLog {
     private static final Logger log = LoggerFactory.getLogger(MuPersistentLog.class);

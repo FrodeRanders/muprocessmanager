@@ -1,13 +1,13 @@
-A micro-process manager based on the Saga pattern.
-==================================================
+A micro-process manager implementing the Saga pattern.
+======================================================
 
 ## Description of content
-This library implements a drop-in micro-process manager, utilizing the Saga pattern. Out of the box,
+This library implements a drop-in micro-process manager, implementing the Saga pattern. Out of the box,
 a local embedded Derby database is used to persist processes and process activities; if the database does not 
 exist, the database and tables are created automatically &#8212; trivializing development use.
 
 In a non-development scenario, the backing database may be stored in the application database or in
-a separate database.
+a separate database. DDL and SQL statements for some database managers are available under [contrib/](contrib).
 
 A key concern has been to provide a relatively simple abstraction over the Saga pattern. This library
 hides details from the utilizing application.
@@ -22,7 +22,7 @@ Available from Maven Central as:
 <dependency>
     <groupId>org.gautelis</groupId>
     <artifactId>muprocessmanager</artifactId>
-    <version>1.6</version>
+    <version>1.7</version>
 </dependency>
 
 ```
