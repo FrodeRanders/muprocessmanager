@@ -162,19 +162,14 @@ public class MuProcessManager {
             final int processRecompensationTime = 1000 * policy.secondsBetweenRecompensationAttempts();
             final int processAssumedStuckTime = 60 * 1000 * policy.minutesBeforeAssumingProcessStuck();
 
-            compensationLog.recover((correlationId, processId, state, created, modified) -> {
+            compensationLog.recover((correlationId, processId, state, created, modified, now) -> {
                 observations[0]++; // explicit code
                 MuProcessState _state = MuProcessState.fromInt(state);
-
-                // Check if process has been stuck?
-                Date now = new Date();
-                boolean isRipeForRemoval = modified.before(new Date(now.getTime() - processRetentionTime));
 
                 //
                 switch (_state) {
                     case NEW:
-                        if (isRipeForRemoval) {
-                            // Automatically remove after timeout
+                        if (/* Assumed stuck */ modified.before(new Date(now.getTime() - processAssumedStuckTime))) {
                             recoverWorkQueue.execute(() -> {
                                 try {
                                     log.debug("Removing stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
@@ -191,9 +186,7 @@ public class MuProcessManager {
                         break;
 
                     case PROGRESSING: {
-                        boolean assumedStuck = modified.before(new Date(now.getTime() - processAssumedStuckTime));
-
-                        if (assumedStuck) {
+                        if (/* Assumed stuck */ modified.before(new Date(now.getTime() - processAssumedStuckTime))) {
                             log.debug("Recovering stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
 
                             // Attempt compensation
@@ -219,8 +212,7 @@ public class MuProcessManager {
 
                     case SUCCESSFUL:
                     case COMPENSATED:
-                        if (isRipeForRemoval) {
-                            // Automatically remove after timeout
+                        if (/* Is ripe for removal */ modified.before(new Date(now.getTime() - processRetentionTime))) {
                             recoverWorkQueue.execute(() -> {
                                 try {
                                     log.trace("Removing retired process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
@@ -238,8 +230,7 @@ public class MuProcessManager {
 
                     case COMPENSATION_FAILED:
                         // First time through, try to recompensate once
-                        if (!justStarted && isRipeForRemoval) {
-                            // Automatically abandon after timeout
+                        if (!justStarted && /* Is ripe for removal */ modified.before(new Date(now.getTime() - processRetentionTime))) {
                             recoverWorkQueue.execute(() -> {
                                 try {
                                     Optional<Integer> stepCount = compensationLog.countProcessSteps(processId);
@@ -262,9 +253,7 @@ public class MuProcessManager {
                                 }
                             });
                         } else {
-                            boolean isRipeForRecompensation = modified.before(new Date(now.getTime() - processRecompensationTime));
-
-                            if (isRipeForRecompensation) {
+                            if (/* Is ripe for recompensation */ modified.before(new Date(now.getTime() - processRecompensationTime))) {
                                 log.trace("Recovering process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
 
                                 // Re-attempt compensation

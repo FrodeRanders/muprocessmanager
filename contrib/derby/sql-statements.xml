@@ -23,7 +23,7 @@
     </entry>
 
     <entry key="FETCH_PROCESSES">
-        SELECT correlation_id, process_id, state, created, modified
+        SELECT correlation_id, process_id, state, created, modified, CURRENT_TIMESTAMP AS now
         FROM mu_process
         WHERE state &lt; 5
         ORDER BY modified DESC

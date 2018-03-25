@@ -60,7 +60,7 @@ public class MuPersistentLog {
     }
 
     public interface CleanupRunnable {
-        void run(String correlationId, int processId, int state, java.util.Date created, java.util.Date modified) throws MuProcessException;
+        void run(String correlationId, int processId, int state, java.util.Date created, java.util.Date modified, java.util.Date now) throws MuProcessException;
     }
 
     /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements, final boolean assumeNativeProcessDataFlow) {
@@ -775,8 +775,9 @@ public class MuPersistentLog {
                         int state = rs.getInt(++idx);
                         Timestamp created = rs.getTimestamp(++idx);
                         Timestamp modified = rs.getTimestamp(++idx);
+                        Timestamp now = rs.getTimestamp(++idx);
 
-                        runnable.run(correlationId, processId, state, created, modified);
+                        runnable.run(correlationId, processId, state, created, modified, now);
                     }
                 }
             }
@@ -831,11 +832,10 @@ public class MuPersistentLog {
                  */
 
                 if (0 == Database.executeUpdate(stmt)) {
-                    // Acceptable since all cases are related to removing ripe processes
-                    // (in any of states NEW (but stuck), SUCCESSFUL or COMPENSATED).
-                    // Efforts were made to study this behaviour, so this is indeed an
-                    // acceptable behaviour -- if not exactly great.
-                    log.trace("No process corresponding to processId={}, when removing process", processId);
+                    // This construct found me a bug, where the clock on the database server was off (by a lot)
+                    // and we were comparing mu_process.modified against a local current timestamp.
+                    // Comparison is now done against current time on database server.
+                    log.debug("No process corresponding to processId={}, when removing process", processId);
                 }
             }
 

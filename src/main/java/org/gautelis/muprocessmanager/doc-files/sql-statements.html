@@ -47,7 +47,7 @@ ORDER BY modified DESC</pre>
 
     <div class="key">FETCH_PROCESSES</div>
     <div class="value">
-        <pre>SELECT correlation_id, process_id, state, created, modified
+        <pre>SELECT correlation_id, process_id, state, created, modified, CURRENT_TIMESTAMP AS now
 FROM mu_process
 WHERE state &lt; 5
 ORDER BY modified DESC</pre>
