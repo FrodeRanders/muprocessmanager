@@ -29,10 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -121,6 +118,8 @@ public class MuProcessManager {
                     cleanupTask, initialDelay, 1000 * policy.secondsBetweenRecoveryAttempts()
             );
         }
+
+        System.out.println("Process manager started.");
     }
 
     /**
@@ -140,6 +139,8 @@ public class MuProcessManager {
         }
 
         recoverWorkQueue.stop();
+
+        System.out.println("Process manager stopped.");
     }
 
     /* package private */ void recover() {
@@ -173,7 +174,7 @@ public class MuProcessManager {
                             recoverWorkQueue.execute(() -> {
                                 try {
                                     log.debug("Removing stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
-                                    compensationLog.remove(correlationId, processId);
+                                    compensationLog.remove(correlationId, processId, modified);
                                     removeCount[state]++;
 
                                 } catch (MuProcessException mpe) {
@@ -187,10 +188,11 @@ public class MuProcessManager {
 
                     case PROGRESSING: {
                         if (/* Assumed stuck */ modified.before(new Date(now.getTime() - processAssumedStuckTime))) {
-                            log.debug("Recovering stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
 
                             // Attempt compensation
                             recoverWorkQueue.execute(() -> {
+                                log.debug("Recovering stuck process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+
                                 // Since we don't have a micro process waiting, we will not propagate any
                                 // exceptions
                                 try {
@@ -217,7 +219,7 @@ public class MuProcessManager {
                             recoverWorkQueue.execute(() -> {
                                 try {
                                     log.trace("Removing retired process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
-                                    compensationLog.remove(correlationId, processId);
+                                    compensationLog.remove(correlationId, processId, modified);
                                     removeCount[state]++;
 
                                 } catch (MuProcessException mpe) {
@@ -255,10 +257,11 @@ public class MuProcessManager {
                             });
                         } else {
                             if (/* Is ripe for recompensation */ modified.before(new Date(now.getTime() - processRecompensationTime))) {
-                                log.trace("Recovering process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
 
                                 // Re-attempt compensation
                                 recoverWorkQueue.execute(() -> {
+                                    log.trace("Recovering process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+
                                     // Since we don't have a micro process waiting, we will not propagate any
                                     // exceptions
                                     try {
@@ -286,6 +289,7 @@ public class MuProcessManager {
             // Having run recover() once, we have at least tried to recompensate
             // processes in COMPENSATION_FAILED once.
             justStarted = false;
+
         } catch (MuProcessException mpe) {
             String info = "Scheduled recovery failed: ";
             info += mpe.getMessage();
@@ -482,6 +486,27 @@ public class MuProcessManager {
         }
     }
 
+    public static Database.Configuration getDatabaseConfiguration(File file) throws FileNotFoundException, MuProcessException {
+        if (null == file) {
+            throw new IllegalArgumentException("file");
+        }
+
+        if (!file.exists() || !file.canRead()) {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+
+        try (InputStream is = new FileInputStream(file)) {
+            Properties properties = new Properties();
+            properties.loadFromXML(is);
+            return Database.getConfiguration(properties);
+        }
+        catch (IOException ioe) {
+            String info = "Failed to load database configuration from \"" + file.getAbsolutePath() + "\": ";
+            info += ioe.getMessage();
+            throw new MuProcessException(info, ioe);
+        }
+    }
+
     public static Database.Configuration getDatabaseConfiguration(Class clazz, String resource) throws MuProcessException {
         if (null == clazz) {
             throw new IllegalArgumentException("class");
@@ -519,6 +544,27 @@ public class MuProcessManager {
         }
     }
 
+    public static Properties getSqlStatements(File file) throws FileNotFoundException, MuProcessException {
+        if (null == file) {
+            throw new IllegalArgumentException("file");
+        }
+
+        if (!file.exists() || !file.canRead()) {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+
+        try (InputStream is = new FileInputStream(file)) {
+            final Properties sqlStatements = new Properties();
+            sqlStatements.loadFromXML(is);
+            return sqlStatements;
+        }
+        catch (IOException ioe) {
+            String info = "Failed to load SQL statements from \"" + file.getAbsolutePath() + "\": ";
+            info += ioe.getMessage();
+            throw new MuProcessException(info, ioe);
+        }
+    }
+
     public static Properties getSqlStatements(Class clazz, String resource) throws MuProcessException {
         if (null == clazz) {
             throw new IllegalArgumentException("class");
@@ -544,7 +590,29 @@ public class MuProcessManager {
         return getSqlStatements(MuProcessManager.class, "sql-statements.xml");
     }
 
-    public static MuProcessManagementPolicy getManagmentPolicy(Class clazz, String resource) throws MuProcessException {
+    public static MuProcessManagementPolicy getManagementPolicy(File file) throws FileNotFoundException, MuProcessException {
+        if (null == file) {
+            throw new IllegalArgumentException("file");
+        }
+
+        if (!file.exists() || !file.canRead()) {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+
+        try (InputStream is = new FileInputStream(file)) {
+            final Properties policyProperties = new Properties();
+            policyProperties.loadFromXML(is);
+
+            return ConfigurationTool.bindProperties(MuProcessManagementPolicy.class, policyProperties);
+        }
+        catch (IOException ioe) {
+            String info = "Failed to load process management policy from \"" + file.getAbsolutePath() + "\": ";
+            info += ioe.getMessage();
+            throw new MuProcessException(info, ioe);
+        }
+    }
+
+    public static MuProcessManagementPolicy getManagementPolicy(Class clazz, String resource) throws MuProcessException {
         if (null == clazz) {
             throw new IllegalArgumentException("class");
         }
@@ -567,6 +635,6 @@ public class MuProcessManager {
     }
 
     public static MuProcessManagementPolicy getDefaultManagementPolicy() throws MuProcessException {
-        return getManagmentPolicy(MuProcessManager.class, "default-management-policy.xml");
+        return getManagementPolicy(MuProcessManager.class, "default-management-policy.xml");
     }
 }

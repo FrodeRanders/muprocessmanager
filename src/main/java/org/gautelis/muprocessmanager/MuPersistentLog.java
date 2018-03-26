@@ -29,7 +29,9 @@ import javax.sql.DataSource;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
 /**
  * Takes care of persisting compensations to a relational database and subsequently reading
@@ -44,7 +46,7 @@ import java.util.*;
 public class MuPersistentLog {
     private static final Logger log = LoggerFactory.getLogger(MuPersistentLog.class);
     private static final Logger statisticsLog = LoggerFactory.getLogger("STATISTICS");
-
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     private static final DynamicLoader<MuBackwardBehaviour> loader = new DynamicLoader<>("compensation activity");
 
     private final DataSource dataSource;
@@ -799,7 +801,9 @@ public class MuPersistentLog {
      *  private static HashMap<Integer, Exception> debugRemovalHistory = new HashMap<>();
      */
 
-    /* package private */ void remove(String correlationId, int processId) throws MuProcessException {
+    /* package private */ void remove(
+            String correlationId, int processId, Date modified
+    ) throws MuProcessException {
         log.trace("Removing process: correlationId=\"{}\", processId={}", correlationId, processId);
 
         Connection conn = null;
@@ -835,7 +839,10 @@ public class MuPersistentLog {
                     // This construct found me a bug, where the clock on the database server was off (by a lot)
                     // and we were comparing mu_process.modified against a local current timestamp.
                     // Comparison is now done against current time on database server.
-                    log.debug("No process corresponding to processId={}, when removing process", processId);
+                    log.debug(
+                            "No process corresponding to processId={} (latest touched at {}), when removing process",
+                            processId, dateFormatter.format(modified)
+                    );
                 }
             }
 
