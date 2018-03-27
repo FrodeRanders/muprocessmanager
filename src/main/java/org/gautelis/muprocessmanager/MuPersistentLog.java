@@ -173,7 +173,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("COUNT_PROCESS_STEPS"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 stmt.setInt(1, processId);
 
@@ -202,7 +202,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_STATE_BY_CORRID"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 stmt.setString(1, correlationId);
 
@@ -231,7 +231,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_RESULT_BY_CORRID"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 stmt.setString(1, correlationId);
 
@@ -321,7 +321,7 @@ public class MuPersistentLog {
 
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_ID_AND_STATE_BY_CORRID"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 stmt.setString(1, correlationId);
 
@@ -435,7 +435,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_ABANDONED_PROCESS_DETAILS"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     MuProcessDetails details = null;
@@ -521,7 +521,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_STEPS_BY_PROCID_DETAILED"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = Database.executeQuery(stmt)) {
@@ -645,7 +645,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_STEPS_BY_PROCID_COARSE"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = Database.executeQuery(stmt)) {
@@ -699,7 +699,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("COUNT_PROCESSES"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
@@ -766,7 +766,7 @@ public class MuPersistentLog {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESSES"),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
@@ -798,7 +798,8 @@ public class MuPersistentLog {
 
     /*
      *  Part of effort to study repeated removal of processes:
-     *  private static HashMap<Integer, Exception> debugRemovalHistory = new HashMap<>();
+     *
+     * private static HashMap<Integer, Exception> debugRemovalHistory = new HashMap<>();
      */
 
     /* package private */ void remove(
@@ -821,17 +822,18 @@ public class MuPersistentLog {
 
                 /*
                  * Part of effort to study repeated removal of processes:
-                 * if (!debugRemovalHistory.containsKey(processId)) {
-                 *     debugRemovalHistory.put(processId, new Exception("first remove"));
-                 * } else {
-                 *     Exception then = debugRemovalHistory.get(processId);
-                 *     Exception now = new Exception("already removed");
                  *
-                 *     String info = "Process " + processId + " has already been removed:\n";
-                 *     info += Stacktrace.asString(then);
-                 *     info += "when attempting to remove\n";
-                 *     info += Stacktrace.asString(now);
-                 *     log.debug(info);
+                 * if (!debugRemovalHistory.containsKey(processId)) {
+                 *    debugRemovalHistory.put(processId, new Exception("first remove"));
+                 * } else {
+                 *    Exception then = debugRemovalHistory.get(processId);
+                 *    Exception now = new Exception("already removed");
+                 *
+                 *    String info = "Process " + processId + " has already been removed:\n";
+                 *    info += Stacktrace.asString(then);
+                 *    info += "when attempting to remove\n";
+                 *    info += Stacktrace.asString(now);
+                 *    log.debug(info);
                  * }
                  */
 
@@ -839,7 +841,7 @@ public class MuPersistentLog {
                     // This construct found me a bug, where the clock on the database server was off (by a lot)
                     // and we were comparing mu_process.modified against a local current timestamp.
                     // Comparison is now done against current time on database server.
-                    log.debug(
+                    log.trace(
                             "No process corresponding to processId={} (latest touched at {}), when removing process",
                             processId, dateFormatter.format(modified)
                     );
