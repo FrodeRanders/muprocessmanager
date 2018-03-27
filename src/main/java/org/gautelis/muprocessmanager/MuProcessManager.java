@@ -93,7 +93,7 @@ public class MuProcessManager {
                     compensationLog.dumpStatistics(recoverWorkQueue);
                 }
             };
-            dumpStatisticsTimer = new Timer("statistics");
+            dumpStatisticsTimer = new Timer("org.gautelis.muprocessmanager.statistics");
             int initialDelay = 1000; // 1 second
             dumpStatisticsTimer.scheduleAtFixedRate(
                     statisticsTask, initialDelay, 1000 * policy.secondsBetweenLoggingStatistics()
@@ -112,7 +112,7 @@ public class MuProcessManager {
                 }
             };
 
-            recoverTimer = new Timer("recover");
+            recoverTimer = new Timer("org.gautelis.muprocessmanager.recover");
             int initialDelay = 1000; // 1 second_
             recoverTimer.scheduleAtFixedRate(
                     cleanupTask, initialDelay, 1000 * policy.secondsBetweenRecoveryAttempts()
@@ -146,6 +146,24 @@ public class MuProcessManager {
     /* package private */ void recover() {
         log.trace("Running scheduled recovery...");
 
+        long size;
+        int waitLeft = 1000 * ((policy.secondsBetweenRecoveryAttempts() * 2) / 3); // two third of full cycle
+        do {
+            size = recoverWorkQueue.size();
+            if (size > 0L) {
+                try {
+                    log.debug("Background threads not yet ready... {} in queue [delay]", size);
+                    Thread.sleep(1000); // 1 second
+                    waitLeft -= 1000;
+                } catch (InterruptedException ignore) {}
+            }
+        } while (size > 0L && waitLeft > 0);
+
+        if (size > 0L) {
+            log.warn("Postponing recover in order to catch up... {} in queue", size);
+            return;
+        }
+
         // Prepare collecting statistics for each state and operation
         final int numStates = MuProcessState.values().length;
         final long[] recoverCount = new long[numStates];
@@ -155,7 +173,7 @@ public class MuProcessManager {
             recoverCount[i] = removeCount[i] = abandonCount[i] = 0L;
         }
 
-        final long[] observations = {0L}; // in order to increment below
+        final long[] observations = {0L}; // mutable in closure
 
         //
         try {

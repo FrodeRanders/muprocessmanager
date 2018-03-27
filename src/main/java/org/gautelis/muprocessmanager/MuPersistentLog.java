@@ -841,7 +841,7 @@ public class MuPersistentLog {
                     // This construct found me a bug, where the clock on the database server was off (by a lot)
                     // and we were comparing mu_process.modified against a local current timestamp.
                     // Comparison is now done against current time on database server.
-                    log.trace(
+                    log.debug(
                             "No process corresponding to processId={} (latest touched at {}), when removing process",
                             processId, dateFormatter.format(modified)
                     );
