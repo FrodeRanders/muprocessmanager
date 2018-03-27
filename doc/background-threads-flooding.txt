@@ -1,0 +1,139 @@
+This is an example of what can happen after re-start with a considerable
+time delay (and a lot of simulated processes).
+
+The process manager will schedule most processes for treatment and the background
+thread pool will try to cope with the situation. However, when initiating the next
+recover the manager will be forced to postpone further treatment until the initial
+peak is over.
+
+
+2018-03-27 23:36:25.463 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {1 NEW} {13 PROGRESSING} {332727 SUCCESSFUL} {165340 COMPENSATED} {1742 COMPENSATION_FAILED} {499823 in total} {0 in queue}
+2018-03-27 23:36:30.769 [Thread-4] [DEBUG] MuProcessManager: Recovering stuck process: correlationId="9a585c09-301f-4070-874d-63ae1a6b4f9c", processId=1770952, state=PROGRESSING
+2018-03-27 23:36:30.769 [Thread-5] [DEBUG] MuProcessManager: Removing stuck process: correlationId="fcc5fcf7-2b52-4a34-97d2-33f0ae754ae7", processId=1770955, state=NEW
+2018-03-27 23:36:30.769 [Thread-6] [DEBUG] MuProcessManager: Recovering stuck process: correlationId="ca25d975-11af-4583-a4a6-61165814739f", processId=1770954, state=PROGRESSING
+2018-03-27 23:36:30.769 [Thread-7] [DEBUG] MuProcessManager: Recovering stuck process: correlationId="bef3da17-3342-4e6a-9c62-ef5df1ac1e97", processId=1770953, state=PROGRESSING
+2018-03-27 23:36:30.771 [Thread-4] [DEBUG] MuProcessManager: Recovering stuck process: correlationId="ce129981-23e7-401f-b4cc-22bc206f0d59", processId=1770951, state=PROGRESSING
+2018-03-27 23:36:30.779 [Thread-4] [DEBUG] MuProcessManager: Recovering stuck process: correlationId="7abf4bb4-1e46-453d-a376-625489df9c37", processId=1770950, state=PROGRESSING
+2018-03-27 23:36:37.565 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {1 removed from NEW} {5 attempted compensations from PROGRESSING} {15165 removed from SUCCESSFUL} {7066 removed from COMPENSATED} {468 attempted compensations from COMPENSATION_FAILED} {504314 observed in total} {475729 in queue}
+2018-03-27 23:36:53.703 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 412571 in queue [delay]
+2018-03-27 23:36:54.703 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 407599 in queue [delay]
+2018-03-27 23:36:55.707 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 403538 in queue [delay]
+2018-03-27 23:36:56.711 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 398665 in queue [delay]
+2018-03-27 23:36:57.779 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 394416 in queue [delay]
+2018-03-27 23:36:58.784 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 389288 in queue [delay]
+2018-03-27 23:36:59.787 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 384460 in queue [delay]
+2018-03-27 23:37:00.792 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 380566 in queue [delay]
+2018-03-27 23:37:01.793 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 376015 in queue [delay]
+2018-03-27 23:37:02.794 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 372355 in queue [delay]
+2018-03-27 23:37:03.956 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 366803 in queue [delay]
+2018-03-27 23:37:04.960 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 361816 in queue [delay]
+2018-03-27 23:37:05.963 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 358012 in queue [delay]
+2018-03-27 23:37:06.968 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 353373 in queue [delay]
+2018-03-27 23:37:07.973 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 349344 in queue [delay]
+2018-03-27 23:37:09.065 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 344157 in queue [delay]
+2018-03-27 23:37:10.072 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 339024 in queue [delay]
+2018-03-27 23:37:11.075 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 335053 in queue [delay]
+2018-03-27 23:37:12.078 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 331320 in queue [delay]
+2018-03-27 23:37:13.079 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 326456 in queue [delay]
+2018-03-27 23:37:14.252 [org.gautelis.muprocessmanager.recover] [WARN ] MuProcessManager: Postponing recover in order to catch up... 326456 in queue
+2018-03-27 23:37:23.700 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 279232 in queue [delay]
+2018-03-27 23:37:23.964 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {229353 SUCCESSFUL} {113580 COMPENSATED} {1441 COMPENSATION_FAILED} {344382 in total} {278104 in queue}
+2018-03-27 23:37:24.703 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 274875 in queue [delay]
+2018-03-27 23:37:25.868 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 270012 in queue [delay]
+2018-03-27 23:37:27.035 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 264184 in queue [delay]
+2018-03-27 23:37:28.040 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 259169 in queue [delay]
+2018-03-27 23:37:29.042 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 255415 in queue [delay]
+2018-03-27 23:37:30.042 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 251057 in queue [delay]
+2018-03-27 23:37:31.129 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 247257 in queue [delay]
+2018-03-27 23:37:32.130 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 241693 in queue [delay]
+2018-03-27 23:37:33.130 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 238870 in queue [delay]
+2018-03-27 23:37:34.130 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 235506 in queue [delay]
+2018-03-27 23:37:35.131 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 231031 in queue [delay]
+2018-03-27 23:37:36.132 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 227078 in queue [delay]
+2018-03-27 23:37:37.135 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 223332 in queue [delay]
+2018-03-27 23:37:38.148 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 218946 in queue [delay]
+2018-03-27 23:37:39.154 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 214176 in queue [delay]
+2018-03-27 23:37:40.157 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 210715 in queue [delay]
+2018-03-27 23:37:41.160 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 206267 in queue [delay]
+2018-03-27 23:37:42.243 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 202203 in queue [delay]
+2018-03-27 23:37:43.248 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 196821 in queue [delay]
+2018-03-27 23:37:44.248 [org.gautelis.muprocessmanager.recover] [WARN ] MuProcessManager: Postponing recover in order to catch up... 196821 in queue
+2018-03-27 23:37:53.705 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 154088 in queue [delay]
+2018-03-27 23:37:54.707 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 150337 in queue [delay]
+2018-03-27 23:37:55.777 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 145619 in queue [delay]
+2018-03-27 23:37:56.779 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 140887 in queue [delay]
+2018-03-27 23:37:57.783 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 136773 in queue [delay]
+2018-03-27 23:37:58.787 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 133357 in queue [delay]
+2018-03-27 23:37:59.792 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 129134 in queue [delay]
+2018-03-27 23:38:00.794 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 124381 in queue [delay]
+2018-03-27 23:38:01.797 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 121007 in queue [delay]
+2018-03-27 23:38:02.801 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 116811 in queue [delay]
+2018-03-27 23:38:03.907 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 112821 in queue [delay]
+2018-03-27 23:38:04.911 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 107992 in queue [delay]
+2018-03-27 23:38:05.913 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 104703 in queue [delay]
+2018-03-27 23:38:06.915 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 100860 in queue [delay]
+2018-03-27 23:38:08.079 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 96822 in queue [delay]
+2018-03-27 23:38:09.087 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 92272 in queue [delay]
+2018-03-27 23:38:10.089 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 88229 in queue [delay]
+2018-03-27 23:38:11.094 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 84911 in queue [delay]
+2018-03-27 23:38:12.277 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 80878 in queue [delay]
+2018-03-27 23:38:13.282 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 76463 in queue [delay]
+2018-03-27 23:38:14.285 [org.gautelis.muprocessmanager.recover] [WARN ] MuProcessManager: Postponing recover in order to catch up... 76463 in queue
+2018-03-27 23:38:23.795 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 38236 in queue [delay]
+2018-03-27 23:38:24.030 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {113916 SUCCESSFUL} {55212 COMPENSATED} {2854 COMPENSATION_FAILED} {171990 in total} {37351 in queue}
+2018-03-27 23:38:24.803 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 33684 in queue [delay]
+2018-03-27 23:38:25.803 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 31061 in queue [delay]
+2018-03-27 23:38:26.807 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 27317 in queue [delay]
+2018-03-27 23:38:27.992 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 23056 in queue [delay]
+2018-03-27 23:38:28.996 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 17998 in queue [delay]
+2018-03-27 23:38:30.000 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 14633 in queue [delay]
+2018-03-27 23:38:31.000 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 10885 in queue [delay]
+2018-03-27 23:38:32.140 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 7294 in queue [delay]
+2018-03-27 23:38:33.148 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 3116 in queue [delay]
+2018-03-27 23:38:34.148 [org.gautelis.muprocessmanager.recover] [DEBUG] MuProcessManager: Background threads not yet ready... 109 in queue [delay]
+2018-03-27 23:38:37.285 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {1602 attempted compensations from COMPENSATION_FAILED} {146801 observed in total} {840 in queue}
+2018-03-27 23:38:55.536 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {413 attempted compensations from COMPENSATION_FAILED} {173120 observed in total} {0 in queue}
+2018-03-27 23:39:23.864 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {145185 SUCCESSFUL} {71738 COMPENSATED} {1897 COMPENSATION_FAILED} {218828 in total} {0 in queue}
+2018-03-27 23:39:25.953 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {949 attempted compensations from COMPENSATION_FAILED} {219477 observed in total} {0 in queue}
+2018-03-27 23:39:56.885 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {955 attempted compensations from COMPENSATION_FAILED} {264995 observed in total} {0 in queue}
+2018-03-27 23:40:23.916 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {206053 SUCCESSFUL} {101872 COMPENSATED} {1974 COMPENSATION_FAILED} {309907 in total} {0 in queue}
+2018-03-27 23:40:27.091 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {983 attempted compensations from COMPENSATION_FAILED} {311386 observed in total} {0 in queue}
+2018-03-27 23:40:57.727 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {995 attempted compensations from COMPENSATION_FAILED} {357335 observed in total} {0 in queue}
+2018-03-27 23:41:24.208 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {264105 SUCCESSFUL} {130708 COMPENSATED} {1927 COMPENSATION_FAILED} {396748 in total} {0 in queue}
+2018-03-27 23:41:28.757 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {26 removed from SUCCESSFUL} {7 removed from COMPENSATED} {978 attempted compensations from COMPENSATION_FAILED} {399199 observed in total} {369 in queue}
+2018-03-27 23:41:58.415 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {772 removed from SUCCESSFUL} {346 removed from COMPENSATED} {947 attempted compensations from COMPENSATION_FAILED} {440699 observed in total} {29028 in queue}
+2018-03-27 23:42:24.166 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {299527 SUCCESSFUL} {147421 COMPENSATED} {1827 COMPENSATION_FAILED} {448783 in total} {0 in queue}
+2018-03-27 23:42:28.567 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {692 removed from SUCCESSFUL} {343 removed from COMPENSATED} {932 attempted compensations from COMPENSATION_FAILED} {451771 observed in total} {32944 in queue}
+2018-03-27 23:42:58.646 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {466 removed from SUCCESSFUL} {227 removed from COMPENSATED} {893 attempted compensations from COMPENSATION_FAILED} {459530 observed in total} {32897 in queue}
+2018-03-27 23:43:24.029 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {8 PROGRESSING} {308374 SUCCESSFUL} {153308 COMPENSATED} {1778 COMPENSATION_FAILED} {463468 in total} {0 in queue}
+2018-03-27 23:43:29.470 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {550 removed from SUCCESSFUL} {247 removed from COMPENSATED} {902 attempted compensations from COMPENSATION_FAILED} {467695 observed in total} {32299 in queue}
+2018-03-27 23:43:58.789 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {581 removed from SUCCESSFUL} {241 removed from COMPENSATED} {874 attempted compensations from COMPENSATION_FAILED} {474464 observed in total} {40034 in queue}
+2018-03-27 23:44:24.019 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {3 NEW} {5 PROGRESSING} {312946 SUCCESSFUL} {154816 COMPENSATED} {1826 COMPENSATION_FAILED} {469596 in total} {0 in queue}
+2018-03-27 23:44:28.908 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {694 removed from SUCCESSFUL} {317 removed from COMPENSATED} {894 attempted compensations from COMPENSATION_FAILED} {471162 observed in total} {44225 in queue}
+2018-03-27 23:44:58.669 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {428 removed from SUCCESSFUL} {209 removed from COMPENSATED} {934 attempted compensations from COMPENSATION_FAILED} {467805 observed in total} {44745 in queue}
+2018-03-27 23:45:24.084 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {1 NEW} {7 PROGRESSING} {306721 SUCCESSFUL} {152360 COMPENSATED} {1827 COMPENSATION_FAILED} {460916 in total} {0 in queue}
+2018-03-27 23:45:29.729 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {670 removed from SUCCESSFUL} {294 removed from COMPENSATED} {923 attempted compensations from COMPENSATION_FAILED} {460984 observed in total} {44509 in queue}
+2018-03-27 23:45:58.340 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {617 removed from SUCCESSFUL} {290 removed from COMPENSATED} {908 attempted compensations from COMPENSATION_FAILED} {454812 observed in total} {44121 in queue}
+2018-03-27 23:46:24.028 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {1 NEW} {7 PROGRESSING} {299748 SUCCESSFUL} {148997 COMPENSATED} {1774 COMPENSATION_FAILED} {450527 in total} {0 in queue}
+2018-03-27 23:46:29.115 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {1514 removed from SUCCESSFUL} {698 removed from COMPENSATED} {891 attempted compensations from COMPENSATION_FAILED} {451356 observed in total} {39234 in queue}
+2018-03-27 23:46:58.346 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {798 removed from SUCCESSFUL} {400 removed from COMPENSATED} {885 attempted compensations from COMPENSATION_FAILED} {451530 observed in total} {40587 in queue}
+2018-03-27 23:47:24.217 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {2 NEW} {6 PROGRESSING} {299566 SUCCESSFUL} {148582 COMPENSATED} {1781 COMPENSATION_FAILED} {449937 in total} {0 in queue}
+2018-03-27 23:47:28.916 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {730 removed from SUCCESSFUL} {393 removed from COMPENSATED} {915 attempted compensations from COMPENSATION_FAILED} {452020 observed in total} {39682 in queue}
+2018-03-27 23:47:58.357 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {585 removed from SUCCESSFUL} {285 removed from COMPENSATED} {863 attempted compensations from COMPENSATION_FAILED} {452560 observed in total} {41101 in queue}
+2018-03-27 23:48:24.192 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {6 NEW} {9 PROGRESSING} {300734 SUCCESSFUL} {148463 COMPENSATED} {1871 COMPENSATION_FAILED} {451083 in total} {0 in queue}
+2018-03-27 23:48:28.526 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {638 removed from SUCCESSFUL} {284 removed from COMPENSATED} {956 attempted compensations from COMPENSATION_FAILED} {453375 observed in total} {39607 in queue}
+2018-03-27 23:48:56.341 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {628 removed from SUCCESSFUL} {296 removed from COMPENSATED} {910 attempted compensations from COMPENSATION_FAILED} {441595 observed in total} {39374 in queue}
+2018-03-27 23:49:23.861 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {267366 SUCCESSFUL} {133189 COMPENSATED} {738 COMPENSATION_FAILED} {401293 in total} {0 in queue}
+2018-03-27 23:49:26.629 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {658 removed from SUCCESSFUL} {295 removed from COMPENSATED} {712 attempted compensations from COMPENSATION_FAILED} {401293 observed in total} {39028 in queue}
+2018-03-27 23:49:56.026 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {622 removed from SUCCESSFUL} {295 removed from COMPENSATED} {25 attempted compensations from COMPENSATION_FAILED} {361308 observed in total} {39922 in queue}
+2018-03-27 23:50:23.830 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {213237 SUCCESSFUL} {107194 COMPENSATED} {34 COMPENSATION_FAILED} {320465 in total} {0 in queue}
+2018-03-27 23:50:24.408 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {242 removed from SUCCESSFUL} {115 removed from COMPENSATED} {31 attempted compensations from COMPENSATION_FAILED} {320465 observed in total} {40907 in queue}
+2018-03-27 23:50:54.313 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {255 removed from SUCCESSFUL} {101 removed from COMPENSATED} {3 attempted compensations from COMPENSATION_FAILED} {279197 observed in total} {39022 in queue}
+2018-03-27 23:51:23.801 [org.gautelis.muprocessmanager.statistics] [INFO ] STATISTICS: {159449 SUCCESSFUL} {80362 COMPENSATED} {4 COMPENSATION_FAILED} {239815 in total} {0 in queue}
+2018-03-27 23:51:25.266 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {579 removed from SUCCESSFUL} {297 removed from COMPENSATED} {3 attempted compensations from COMPENSATION_FAILED} {239815 observed in total} {39904 in queue}
+2018-03-27 23:51:54.394 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {303 removed from SUCCESSFUL} {112 removed from COMPENSATED} {1 attempted compensations from COMPENSATION_FAILED} {199031 observed in total} {40611 in queue}
+2018-03-27 23:52:24.234 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {339 removed from SUCCESSFUL} {147 removed from COMPENSATED} {158001 observed in total} {40683 in queue}
+2018-03-27 23:52:53.976 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {274 removed from SUCCESSFUL} {118 removed from COMPENSATED} {116828 observed in total} {41712 in queue}
+2018-03-27 23:53:23.866 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {262 removed from SUCCESSFUL} {131 removed from COMPENSATED} {74720 observed in total} {41241 in queue}
+2018-03-27 23:53:53.795 [org.gautelis.muprocessmanager.recover] [INFO ] MuProcessManager: {204 removed from SUCCESSFUL} {90 removed from COMPENSATED} {33082 observed in total} {31161 in queue}
+...
