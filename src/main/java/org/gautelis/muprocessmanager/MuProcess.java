@@ -54,7 +54,7 @@ public class MuProcess {
     private final boolean assumeNativeProcessDataFlow;
 
     //
-    final MuProcessResult result;;
+    final MuProcessResult result;
 
     /* package private */ MuProcess(
             final String correlationId, MuPersistentLog compensationLog,

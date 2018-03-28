@@ -33,7 +33,7 @@ import java.util.Optional;
 
     private MuBackwardBehaviour backwardBehaviour = null;
 
-    /* package private */ MuVolatileProcessStep(String correlationId, final MuActivityParameters activityParameters) throws MuProcessException {
+    /* package private */ MuVolatileProcessStep(String correlationId, final MuActivityParameters activityParameters) {
         this.correlationId = correlationId;
         this.activityParameters = activityParameters;
     }

@@ -460,7 +460,7 @@ public class MuProcessManager {
         try {
             Database.Configuration databaseConfiguration = getDefaultDatabaseConfiguration();
             DataSource dataSource = Derby.getDataSource("mu_process_manager", databaseConfiguration);
-            prepareInternalDatabase(dataSource);;
+            prepareInternalDatabase(dataSource);
 
             return getManager(dataSource);
 
