@@ -84,8 +84,6 @@ public class MuForeignActivityState implements MuActivityState, Serializable {
 
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("(\"").append(json).append("\")");
-        return buf.toString();
+        return getClass().getName() + "(\"" + json + "\")";
     }
 }

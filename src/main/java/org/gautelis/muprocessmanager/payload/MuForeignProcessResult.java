@@ -27,7 +27,6 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.function.Consumer;
 
 /**
@@ -110,8 +109,6 @@ public class MuForeignProcessResult implements MuProcessResult, Serializable {
 
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder(getClass().getName());
-        buf.append("(\"").append(toJson()).append("\")");
-        return buf.toString();
+        return getClass().getName() + "(\"" + toJson() + "\")";
     }
 }

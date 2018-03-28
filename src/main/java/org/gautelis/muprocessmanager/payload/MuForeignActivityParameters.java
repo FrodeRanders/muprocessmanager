@@ -20,7 +20,6 @@ package org.gautelis.muprocessmanager.payload;
 import org.apache.commons.io.IOUtils;
 import org.gautelis.muprocessmanager.MuActivity;
 import org.gautelis.muprocessmanager.MuActivityParameters;
-import org.gautelis.muprocessmanager.MuOrchestrationParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,8 +91,6 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
 
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer(getClass().getName());
-        buf.append("(\"").append(foreignData).append("\")");
-        return buf.toString();
+        return getClass().getName() + "(\"" + foreignData + "\")";
     }
 }

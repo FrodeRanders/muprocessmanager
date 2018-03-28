@@ -17,12 +17,6 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.apache.commons.lang3.SerializationUtils;
-import org.gautelis.vopn.io.Cloner;
-
-import java.io.IOException;
-import java.util.Optional;
-
 /**
  * Corresponds to an individual volatile process step.
  */

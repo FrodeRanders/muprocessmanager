@@ -20,7 +20,6 @@ package org.gautelis.muprocessmanager;
 import org.gautelis.muprocessmanager.payload.*;
 import org.gautelis.vopn.db.Database;
 import org.gautelis.vopn.lang.DynamicLoader;
-import org.gautelis.vopn.lang.Stacktrace;
 import org.gautelis.vopn.queue.WorkQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -310,9 +309,7 @@ public class MuPersistentLog {
     }
 
     /* package private */ Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
-        Connection conn = null;
-        try {
-            conn = dataSource.getConnection();
+        try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
             int processId = MuProcess.PROCESS_ID_NOT_YET_ASSIGNED;
@@ -409,23 +406,12 @@ public class MuPersistentLog {
             conn.commit();
 
             return Optional.of(true);
-        }
-        catch (SQLException sqle) {
-            try {
-                if (null != conn) conn.rollback();
-            }
-            catch (SQLException ignore) {}
 
+        } catch (SQLException sqle) {
             String info = "Failed to reset process: ";
             info += Database.squeeze(sqle);
             log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
-        }
-        finally {
-            try {
-                if (null != conn) conn.close();
-            }
-            catch (SQLException ignore) {}
         }
     }
 
@@ -587,12 +573,7 @@ public class MuPersistentLog {
                                  // harmless since constantly false conditional blocks are removed at
                                  // compile time (as per the Java specification)
                                  //---------------------------------------------------------------------------
-                                MuBackwardBehaviour trapChangesToInterface = new MuBackwardBehaviour() {
-                                    @Override
-                                    public boolean backward(MuBackwardActivityContext context) {
-                                        return false;
-                                    }
-                                };
+                                MuBackwardBehaviour trapChangesToInterface = context -> false;
                             }
                             Class[] parameterTypes = { MuBackwardActivityContext.class };
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
@@ -807,9 +788,7 @@ public class MuPersistentLog {
     ) throws MuProcessException {
         log.trace("Removing process: correlationId=\"{}\", processId={}", correlationId, processId);
 
-        Connection conn = null;
-        try {
-            conn = dataSource.getConnection();
+        try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEPS"))) {
@@ -852,21 +831,10 @@ public class MuPersistentLog {
 
         }
         catch (SQLException sqle) {
-            try {
-                if (null != conn) conn.rollback();
-            }
-            catch (SQLException ignore) {}
-
             String info = "Failed to remove process: correlationId=\"" + correlationId + "\", processId=" + processId + ": ";
             info += Database.squeeze(sqle);
             log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
-        }
-        finally {
-            try {
-                if (null != conn) conn.close();
-            }
-            catch (SQLException ignore) {}
         }
     }
 
@@ -960,9 +928,7 @@ public class MuPersistentLog {
             log.trace(info);
         }
 
-        Connection conn = null;
-        try {
-            conn = dataSource.getConnection();
+        try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS_STEP"))) {
@@ -1011,21 +977,10 @@ public class MuPersistentLog {
             conn.commit();
         }
         catch (SQLException sqle) {
-            try {
-                if (null != conn) conn.rollback();
-            }
-            catch (SQLException ignore) {}
-
             String info = "Failed to persist process step: ";
             info += Database.squeeze(sqle);
             log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
-        }
-        finally {
-            try {
-                if (null != conn) conn.close();
-            }
-            catch (SQLException ignore) {}
         }
     }
 

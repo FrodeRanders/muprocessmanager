@@ -41,7 +41,7 @@ public class MuVolatileProcess {
     private final boolean acceptCompensationFailure;
     private final boolean assumeNativeProcessDataFlow;
 
-    private Stack<MuVolatileProcessStep> stepStack = new Stack<>();
+    private final Stack<MuVolatileProcessStep> stepStack = new Stack<>();
 
     //
     private final MuProcessResult result;

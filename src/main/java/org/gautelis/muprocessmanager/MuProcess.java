@@ -17,14 +17,11 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.gautelis.muprocessmanager.payload.MuForeignProcessResult;
 import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
-import org.gautelis.vopn.io.Cloner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -340,7 +337,7 @@ public class MuProcess {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static class FailedCompensation {
-        private int step;
+        private final int step;
         private String activityName;
 
         FailedCompensation(int step, String activityName) {

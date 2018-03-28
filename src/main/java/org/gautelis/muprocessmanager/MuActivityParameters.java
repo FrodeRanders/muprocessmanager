@@ -19,7 +19,6 @@ package org.gautelis.muprocessmanager;
 
 import java.io.Reader;
 import java.io.Serializable;
-import java.util.Optional;
 
 /**
  * Wraps parameters to a {@link MuActivity}.
