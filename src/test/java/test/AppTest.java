@@ -298,7 +298,7 @@ public class AppTest extends TestCase {
         try {
             Collection<MuProcessDetails> details = mngr.getAbandonedProcessDetails();
             for (MuProcessDetails detail : details) {
-                System.out.println(detail.asJson());
+                System.out.println(detail.toJson());
             }
         }
         catch (MuProcessException mupp) {
