@@ -66,6 +66,23 @@ WHERE p.state = 5</pre>
             <a href="../MuProcessState.html">ABANDONED</a> as visualized in <a href="microprocess-manager-states-description.png">this figure</a>.</p>
     </div>
 
+    <div class="key">FETCH_ALL_PROCESS_DETAILS</div>
+    <div class="value">
+        <pre>SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
+FROM mu_process p
+LEFT OUTER JOIN mu_process_step s
+  ON (p.process_id = s.process_id)</pre>
+    </div>
+
+    <div class="key">FETCH_PROCESS_DETAILS_BY_CORRID</div>
+    <div class="value">
+        <pre>SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
+FROM mu_process p
+LEFT OUTER JOIN mu_process_step s
+ON (p.process_id = s.process_id)
+WHERE p.correlation_id = ?</pre>
+    </div>
+
     <div class="key">FETCH_PROCESS_RESULT_BY_CORRID</div>
     <div class="value">
         <pre>SELECT state, result

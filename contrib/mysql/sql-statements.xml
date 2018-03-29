@@ -37,6 +37,21 @@
         WHERE p.state = 5
     </entry>
 
+    <entry key="FETCH_ALL_PROCESS_DETAILS">
+        SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
+        FROM mu_process p
+        LEFT OUTER JOIN mu_process_step s
+        ON (p.process_id = s.process_id)
+    </entry>
+
+    <entry key="FETCH_PROCESS_DETAILS_BY_CORRID">
+        SELECT p.correlation_id, p.process_id, p.state, p.created, p.modified, s.step_id, s.retries, s.previous_state
+        FROM mu_process p
+        LEFT OUTER JOIN mu_process_step s
+        ON (p.process_id = s.process_id)
+        WHERE p.correlation_id = ?
+    </entry>
+
     <entry key="FETCH_PROCESS_RESULT_BY_CORRID">
         SELECT state, result
         FROM mu_process

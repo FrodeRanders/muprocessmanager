@@ -411,13 +411,34 @@ public class MuProcessManager {
     }
 
     /**
-     * Salvages abandoned processes, returning details of processes and their activities;
+     * Retrieves abandoned processes, returning details of processes and their activities.
      *
      * @return a collection of process details.
      * @throws MuProcessException upon failure.
      */
-    public Collection<MuProcessDetails> getAbandonedProcessesDetails() throws MuProcessException {
-        return compensationLog.getAbandonedProcessesDetails();
+    public Collection<MuProcessDetails> getAbandonedProcessDetails() throws MuProcessException {
+        return compensationLog.getAbandonedProcessDetails();
+    }
+
+    /**
+     * Retrieves details for all (known) processes, returning process details as well as details
+     * on activities.
+     *
+     * @return a collection of process details.
+     * @throws MuProcessException upon failure.
+     */
+    public Collection<MuProcessDetails> getProcessDetails() throws MuProcessException {
+        return compensationLog.getProcessDetails();
+    }
+
+    /**
+     * Retrieves processes, returning details of processes and their activities;
+     *
+     * @return details for process identified by correlationId.
+     * @throws MuProcessException upon failure.
+     */
+    public Optional<MuProcessDetails> getProcessDetails(String correlationId) throws MuProcessException {
+        return compensationLog.getProcessDetails(correlationId);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

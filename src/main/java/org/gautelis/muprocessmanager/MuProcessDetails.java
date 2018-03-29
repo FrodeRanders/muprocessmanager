@@ -97,7 +97,7 @@ public class MuProcessDetails {
         activityDetails.add(new MuActivityDetails(stepId, retries, preState));
     }
 
-    public String asJson() {
+    public String toJson() {
         return gson.toJson(this);
     }
 }

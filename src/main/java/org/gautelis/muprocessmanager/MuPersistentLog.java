@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
+import javax.swing.text.html.Option;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.sql.*;
@@ -415,7 +416,51 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ Collection<MuProcessDetails> getAbandonedProcessesDetails() throws MuProcessException {
+    private void fetchDetails(PreparedStatement stmt, List<MuProcessDetails> list) throws SQLException, MuProcessException {
+        try (ResultSet rs = Database.executeQuery(stmt)) {
+            MuProcessDetails details = null;
+            while (rs.next()) {
+                // correlation_id, process_id, state, p.created, p.modified, step_id, retries, preState
+                int idx = 0;
+
+                // Process related
+                String correlationId = rs.getString(++idx);
+                int processId = rs.getInt(++idx);
+                MuProcessState state = MuProcessState.fromInt(rs.getInt(++idx));
+                Timestamp created = rs.getTimestamp(++idx);
+                Timestamp modified = rs.getTimestamp(++idx);
+
+                if (null == details || details.getProcessId() != processId) {
+                    // New process
+                    details = new MuProcessDetails(correlationId, processId, state, created, modified);
+                    list.add(details);
+                }
+
+                // Process step related
+                int stepId = rs.getInt(++idx);
+                if (rs.wasNull()) {
+                    // Then there are no steps associated with process.
+                    // This is an effect of the left outer join.
+                    continue;
+                }
+                int retries = rs.getInt(++idx);
+
+                MuActivityState preState = null;
+                Reader preStateReader = rs.getCharacterStream(++idx);
+                if (!rs.wasNull()) {
+                    if (assumeNativeProcessDataFlow) {
+                        preState = MuNativeActivityState.fromReader(preStateReader);
+                    } else {
+                        preState = MuForeignActivityState.fromReader(preStateReader);
+                    }
+                }
+
+                details.addActivityDetails(stepId, retries, preState);
+            }
+        }
+    }
+
+    /* package private */ Collection<MuProcessDetails> getAbandonedProcessDetails() throws MuProcessException {
         List<MuProcessDetails> detailsList = new LinkedList<>();
 
         try (Connection conn = dataSource.getConnection()) {
@@ -423,48 +468,7 @@ public class MuPersistentLog {
                     getStatement("FETCH_ABANDONED_PROCESS_DETAILS"),
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
-                try (ResultSet rs = Database.executeQuery(stmt)) {
-                    MuProcessDetails details = null;
-                    while (rs.next()) {
-                        // correlation_id, process_id, state, p.created, p.modified, step_id, retries, preState
-                        int idx = 0;
-
-                        // Process related
-                        String correlationId = rs.getString(++idx);
-                        int processId = rs.getInt(++idx);
-                        MuProcessState state = MuProcessState.fromInt(rs.getInt(++idx));
-                        Timestamp created = rs.getTimestamp(++idx);
-                        Timestamp modified = rs.getTimestamp(++idx);
-
-                        if (null == details || details.getProcessId() != processId) {
-                            // New process
-                            details = new MuProcessDetails(correlationId, processId, state, created, modified);
-                            detailsList.add(details);
-                        }
-
-                        // Process step related
-                        int stepId = rs.getInt(++idx);
-                        if (rs.wasNull()) {
-                            // Then there are no steps associated with process.
-                            // This is an effect of the left outer join.
-                            continue;
-                        }
-                        int retries = rs.getInt(++idx);
-
-                        MuActivityState preState = null;
-                        Reader preStateReader = rs.getCharacterStream(++idx);
-                        if (!rs.wasNull()) {
-                            if (assumeNativeProcessDataFlow) {
-                                preState = MuNativeActivityState.fromReader(preStateReader);
-                            }
-                            else {
-                                preState = MuForeignActivityState.fromReader(preStateReader);
-                            }
-                        }
-
-                        details.addActivityDetails(stepId, retries, preState);
-                    }
-                }
+                fetchDetails(stmt, detailsList);
             }
         }
         catch (SQLException sqle) {
@@ -477,6 +481,59 @@ public class MuPersistentLog {
         return detailsList;
     }
 
+    /* package private */ Collection<MuProcessDetails> getProcessDetails() throws MuProcessException {
+        List<MuProcessDetails> detailsList = new LinkedList<>();
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_ALL_PROCESS_DETAILS"),
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+            ) {
+                fetchDetails(stmt, detailsList);
+            }
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to fetch details for all processes: ";
+            info += Database.squeeze(sqle);
+            log.warn(info, sqle);
+            throw new MuProcessException(info, sqle);
+        }
+
+        return detailsList;
+    }
+
+    /* package private */ Optional<MuProcessDetails> getProcessDetails(String correlationId) throws MuProcessException {
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    getStatement("FETCH_PROCESS_DETAILS_BY_CORRID"),
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+            ) {
+                stmt.setString(1, correlationId);
+
+                List<MuProcessDetails> list = new LinkedList<>();
+                fetchDetails(stmt, list);
+                if (list.isEmpty()) {
+                    return Optional.empty();
+                } else {
+                    if (list.size() != 1) {
+                        log.warn(
+                                "Several processes matches same correlation ID: {}", correlationId,
+                                new Exception("Synthetic exception to gain a stack trace")
+                        );
+                        return Optional.empty();
+                    }
+                    return Optional.of(((LinkedList<MuProcessDetails>) list).getFirst());
+                }
+            }
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to fetch details for processes: correlationId=\"" + correlationId + "\": ";
+            info += Database.squeeze(sqle);
+            log.warn(info, sqle);
+            throw new MuProcessException(info, sqle);
+        }
+    }
 
     /* package private */ void markRetry(
         final int processId, final int stepId
