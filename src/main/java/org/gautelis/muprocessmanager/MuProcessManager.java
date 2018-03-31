@@ -364,11 +364,33 @@ public class MuProcessManager {
      * persisted to database. Handles synchronous process executions, including Saga-style compensation,
      * but will also survive a power off after which the compensations are run asynchronously without
      * a running process and in the background.
+     * <p>
+     * This version of the 'newProcess' method falls back on the globally defined process manager
+     * policy for determining re-compensation acceptance. If this cannot be defined globally for
+     * all processes, use the more specific {@link MuProcessManager#newProcess(String, boolean)} instead.
      *
      * @param correlationId a correlation ID identifying the business request.
      * @return a persisted {@link MuProcess}
      */
     public MuProcess newProcess(final String correlationId) {
+        return new MuProcess(correlationId, compensationLog, acceptCompensationFailure, assumeNativeProcessDataFlow);
+    }
+
+    /**
+     * Creates a new persisted process, a process that handles activities with compensations that are
+     * persisted to database. Handles synchronous process executions, including Saga-style compensation,
+     * but will also survive a power off after which the compensations are run asynchronously without
+     * a running process and in the background.
+     * <p>
+     * If there are explicit demands on Serializability, re-compensation should not be allowed. This can be
+     * set for all processes by means of the {@link MuProcessManagementPolicy}, or by this method on a per
+     * process basis.
+     *
+     * @param correlationId a correlation ID identifying the business request.
+     * @param acceptCompensationFailure indicate (on a per process basis) whether re-compensation is allowed.
+     * @return a persisted {@link MuProcess}
+     */
+    public MuProcess newProcess(final String correlationId, boolean acceptCompensationFailure) {
         return new MuProcess(correlationId, compensationLog, acceptCompensationFailure, assumeNativeProcessDataFlow);
     }
 
