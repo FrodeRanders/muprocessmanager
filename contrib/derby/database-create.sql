@@ -29,7 +29,7 @@ CREATE TABLE mu_process (
   correlation_id VARCHAR(255) NOT NULL, -- for now
 
   state INTEGER NOT NULL DEFAULT 0, -- 0=new, 1=progressing, 2=successful, 3=compensated, 4=compensation-failed, 5=abandoned
-
+  accept_failure BOOLEAN NOT NULL DEFAULT true,
   result CLOB DEFAULT NULL,
 
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

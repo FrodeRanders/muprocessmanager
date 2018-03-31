@@ -34,7 +34,7 @@ public class AppTest extends TestCase {
     private static final Logger log = LogManager.getLogger(AppTest.class);
     private static final Object lock = new Object();
 
-    MuProcessManager mngr = null;
+    private MuProcessManager mngr = null;
 
     @Override
     protected void setUp() throws Exception {

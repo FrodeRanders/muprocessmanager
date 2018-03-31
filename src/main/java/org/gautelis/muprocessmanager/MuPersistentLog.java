@@ -62,7 +62,7 @@ public class MuPersistentLog {
     }
 
     public interface CleanupRunnable {
-        void run(String correlationId, int processId, int state, java.util.Date created, java.util.Date modified, java.util.Date now) throws MuProcessException;
+        void run(String correlationId, int processId, int state, boolean acceptCompensationFailure, java.util.Date created, java.util.Date modified, java.util.Date now) throws MuProcessException;
     }
 
     /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements, final boolean assumeNativeProcessDataFlow) {
@@ -119,8 +119,10 @@ public class MuPersistentLog {
     ) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS"), Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, process.getCorrelationId());
-                stmt.setInt(2, MuProcessState.NEW.toInt());
+                int idx = 0;
+                stmt.setString(++idx, process.getCorrelationId());
+                stmt.setInt(++idx, MuProcessState.NEW.toInt());
+                stmt.setBoolean(++idx, process.getAcceptCompensationFailure());
                 Database.executeUpdate(stmt);
 
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
@@ -569,9 +571,10 @@ public class MuPersistentLog {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
-                        // correlation_id, step_id, class_name, method_name, activity_params, orchestr_params, retries, previous_state
+                        // correlation_id, accept_failure, step_id, class_name, method_name, activity_params, orchestr_params, retries, previous_state
                         int idx = 0;
                         String correlationId = rs.getString(++idx);
+                        boolean acceptCompensationFailure = rs.getBoolean(++idx);
                         int stepId = rs.getInt(++idx);
                         String className = rs.getString(++idx);
                         String methodName = rs.getString(++idx);
@@ -636,7 +639,7 @@ public class MuPersistentLog {
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
 
                             MuBackwardActivityContext context =
-                                    new MuBackwardActivityContext(correlationId, activityParameters, orchestrationParameters, preState);
+                                    new MuBackwardActivityContext(correlationId, acceptCompensationFailure, activityParameters, orchestrationParameters, preState);
 
                             //
                             if (runnable.run(activity, method, context, stepId, retries)) {
@@ -808,16 +811,17 @@ public class MuPersistentLog {
             ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
-                        // correlation_id, process_id, state, created, modified
+                        // correlation_id, process_id, state, accept_failure, created, modified, now
                         int idx = 0;
                         String correlationId = rs.getString(++idx);
                         int processId = rs.getInt(++idx);
                         int state = rs.getInt(++idx);
+                        boolean acceptCompensationFailure = rs.getBoolean(++idx);
                         Timestamp created = rs.getTimestamp(++idx);
                         Timestamp modified = rs.getTimestamp(++idx);
                         Timestamp now = rs.getTimestamp(++idx);
 
-                        runnable.run(correlationId, processId, state, created, modified, now);
+                        runnable.run(correlationId, processId, state, acceptCompensationFailure, created, modified, now);
                     }
                 }
             }

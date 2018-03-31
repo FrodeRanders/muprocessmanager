@@ -48,7 +48,6 @@ public class MuProcess {
 
     //
     private final boolean acceptCompensationFailure;
-    private final boolean assumeNativeProcessDataFlow;
 
     //
     final MuProcessResult result;
@@ -60,7 +59,6 @@ public class MuProcess {
         this.correlationId = correlationId;
         this.compensationLog = compensationLog;
         this.acceptCompensationFailure = acceptCompensationFailure;
-        this.assumeNativeProcessDataFlow = assumeNativeProcessDataFlow;
 
         if (assumeNativeProcessDataFlow) {
             result = new MuNativeProcessResult();
@@ -146,7 +144,7 @@ public class MuProcess {
             // relevant syndrome:
             //     - failed, but managed to compensate
             //     - failed and so did compensation(s)
-            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+            throw compensate(compensationLog, correlationId, processId);
         }
     }
 
@@ -194,7 +192,7 @@ public class MuProcess {
             // relevant syndrome:
             //     - failed, but managed to compensate
             //     - failed and so did compensation(s)
-            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+            throw compensate(compensationLog, correlationId, processId);
         }
     }
 
@@ -265,7 +263,7 @@ public class MuProcess {
             // relevant syndrome:
             //     - failed, but managed to compensate
             //     - failed and so did compensation(s)
-            throw compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+            throw compensate(compensationLog, correlationId, processId);
         }
     }
 
@@ -354,10 +352,13 @@ public class MuProcess {
         }
     }
 
+    /*
+     * This is the synchronous handling of compensation, which has another
+     * treatment of acceptCompensationFailure than has the asynchronous one.
+     */
     /* package private */ static MuProcessException compensate(
             final MuPersistentLog compensationLog,
-            final String correlationId, final int processId,
-            final boolean acceptCompensationFailure
+            final String correlationId, final int processId
     ) throws MuProcessException {
 
         MuProcessException exception;
@@ -382,7 +383,7 @@ public class MuProcess {
                     compensationSuccess = false;
                     failedCompensations.add(new FailedCompensation(step, activityName));
 
-                    if (!acceptCompensationFailure) {
+                    if (!context.acceptCompensationFailure()) {
                         // Handling when having a throwable, i.e. compensation failed catastrophically
                         String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\"";
                         throw new MuProcessBackwardBehaviourException(info, t);
@@ -392,7 +393,7 @@ public class MuProcess {
                 if (!compensationSuccess) {
                     log.trace("Failed to compensate step {} activity (\"{}\"): correlationId=\"{}\"", step, activityName, correlationId);
 
-                    if (!acceptCompensationFailure) {
+                    if (!context.acceptCompensationFailure()) {
                         // Handling without throwable, i.e. compensation failed in a controlled manner.
                         String info = "Failed to compensate step " + step + " activity (\"" + activityName + "\"): correlationId=\"" + correlationId + "\"";
                         throw new MuProcessBackwardBehaviourException(info);

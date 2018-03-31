@@ -6,8 +6,8 @@
           There exists corresponding documentation in src/main/java/eu/ensure/muprocessmanager/doc-files/sql-statements.html
     </comment>
     <entry key="STORE_PROCESS">
-        INSERT INTO mu_process (correlation_id, state)
-        VALUES (?,?)
+        INSERT INTO mu_process (correlation_id, state, accept_failure)
+        VALUES (?,?,?)
     </entry>
 
     <entry key="REMOVE_PROCESS">
@@ -23,7 +23,7 @@
     </entry>
 
     <entry key="FETCH_PROCESSES">
-        SELECT correlation_id, process_id, state, created, modified, CURRENT_TIMESTAMP AS now
+        SELECT correlation_id, process_id, state, accept_failure, created, modified, CURRENT_TIMESTAMP AS now
         FROM mu_process
         WHERE state &lt; 5
         ORDER BY modified DESC
@@ -103,7 +103,7 @@
     </entry>
 
     <entry key="FETCH_PROCESS_STEPS_BY_PROCID_DETAILED">
-        SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
+        SELECT proc.correlation_id, proc.accept_failure, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
         FROM mu_process_step step
         INNER JOIN mu_process proc
           ON proc.process_id = step.process_id

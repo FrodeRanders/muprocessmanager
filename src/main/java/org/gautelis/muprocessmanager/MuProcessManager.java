@@ -181,7 +181,9 @@ public class MuProcessManager {
             final int processRecompensationTime = 1000 * policy.secondsBetweenRecompensationAttempts();
             final int processAssumedStuckTime = 60 * 1000 * policy.minutesBeforeAssumingProcessStuck();
 
-            compensationLog.recover((correlationId, processId, state, created, modified, now) -> {
+            compensationLog.recover(
+                    (correlationId, processId, state, acceptCompensationFailure, created, modified, now) -> {
+
                 observations[0]++; // explicit code
                 MuProcessState _state = MuProcessState.fromInt(state);
 
@@ -215,8 +217,11 @@ public class MuProcessManager {
                                 // exceptions
                                 try {
                                     // Ignored returned exception -- we don't want to throw anything here
-                                    // since we are running compensation asynchronously
-                                    MuProcess.compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+                                    // since we are running compensation asynchronously. It is safe to compensate
+                                    // here (since we cannot be re-compensating -- process was progressing -- and
+                                    // re-compensation may not be allowed if we failed at it earlier)
+                                    //
+                                    MuProcess.compensate(compensationLog, correlationId, processId);
                                     recoverCount[state]++;
 
                                 } catch (MuProcessException unexpected) {
@@ -250,13 +255,16 @@ public class MuProcessManager {
                         break;
 
                     case COMPENSATION_FAILED:
-                        // First time through, try to recompensate once
-                        if (!justStarted && /* Is ripe for removal */ modified.before(new Date(now.getTime() - processRetentionTime))) {
+                        // If this process doesn't allow re-compensations, we will fail and abandon process right away.
+                        // Otherwise, if this is the first time through, we will try to re-compensate at least once
+                        if (!acceptCompensationFailure
+                                || (!justStarted && /* Is ripe for removal */ modified.before(new Date(now.getTime() - processRetentionTime)))) {
                             recoverWorkQueue.execute(() -> {
                                 try {
                                     Optional<Integer> stepCount = compensationLog.countProcessSteps(processId);
                                     if (stepCount.isPresent() && stepCount.get() > 0) {
-                                        log.debug("Abandoning process: correlationId=\"{}\", processId={}, state={}", correlationId, processId, _state);
+                                        log.debug("Abandoning process{}: correlationId=\"{}\", processId={}, state={}",
+                                                acceptCompensationFailure ? "" : " (since re-compensation prohibited)", correlationId, processId, _state);
                                         compensationLog.abandon(correlationId, processId);
                                         abandonCount[state]++;
 
@@ -284,7 +292,7 @@ public class MuProcessManager {
                                     // exceptions
                                     try {
                                         // Ignored returned exception -- we don't want to throw anything here
-                                        MuProcess.compensate(compensationLog, correlationId, processId, acceptCompensationFailure);
+                                        MuProcess.compensate(compensationLog, correlationId, processId);
                                         recoverCount[state]++;
 
                                     } catch (MuProcessException unexpected) {

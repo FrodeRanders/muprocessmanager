@@ -25,8 +25,8 @@
 
     <div class="key">STORE_PROCESS</div>
     <div class="value">
-        <pre>INSERT INTO mu_process (correlation_id, state)
-VALUES (?,?)</pre>
+        <pre>INSERT INTO mu_process (correlation_id, state, accept_failure)
+VALUES (?,?,?)</pre>
      </div>
 
     <div class="key">REMOVE_PROCESS</div>
@@ -47,7 +47,7 @@ ORDER BY modified DESC</pre>
 
     <div class="key">FETCH_PROCESSES</div>
     <div class="value">
-        <pre>SELECT correlation_id, process_id, state, created, modified, CURRENT_TIMESTAMP AS now
+        <pre>SELECT correlation_id, process_id, state, accept_failure, created, modified, CURRENT_TIMESTAMP AS now
 FROM mu_process
 WHERE state &lt; 5
 ORDER BY modified DESC</pre>
@@ -145,7 +145,7 @@ WHERE process_id = ?</pre>
 
     <div class="key">FETCH_PROCESS_STEPS_BY_PROCID_DETAILED</div>
     <div class="value">
-        <pre>SELECT proc.correlation_id, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
+        <pre>SELECT proc.correlation_id, proc.accept_failure, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
 FROM mu_process_step step
 INNER JOIN mu_process proc
   ON proc.process_id = step.process_id

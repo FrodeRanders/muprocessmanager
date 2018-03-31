@@ -55,7 +55,8 @@ package org.gautelis.muprocessmanager;
         // Run backward transaction
         boolean success;
         try {
-            MuBackwardActivityContext context = new MuBackwardActivityContext(correlationId, activityParameters, null, null);
+            boolean acceptCompensationFailure = /* does not matter either way */ true;
+            MuBackwardActivityContext context = new MuBackwardActivityContext(correlationId, acceptCompensationFailure, activityParameters, null, null);
             success = backwardBehaviour.backward(context);
         }
         catch (Throwable t) {

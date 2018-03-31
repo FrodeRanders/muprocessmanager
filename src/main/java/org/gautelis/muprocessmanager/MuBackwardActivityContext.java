@@ -22,15 +22,17 @@ import java.util.Optional;
 public class MuBackwardActivityContext {
 
     private final String correlationId;
+    private final boolean acceptCompensationFailure;
     private final MuActivityParameters activityParameters;
     private final MuOrchestrationParameters orchestrationParameters;
     private final MuActivityState preState;
 
     /* package private */ MuBackwardActivityContext(
-            String correlationId, MuActivityParameters activityParameters,
+            String correlationId, boolean acceptCompensationFailure, MuActivityParameters activityParameters,
             MuOrchestrationParameters orchestrationParameters, MuActivityState preState
     ) {
         this.correlationId = correlationId;
+        this.acceptCompensationFailure = acceptCompensationFailure;
         this.activityParameters = activityParameters;
         this.orchestrationParameters = orchestrationParameters;
         this.preState = preState;
@@ -42,6 +44,10 @@ public class MuBackwardActivityContext {
 
     public String getCorrelationId() {
         return correlationId;
+    }
+
+    public boolean acceptCompensationFailure() {
+        return acceptCompensationFailure;
     }
 
     public MuActivityParameters getActivityParameters() {
