@@ -22,7 +22,7 @@ Available from Maven Central as:
 <dependency>
     <groupId>org.gautelis</groupId>
     <artifactId>muprocessmanager</artifactId>
-    <version>1.8</version>
+    <version>1.9</version>
 </dependency>
 
 ```
