@@ -1,8 +1,8 @@
-A micro-process manager implementing the Saga pattern.
-======================================================
+A Saga execution coordinator implementing a micro-process manager.
+==================================================================
 
 ## Description of content
-This library implements a drop-in micro-process manager, implementing the Saga pattern. Out of the box,
+This library implements a Saga execution coordinator (SEC), suitable as a micro-process manager. Out of the box,
 a local embedded Derby database is used to persist processes and process activities; if the database does not 
 exist, the database and tables are created automatically &#8212; trivializing development use.
 
