@@ -104,7 +104,14 @@ public class MuForeignProcessResult implements MuProcessResult, Serializable {
 
     @Override
     public String toJson() {
-        return gson.toJson(results);
+        JsonParser parser = new JsonParser();
+
+        JsonArray ary = new JsonArray();
+        results.forEach( r -> {
+            JsonObject obj = parser.parse(r).getAsJsonObject();
+            ary.add(obj);
+        });
+        return ary.toString();
     }
 
     @Override
