@@ -27,7 +27,7 @@ CONTAINER ID        IMAGE                                      COMMAND          
 867f4b6ad633        microsoft/mssql-server-linux:2017-latest   "/opt/mssql/bin/sqls…"   3 hours ago         Up 3 hours          0.0.0.0:1401->1433/tcp   muproc
 
 ~ > docker exec -t -i muproc /bin/bash
-root@867f4b6ad633:/# /var/opt/mssql
+root@867f4b6ad633:/# cd /var/opt/mssql
 root@867f4b6ad633:/var/opt/mssql# ls -lR
 .:
 total 12
