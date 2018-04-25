@@ -58,6 +58,9 @@ CREATE TABLE mu_process_step (
   orchestr_params TEXT DEFAULT NULL,
   previous_state TEXT DEFAULT NULL,
 
+  compensate_if_failure BIT NOT NULL DEFAULT 0,
+  transaction_successful BIT DEFAULT NULL,
+
   retries INTEGER NOT NULL DEFAULT 0,
   created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

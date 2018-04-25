@@ -127,8 +127,8 @@ WHERE process_id = ?</pre>
 
     <div class="key">STORE_PROCESS_STEP</div>
     <div class="value">
-        <pre>INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, activity_params, orchestr_params, previous_state)
-        VALUES (?,?,?,?,?,?,?)</pre>
+        <pre>INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, activity_params, orchestr_params, previous_state, compensate_if_failure)
+        VALUES (?,?,?,?,?,?,?,?)</pre>
     </div>
 
     <div class="key">REMOVE_PROCESS_STEP</div>
@@ -143,9 +143,16 @@ WHERE process_id = ? AND step_id = ?</pre>
 WHERE process_id = ?</pre>
     </div>
 
+    <div class="key">UPDATE_PROCESS_STEP</div>
+    <div class="value">
+        <pre>UPDATE mu_process_step
+SET transaction_successful = ?
+WHERE process_id = ? AND step_id = ?</pre>
+    </div>
+
     <div class="key">FETCH_PROCESS_STEPS_BY_PROCID_DETAILED</div>
     <div class="value">
-        <pre>SELECT proc.correlation_id, proc.accept_failure, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
+        <pre>SELECT proc.correlation_id, proc.accept_failure, step.step_id, step.compensate_if_failure, step.transaction_successful, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
 FROM mu_process_step step
 INNER JOIN mu_process proc
   ON proc.process_id = step.process_id

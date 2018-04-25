@@ -4,11 +4,11 @@
 
     <groupId>org.gautelis</groupId>
     <artifactId>muprocessmanager</artifactId>
-    <version>1.11-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
-    <description>A library implementing a micro process manager</description>
+    <description>A library implementing a micro process manager, based on the Saga pattern</description>
     <url>http://github.com/FrodeRanders/muprocessmanager</url>
 
     <licenses>

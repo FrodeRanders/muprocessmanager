@@ -11,6 +11,12 @@
          the process mManager in the background), the behaviour may differ. -->
     <entry key="accept-compensation-failure">true</entry>
 
+    <!-- Should we only compensate an activity if it was previously successful?
+         If we failed to accomplish the objective of an activity, it may not be
+         reasonable to compensate (i.e. undo) the activity.
+         The default is to compensate also on failure. -->
+    <entry key="only-compensate-if-transaction-was-successful">false</entry>
+
     <!-- Number of threads used when recovering processes -->
     <entry key="number-of-recovery-threads">4</entry>
 

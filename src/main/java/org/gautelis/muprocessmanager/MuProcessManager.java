@@ -46,6 +46,7 @@ public class MuProcessManager {
     //
     private final boolean acceptCompensationFailure;
     private final boolean assumeNativeProcessDataFlow;
+    private final boolean onlyCompensateIfTransactionWasSuccessful;
 
     // Timers
     private Timer dumpStatisticsTimer = null;
@@ -65,6 +66,7 @@ public class MuProcessManager {
     private MuProcessManager(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
         acceptCompensationFailure = policy.acceptCompensationFailure();
         assumeNativeProcessDataFlow = policy.assumeNativeProcessDataFlow();
+        onlyCompensateIfTransactionWasSuccessful = policy.onlyCompensateIfTransactionWasSuccessful();
 
         compensationLog = new MuPersistentLog(dataSource, sqlStatements, assumeNativeProcessDataFlow);
         this.policy = policy;
@@ -373,7 +375,12 @@ public class MuProcessManager {
      * @return a persisted {@link MuProcess}
      */
     public MuProcess newProcess(final String correlationId) {
-        return new MuProcess(correlationId, compensationLog, acceptCompensationFailure, assumeNativeProcessDataFlow);
+        return new MuProcess(
+                correlationId, compensationLog,
+                acceptCompensationFailure,
+                assumeNativeProcessDataFlow,
+                onlyCompensateIfTransactionWasSuccessful
+        );
     }
 
     /**
@@ -391,7 +398,12 @@ public class MuProcessManager {
      * @return a persisted {@link MuProcess}
      */
     public MuProcess newProcess(final String correlationId, boolean acceptCompensationFailure) {
-        return new MuProcess(correlationId, compensationLog, acceptCompensationFailure, assumeNativeProcessDataFlow);
+        return new MuProcess(
+                correlationId, compensationLog,
+                acceptCompensationFailure,
+                assumeNativeProcessDataFlow,
+                onlyCompensateIfTransactionWasSuccessful
+        );
     }
 
     /**

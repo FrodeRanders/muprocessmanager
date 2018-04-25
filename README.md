@@ -122,7 +122,7 @@ String correlationId = UUID.randomUUID().toString();
 // of individual activities.
 MuProcess process = null;
 try {
-    MuActivityParameters parameters = new MuActivityParameters();
+    MuNativeActivityParameters parameters = new MuNativeActivityParameters();
 
     process = mngr.newProcess(correlationId);
     

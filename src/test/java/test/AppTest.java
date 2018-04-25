@@ -278,7 +278,7 @@ public class AppTest extends TestCase {
                                 default:
                                     // No idea to recheck, but we will try to reset the process here -- faking a retry
                                     Optional<Boolean> isReset = mngr.resetProcess(correlationId);
-                                    isReset.ifPresent(aBoolean -> info.append(" (was ").append(aBoolean ? "" : "NOT ").append("reset)"));
+                                    isReset.ifPresent(aBoolean -> info.append(" (successfully ").append(aBoolean ? "" : "NOT ").append("reset)"));
                                     sit.remove();
                                     break;
                             }

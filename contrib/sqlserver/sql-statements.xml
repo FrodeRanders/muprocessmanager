@@ -88,8 +88,8 @@
     </entry>
 
     <entry key="STORE_PROCESS_STEP">
-        INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, activity_params, orchestr_params, previous_state)
-        VALUES (?,?,?,?,?,?,?)
+        INSERT INTO mu_process_step (process_id, step_id, class_name, method_name, activity_params, orchestr_params, previous_state, compensate_if_failure)
+        VALUES (?,?,?,?,?,?,?,?)
     </entry>
 
     <entry key="REMOVE_PROCESS_STEP">
@@ -102,8 +102,13 @@
         WHERE process_id = ?
     </entry>
 
+    <entry key="UPDATE_PROCESS_STEP">
+        UPDATE mu_process_step SET transaction_successful = ?
+        WHERE process_id = ? AND step_id = ?
+    </entry>
+
     <entry key="FETCH_PROCESS_STEPS_BY_PROCID_DETAILED">
-        SELECT proc.correlation_id, proc.accept_failure, step.step_id, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
+        SELECT proc.correlation_id, proc.accept_failure, step.step_id, step.compensate_if_failure, step.transaction_successful, step.class_name, step.method_name, step.activity_params, step.orchestr_params, step.retries, step.previous_state
         FROM mu_process_step step
         INNER JOIN mu_process proc
           ON proc.process_id = step.process_id

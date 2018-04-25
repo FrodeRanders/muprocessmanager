@@ -55,6 +55,9 @@ CREATE TABLE mu_process_step (
   orchestr_params CLOB DEFAULT NULL,
   previous_state CLOB DEFAULT NULL,
 
+  compensate_if_failure BOOLEAN NOT NULL DEFAULT false,
+  transaction_successful BOOLEAN DEFAULT NULL,
+
   retries INTEGER NOT NULL DEFAULT 0,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

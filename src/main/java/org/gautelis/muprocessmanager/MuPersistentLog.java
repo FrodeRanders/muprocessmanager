@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import javax.swing.text.html.Option;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.sql.*;
@@ -273,7 +272,7 @@ public class MuPersistentLog {
         return Optional.empty();
     }
 
-    /* package private */ void setProcessState(
+    /* package private */ void setProcessStateAndResult(
             final int processId, final MuProcessState state, final MuProcessResult result
     ) throws MuProcessException {
 
@@ -296,7 +295,7 @@ public class MuPersistentLog {
             }
         }
         catch (SQLException sqle) {
-            String info = "Failed to set process state: ";
+            String info = "Failed to update process: ";
             info += Database.squeeze(sqle);
             log.warn(info, sqle);
             throw new MuProcessException(info, sqle);
@@ -308,8 +307,9 @@ public class MuPersistentLog {
     /* package private */ void setProcessState(
             final int processId, final MuProcessState state
     ) throws MuProcessException {
-        setProcessState(processId, state, /* no result */ null);
+        setProcessStateAndResult(processId, state, /* no result */ null);
     }
+
 
     /* package private */ Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
         try (Connection conn = dataSource.getConnection()) {
@@ -559,6 +559,35 @@ public class MuPersistentLog {
         }
     }
 
+    /* package private */ void markSuccessful(
+            final int processId, final int stepId, final boolean successful
+    ) throws MuProcessException {
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS_STEP"))) {
+                int idx = 0;
+                stmt.setBoolean(++idx, successful);
+                stmt.setInt(++idx, processId);
+                stmt.setInt(++idx, stepId);
+
+                if (0 == Database.executeUpdate(stmt)) {
+                    log.debug(
+                            "No process step corresponding to processId={}, stepId={}, when marking {}",
+                            processId, stepId, successful ? "success" : "failure"
+                    );
+                }
+            }
+        }
+        catch (SQLException sqle) {
+            String info = "Failed to update process step: ";
+            info += Database.squeeze(sqle);
+            log.warn(info, sqle);
+            throw new MuProcessException(info, sqle);
+        }
+
+        log.trace("Updated process step {}#{}", processId, stepId);
+    }
+
     /* package private */ void compensate(
             final int processId, final CompensationRunnable runnable
     ) throws MuProcessException {
@@ -571,11 +600,33 @@ public class MuPersistentLog {
                 stmt.setInt(1, processId);
                 try (ResultSet rs = Database.executeQuery(stmt)) {
                     while (rs.next()) {
-                        // correlation_id, accept_failure, step_id, class_name, method_name, activity_params, orchestr_params, retries, previous_state
+                        // correlation_id, accept_failure, step_id, compensate_if_failure, trans_successful, class_name, method_name, activity_params, orchestr_params, retries, previous_state
                         int idx = 0;
                         String correlationId = rs.getString(++idx);
                         boolean acceptCompensationFailure = rs.getBoolean(++idx);
                         int stepId = rs.getInt(++idx);
+
+                        // Should we compensate even if forward transaction failed? Compensating a successful
+                        // forward transaction seems reasonable, but if the transaction did not accomplish anything
+                        // it may not be pertinent to try to undo anything.
+                        boolean compensateIfFailure = rs.getBoolean(++idx);
+                        Boolean transWasSuccessful = rs.getBoolean(++idx);
+                        if (!rs.wasNull()) {
+                            if (compensateIfFailure && !transWasSuccessful) {
+                                // This is the case we want to trap -- the forward transaction was not successful
+                                // but we should not compensate anyhow. Therefore, we leave early
+
+                                log.debug("Ignoring compensation of unsuccessful step (correlationId=\"{}\", processId={}, stepId={})",
+                                        correlationId, processId, stepId);
+
+                                continue;
+                            }
+                        } else {
+                            log.info("Ignoring compensation of unsuccessful step (correlationId=\"{}\", processId={}, stepId={})",
+                                    correlationId, processId, stepId);
+                        }
+
+                        //
                         String className = rs.getString(++idx);
                         String methodName = rs.getString(++idx);
 
@@ -706,7 +757,7 @@ public class MuPersistentLog {
         }
         finally {
             // Set process state
-            setProcessState(processId, MuProcessState.SUCCESSFUL, result);
+            setProcessStateAndResult(processId, MuProcessState.SUCCESSFUL, result);
         }
     }
 
@@ -937,7 +988,8 @@ public class MuPersistentLog {
             final MuProcess process, final MuBackwardBehaviour activity,
             final MuActivityParameters activityParameters,
             final MuOrchestrationParameters orchestrationParameters,
-            final MuActivityState preState
+            final MuActivityState preState,
+            final boolean onlyCompensateIfTransactionWasSuccessful
     ) throws MuProcessException {
 
         // Determine class name
@@ -1019,6 +1071,10 @@ public class MuPersistentLog {
                 else {
                     stmt.setNull(++idx, Types.CLOB);
                 }
+
+                // remember whether we should compensate
+                stmt.setBoolean(++idx, onlyCompensateIfTransactionWasSuccessful);
+
                 if (0 == Database.executeUpdate(stmt)) {
                     log.debug("No process step corresponding to processId={} stepId={} stored, when storing process step", process.getProcessId(), process.getCurrentStep());
                 }
@@ -1048,16 +1104,20 @@ public class MuPersistentLog {
     /* package private */ void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
             final MuActivityParameters activityParameters,
-            final MuOrchestrationParameters orchestrationParameters
+            final MuOrchestrationParameters orchestrationParameters,
+            final boolean onlyCompensateIfTransactionWasSuccessful
     ) throws MuProcessException {
-        pushCompensation(process, activity, activityParameters, orchestrationParameters, null);
+        pushCompensation(process, activity, activityParameters, orchestrationParameters,
+                null, onlyCompensateIfTransactionWasSuccessful);
     }
 
     /* package private */ void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
-            final MuActivityParameters activityParameters
+            final MuActivityParameters activityParameters,
+            final boolean onlyCompensateIfTransactionWasSuccessful
     ) throws MuProcessException {
-        pushCompensation(process, activity, activityParameters, null, null);
+        pushCompensation(process, activity, activityParameters, null,
+                null, onlyCompensateIfTransactionWasSuccessful);
     }
 
     private void popCompensation(

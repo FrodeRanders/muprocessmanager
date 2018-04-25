@@ -48,17 +48,20 @@ public class MuProcess {
 
     //
     private final boolean acceptCompensationFailure;
+    private final boolean onlyCompensateIfTransactionWasSuccessful;
 
     //
     final MuProcessResult result;
 
     /* package private */ MuProcess(
             final String correlationId, MuPersistentLog compensationLog,
-            final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow
+            final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow,
+            final boolean onlyCompensateIfTransactionWasSuccessful
     ) {
         this.correlationId = correlationId;
         this.compensationLog = compensationLog;
         this.acceptCompensationFailure = acceptCompensationFailure;
+        this.onlyCompensateIfTransactionWasSuccessful = onlyCompensateIfTransactionWasSuccessful;
 
         if (assumeNativeProcessDataFlow) {
             result = new MuNativeProcessResult();
@@ -166,26 +169,11 @@ public class MuProcess {
 
         final Optional<MuActivityState> preState = activity.getState();
 
-        // Run forward action
-        boolean forwardSuccess;
-        try {
-            // Log backward activity
-            if (preState.isPresent()) {
-                compensationLog.pushCompensation(this, activity, activityParameters, orchestrationParameters, preState.get());
-            }
-            else {
-                compensationLog.pushCompensation(this, activity, activityParameters, orchestrationParameters);
-            }
-            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
-            forwardSuccess = activity.forward(context);
-        }
-        catch (Throwable t) {
-            String info = this + ": Forward activity (\"" + activity.getClass().getName() + "\") step " + currentStep + " failed: ";
-            info += t.getMessage();
-            log.info(info, t);
-
-            forwardSuccess = false;
-        }
+        boolean forwardSuccess = runForwardAction(
+                preState, /* forwardBehaviour */ activity, /* backwardBehaviour */ activity,
+                activityParameters, orchestrationParameters
+        );
+        compensationLog.markSuccessful(processId, currentStep, forwardSuccess);
 
         if (!forwardSuccess) {
             // So we failed. Now run backward actions, and throw exception corresponding to
@@ -236,27 +224,10 @@ public class MuProcess {
 
         final Optional<MuActivityState> preState = forwardBehaviour.getState();
 
-        // Run forward action
-        boolean forwardSuccess;
-        try {
-            // Log backward activity
-            if (preState.isPresent()) {
-                compensationLog.pushCompensation(this, backwardBehaviour, activityParameters, orchestrationParameters, preState.get());
-            }
-            else {
-                compensationLog.pushCompensation(this, backwardBehaviour, activityParameters, orchestrationParameters);
-            }
-
-            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
-            forwardSuccess = forwardBehaviour.forward(context);
-        }
-        catch (Throwable t) {
-            String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
-            info += t.getMessage();
-            log.info(info, t);
-
-            forwardSuccess = false;
-        }
+        boolean forwardSuccess = runForwardAction(
+                preState, forwardBehaviour, backwardBehaviour, activityParameters, orchestrationParameters
+        );
+        compensationLog.markSuccessful(processId, currentStep, forwardSuccess);
 
         if (!forwardSuccess) {
             // So we failed. Now run backward actions, and throw exception corresponding to
@@ -283,6 +254,41 @@ public class MuProcess {
             final MuActivityParameters activityParameters
     ) throws MuProcessException {
         execute(forwardBehaviour, backwardBehaviour, activityParameters, null);
+    }
+
+    private boolean runForwardAction(
+            final Optional<MuActivityState> preState,
+            final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
+            final MuActivityParameters activityParameters, final MuOrchestrationParameters orchestrationParameters
+    ) {
+        boolean forwardSuccess;
+
+        try {
+            // Log backward activity
+            if (preState.isPresent()) {
+                compensationLog.pushCompensation(
+                        this, backwardBehaviour, activityParameters, orchestrationParameters, preState.get(),
+                        onlyCompensateIfTransactionWasSuccessful
+                );
+            }
+            else {
+                compensationLog.pushCompensation(
+                        this, backwardBehaviour, activityParameters, orchestrationParameters,
+                        onlyCompensateIfTransactionWasSuccessful
+                );
+            }
+
+            MuForwardActivityContext context = new MuForwardActivityContext(correlationId, activityParameters, result);
+            forwardSuccess = forwardBehaviour.forward(context);
+        }
+        catch (Throwable t) {
+            String info = this + ": Forward activity (\"" + forwardBehaviour.getClass().getName() + "\") step " + currentStep + " failed: ";
+            info += t.getMessage();
+            log.info(info, t);
+
+            forwardSuccess = false;
+        }
+        return forwardSuccess;
     }
 
     /**
