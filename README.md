@@ -43,7 +43,7 @@ consider invoking distributed services, in an environment where we do not want t
 a local database transaction cannot guarantee ACID characteristics for the process.
 
 Having a transaction manager, the individual activities could participate in a global (distributed) transaction, having 
-local transactions that individually participates in, say, the [two-phace-commit (2PC)](https://en.wikipedia.org/wiki/Two-phase_commit_protocol) 
+local transactions that individually participates in, say, the [two-phase-commit (2PC)](https://en.wikipedia.org/wiki/Two-phase_commit_protocol) 
 consensus-protocol on top of the individual transactions.
 
 ![Image](doc/figure1.png?raw=true)
