@@ -79,8 +79,13 @@ public class MuProcessManager {
     }
 
     /**
-     * Starts the micro process manager, i.e. initiates the background tasks associated with
-     * detecting stuck processes and (re-)compensating process tasks if the process has died.
+     * Starts the micro process manager asynchronous background tasks, i.e. initiates the
+     * background tasks associated with detecting stuck processes and (re-)compensating
+     * process tasks if the process has died.
+     * <p>
+     * If you need multiple instances of MuProcessManager, at the moment you should only start
+     * the asynchronous background task in one single instance.
+     * <p>
      * Also initiates the statistics logging (in the background).
      */
     public void start() {
@@ -121,11 +126,11 @@ public class MuProcessManager {
             );
         }
 
-        System.out.println("Process manager started.");
+        System.out.println("Process manager asynchronous background task started.");
     }
 
     /**
-     * Stops the micro process manager, i.e. stop all background tasks.
+     * Stops the micro process manager asynchronous background tasks.
      * <p>
      * As long as these tasks are running, the program will not exit.
      */
@@ -142,7 +147,7 @@ public class MuProcessManager {
 
         recoverWorkQueue.stop();
 
-        System.out.println("Process manager stopped.");
+        System.out.println("Process manager asynchronous background task stopped.");
     }
 
     /* package private */ void recover() {
