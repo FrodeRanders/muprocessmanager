@@ -120,7 +120,7 @@ public class MuProcessManager {
             };
 
             recoverTimer = new Timer("org.gautelis.muprocessmanager.recover");
-            int initialDelay = 1000; // 1 second_
+            int initialDelay = 1000 + (int)Math.round(Math.random() * 5000); // 1+ seconds
             recoverTimer.scheduleAtFixedRate(
                     cleanupTask, initialDelay, 1000 * policy.secondsBetweenRecoveryAttempts()
             );

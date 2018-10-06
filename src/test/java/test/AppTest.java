@@ -168,6 +168,17 @@ public class AppTest extends TestCase {
 
         workQueue.start();
 
+        if (false) {
+            // Introduce a competing process manager
+            try {
+                MuProcessManager competingMngr = MuProcessManager.getManager();
+                competingMngr.start();
+            } catch (MuProcessException mpe) {
+                String info = "Failed to initiate competing manager: ";
+                info += mpe.getMessage();
+                fail(info);
+            }
+        }
         final Collection<String> sampledCorrelationIds = new ArrayList<>();
 
         for (int i = 0; i < 100000; i++) {

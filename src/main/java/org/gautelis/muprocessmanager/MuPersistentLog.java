@@ -861,6 +861,10 @@ public class MuPersistentLog {
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
             ) {
                 try (ResultSet rs = Database.executeQuery(stmt)) {
+                    /*
+                     * If multiple MuProcessManagers are running background jobs (recover) concurrently,
+                     * they will be competing to recover processes!
+                     */
                     while (rs.next()) {
                         // correlation_id, process_id, state, accept_failure, created, modified, now
                         int idx = 0;
