@@ -163,7 +163,7 @@ public class AppTest extends TestCase {
         System.out.println("\n---- MuProcess test ----");
         WorkQueue workQueue = WorkerQueueFactory.getWorkQueue(
             WorkerQueueFactory.Type.Multi,
-            /* number of threads */ 8
+            /* number of threads */ Runtime.getRuntime().availableProcessors()
         );
 
         workQueue.start();

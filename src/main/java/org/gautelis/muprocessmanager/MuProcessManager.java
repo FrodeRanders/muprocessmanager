@@ -184,9 +184,9 @@ public class MuProcessManager {
 
         //
         try {
-            final int processRetentionTime = 60 * 1000 * policy.minutesToTrackProcess();
-            final int processRecompensationTime = 1000 * policy.secondsBetweenRecompensationAttempts();
-            final int processAssumedStuckTime = 60 * 1000 * policy.minutesBeforeAssumingProcessStuck();
+            final long processRetentionTime = 60 * 1000 * policy.minutesToTrackProcess();
+            final long processRecompensationTime = 1000 * policy.secondsBetweenRecompensationAttempts();
+            final long processAssumedStuckTime = 60 * 1000 * policy.minutesBeforeAssumingProcessStuck();
 
             compensationLog.recover(
                     (correlationId, processId, state, acceptCompensationFailure, created, modified, now) -> {
