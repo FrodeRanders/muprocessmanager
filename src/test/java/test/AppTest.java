@@ -28,6 +28,8 @@ import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.gautelis.vopn.queue.WorkQueue;
 import org.gautelis.vopn.queue.WorkerQueueFactory;
 
+import static org.gautelis.muprocessmanager.MuProcessManagerFactory.getManager;
+
 import java.util.*;
 
 public class AppTest extends TestCase {
@@ -42,7 +44,7 @@ public class AppTest extends TestCase {
 
         try {
             System.out.println();
-            mngr = MuProcessManager.getManager();
+            mngr = getManager();
             mngr.start();
 
         }
@@ -171,7 +173,7 @@ public class AppTest extends TestCase {
         if (false) {
             // Introduce a competing process manager
             try {
-                MuProcessManager competingMngr = MuProcessManager.getManager();
+                MuProcessManager competingMngr = getManager();
                 competingMngr.start();
             } catch (MuProcessException mpe) {
                 String info = "Failed to initiate competing manager: ";

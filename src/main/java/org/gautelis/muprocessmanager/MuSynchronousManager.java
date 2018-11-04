@@ -17,55 +17,12 @@
  */
 package org.gautelis.muprocessmanager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 
 /**
- * Implements a micro-process manager.
- * <p>
- * Acquire a {@link MuProcess} from this manager and execute your {@link MuActivity}
- * in this process -- this manager will take care of potential failures by automatically
- * running compensations. Compensations are persisted to a relational database (in
- * the background).
+ * This is the synchronous functionality of a micro-process manager.
  */
-public class MuProcessManager implements MuSynchronousManager, MuAsynchronousManager {
-    private static final Logger log = LoggerFactory.getLogger(MuProcessManager.class);
-
-    //
-    private MuSynchronousManagerImpl synchronousManager;
-    private MuAsynchronousManagerImpl asynchronousManager;
-
-
-    /* package private */ MuProcessManager(MuSynchronousManagerImpl synchronousManager, MuAsynchronousManagerImpl asynchronousManager) {
-        this.synchronousManager = synchronousManager;
-        this.asynchronousManager = asynchronousManager;
-    }
-
-    /**
-     * Starts the micro process manager asynchronous background tasks, i.e. initiates the
-     * background tasks associated with detecting stuck processes and (re-)compensating
-     * process tasks if the process has died.
-     * <p>
-     * If you need multiple instances of MuProcessManager, at the moment you should only start
-     * the asynchronous background task in one single instance.
-     * <p>
-     * Also initiates the statistics logging (in the background).
-     */
-    public void start() {
-        asynchronousManager.start();
-    }
-
-    /**
-     * Stops the micro process manager asynchronous background tasks.
-     * <p>
-     * As long as these tasks are running, the program will not exit.
-     */
-    public void stop() {
-        asynchronousManager.stop();
-    }
-
+public interface MuSynchronousManager {
     /**
      * Creates a new volatile process, a process that handles volatile activities that will not be
      * persisted. May be used to handle synchronous process execution, including Saga-style compensation.
@@ -73,9 +30,7 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * @param correlationId a correlation ID identifying the business request.
      * @return a volatile {@link MuVolatileProcess}.
      */
-    public MuVolatileProcess newVolatileProcess(final String correlationId) {
-        return synchronousManager.newVolatileProcess(correlationId);
-    }
+    MuVolatileProcess newVolatileProcess(final String correlationId);
 
     /**
      * Creates a new persisted process, a process that handles activities with compensations that are
@@ -85,14 +40,12 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * <p>
      * This version of the 'newProcess' method falls back on the globally defined process manager
      * policy for determining re-compensation acceptance. If this cannot be defined globally for
-     * all processes, use the more specific {@link MuProcessManager#newProcess(String, boolean)} instead.
+     * all processes, use the more specific {@link MuSynchronousManager#newProcess(String, boolean)} instead.
      *
      * @param correlationId a correlation ID identifying the business request.
      * @return a persisted {@link MuProcess}
      */
-    public MuProcess newProcess(final String correlationId) {
-        return synchronousManager.newProcess(correlationId);
-    }
+    MuProcess newProcess(final String correlationId);
 
     /**
      * Creates a new persisted process, a process that handles activities with compensations that are
@@ -108,9 +61,7 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * @param acceptCompensationFailure indicate (on a per process basis) whether re-compensation is allowed.
      * @return a persisted {@link MuProcess}
      */
-    public MuProcess newProcess(final String correlationId, boolean acceptCompensationFailure) {
-        return synchronousManager.newProcess(correlationId, acceptCompensationFailure);
-    }
+    MuProcess newProcess(final String correlationId, boolean acceptCompensationFailure);
 
     /**
      * Retrieves process state ({@link MuProcessState}) for a process, identified by correlation ID.
@@ -121,9 +72,7 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * @return {@link MuProcessState} for process, identified by correlation ID, or {@link Optional#empty} if process not found.
      * @throws MuProcessException if failing to retrieve result
      */
-    public Optional<MuProcessState> getProcessState(final String correlationId) throws MuProcessException {
-        return synchronousManager.getProcessState(correlationId);
-    }
+    Optional<MuProcessState> getProcessState(final String correlationId) throws MuProcessException;
 
     /**
      * Retrieves process results from {@link MuProcessState#SUCCESSFUL} processes.
@@ -133,9 +82,7 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * @throws MuProcessException          if failing to retrieve result
      * @throws MuProcessResultsUnavailable if process is not {@link MuProcessState#SUCCESSFUL SUCCESSFUL}
      */
-    public Optional<MuProcessResult> getProcessResult(final String correlationId) throws MuProcessException {
-        return synchronousManager.getProcessResult(correlationId);
-    }
+    Optional<MuProcessResult> getProcessResult(final String correlationId) throws MuProcessException;
 
     /**
      * Resets (possibly existing) process. If a process failed earlier and left some activities
@@ -154,9 +101,7 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * @return true if a matching process was found and reset, false if no matching process was found
      * @throws MuProcessException upon failure
      */
-    public Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
-        return synchronousManager.resetProcess(correlationId);
-    }
+    Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException;
 
     /**
      * Retrieves processes, returning details of processes and their activities;
@@ -164,28 +109,5 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * @return details for process identified by correlationId.
      * @throws MuProcessException upon failure.
      */
-    public Optional<MuProcessDetails> getProcessDetails(String correlationId) throws MuProcessException {
-        return synchronousManager.getProcessDetails(correlationId);
-    }
-
-    /**
-     * Retrieves abandoned processes, returning details of processes and their activities.
-     *
-     * @return a collection of process details.
-     * @throws MuProcessException upon failure.
-     */
-    public Collection<MuProcessDetails> getAbandonedProcessDetails() throws MuProcessException {
-        return synchronousManager.getAbandonedProcessDetails();
-    }
-
-    /**
-     * Retrieves details for all (known) processes, returning process details as well as details
-     * on activities.
-     *
-     * @return a collection of process details.
-     * @throws MuProcessException upon failure.
-     */
-    public Collection<MuProcessDetails> getProcessDetails() throws MuProcessException {
-        return synchronousManager.getProcessDetails();
-    }
+    Optional<MuProcessDetails> getProcessDetails(String correlationId) throws MuProcessException;
 }
