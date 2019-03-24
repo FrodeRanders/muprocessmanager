@@ -34,8 +34,8 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
     private static final Logger log = LoggerFactory.getLogger(MuProcessManager.class);
 
     //
-    private MuSynchronousManagerImpl synchronousManager;
-    private MuAsynchronousManagerImpl asynchronousManager;
+    private final MuSynchronousManagerImpl synchronousManager;
+    private final MuAsynchronousManagerImpl asynchronousManager;
 
 
     /* package private */ MuProcessManager(MuSynchronousManagerImpl synchronousManager, MuAsynchronousManagerImpl asynchronousManager) {

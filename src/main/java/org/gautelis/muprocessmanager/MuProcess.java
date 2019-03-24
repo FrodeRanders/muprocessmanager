@@ -342,7 +342,7 @@ public class MuProcess {
 
     private static class FailedCompensation {
         private final int step;
-        private String activityName;
+        private final String activityName;
 
         FailedCompensation(int step, String activityName) {
             this.step = step;
