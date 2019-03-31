@@ -61,7 +61,7 @@ public class MuPersistentLog {
     }
 
     public interface CleanupRunnable {
-        void run(String correlationId, int processId, int state, boolean acceptCompensationFailure, java.util.Date created, java.util.Date modified, java.util.Date now) throws MuProcessException;
+        void run(String correlationId, int processId, int state, boolean acceptCompensationFailure, java.util.Date created, java.util.Date modified, java.util.Date now);
     }
 
     /* package private */  MuPersistentLog(final DataSource dataSource, final Properties sqlStatements, final boolean assumeNativeProcessDataFlow) {

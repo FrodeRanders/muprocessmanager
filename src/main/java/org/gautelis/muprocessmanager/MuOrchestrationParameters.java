@@ -82,7 +82,6 @@ public class MuOrchestrationParameters implements Serializable {
      * @return MuActivityParameters made from JSON stream
      */
     public static MuOrchestrationParameters fromReader(Reader reader) {
-        @SuppressWarnings("unchecked")
         MuOrchestrationParameters parameters = new MuOrchestrationParameters(gson.fromJson(reader, OrchestrationParameters.class));
         return parameters;
     }
