@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Frode Randers
+ * Copyright (C) 2017-2019 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,6 @@
  *
  */
 package org.gautelis.muprocessmanager;
-
-import org.gautelis.vopn.db.Database;
-import org.gautelis.vopn.db.DatabaseException;
-import org.gautelis.vopn.db.utils.Derby;
-import org.gautelis.vopn.db.utils.Manager;
-import org.gautelis.vopn.db.utils.Options;
-import org.gautelis.vopn.lang.ConfigurationTool;
-import org.gautelis.vopn.queue.WorkQueue;
-import org.gautelis.vopn.queue.WorkerQueueFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.sql.DataSource;
-import java.io.*;
-import java.util.*;
 
 /**
  * This is the asynchronous functionality of a micro-process manager, taking care of

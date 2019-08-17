@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Frode Randers
+ * Copyright (C) 2017-2019 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -418,7 +418,7 @@ public class MuPersistentLog {
         }
     }
 
-    private void fetchDetails(PreparedStatement stmt, List<MuProcessDetails> list) throws SQLException, MuProcessException {
+    private void fetchDetails(PreparedStatement stmt, List<MuProcessDetails> list) throws SQLException {
         try (ResultSet rs = Database.executeQuery(stmt)) {
             MuProcessDetails details = null;
             while (rs.next()) {
@@ -513,7 +513,7 @@ public class MuPersistentLog {
             ) {
                 stmt.setString(1, correlationId);
 
-                List<MuProcessDetails> list = new LinkedList<>();
+                LinkedList<MuProcessDetails> list = new LinkedList<>();
                 fetchDetails(stmt, list);
                 if (list.isEmpty()) {
                     return Optional.empty();
@@ -525,7 +525,7 @@ public class MuPersistentLog {
                         );
                         return Optional.empty();
                     }
-                    return Optional.of(((LinkedList<MuProcessDetails>) list).getFirst());
+                    return Optional.of(list.getFirst());
                 }
             }
         }
@@ -610,7 +610,7 @@ public class MuPersistentLog {
                         // forward transaction seems reasonable, but if the transaction did not accomplish anything
                         // it may not be pertinent to try to undo anything.
                         boolean compensateIfFailure = rs.getBoolean(++idx);
-                        Boolean transWasSuccessful = rs.getBoolean(++idx);
+                        boolean transWasSuccessful = rs.getBoolean(++idx);
                         if (!rs.wasNull()) {
                             if (compensateIfFailure && !transWasSuccessful) {
                                 // This is the case we want to trap -- the forward transaction was not successful
@@ -1012,12 +1012,7 @@ public class MuPersistentLog {
                 // harmless since constantly false conditional blocks are removed at
                 // compile time (as per the Java specification)
                 //---------------------------------------------------------------------------
-                MuBackwardBehaviour trapChangesToInterface = new MuBackwardBehaviour() {
-                    @Override
-                    public boolean backward(MuBackwardActivityContext context) {
-                        return false;
-                    }
-                };
+                MuBackwardBehaviour trapChangesToInterface = context -> false;
             }
             clazz.getMethod(activity.getPersistableMethodName(), MuBackwardActivityContext.class);
         }

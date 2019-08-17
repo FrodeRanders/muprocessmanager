@@ -39,7 +39,7 @@ WHERE process_id = ?</pre>
     <div class="value">
         <pre>SELECT correlation_id, process_id, state, created, modified
 FROM mu_process
-WHERE state >= 5
+WHERE state &ge; 5
 ORDER BY modified DESC</pre>
        <p>The value of state used in this statement corresponds to the numeral value of
            <a href="../MuProcessState.html">ABANDONED</a> as visualized in <a href="microprocess-manager-states-description.png">this figure</a>.</p>
@@ -97,7 +97,7 @@ FROM mu_process
 WHERE correlation_id = ?</pre>
     </div>
 
-    <div class="key">FETCH_PROCESS_ID_AND_STATE_BY_CORRID</div>>
+    <div class="key">FETCH_PROCESS_ID_AND_STATE_BY_CORRID</div>
     <div class="value">
         <pre>SELECT process_id, state
 FROM mu_process

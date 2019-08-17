@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Frode Randers
+ * Copyright (C) 2017-2019 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,8 +34,8 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
     private static final Logger log = LoggerFactory.getLogger(MuProcessManager.class);
 
     //
-    private MuSynchronousManagerImpl synchronousManager;
-    private MuAsynchronousManagerImpl asynchronousManager;
+    private final MuSynchronousManagerImpl synchronousManager;
+    private final MuAsynchronousManagerImpl asynchronousManager;
 
 
     /* package private */ MuProcessManager(MuSynchronousManagerImpl synchronousManager, MuAsynchronousManagerImpl asynchronousManager) {

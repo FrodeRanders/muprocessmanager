@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Frode Randers
+ * Copyright (C) 2017-2019 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -342,7 +342,7 @@ public class MuProcess {
 
     private static class FailedCompensation {
         private final int step;
-        private String activityName;
+        private final String activityName;
 
         FailedCompensation(int step, String activityName) {
             this.step = step;
