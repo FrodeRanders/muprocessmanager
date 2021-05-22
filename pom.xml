@@ -38,7 +38,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
         <commons.io.version>2.8.0</commons.io.version>
         <commons.lang3.version>3.12.0</commons.lang3.version>
         <derby.version>10.14.2.0</derby.version> <!-- later versions demands jdk 9 -->
