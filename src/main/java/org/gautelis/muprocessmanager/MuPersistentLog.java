@@ -686,7 +686,7 @@ public class MuPersistentLog {
                                  //---------------------------------------------------------------------------
                                 MuBackwardBehaviour trapChangesToInterface = context -> false;
                             }
-                            Class[] parameterTypes = { MuBackwardActivityContext.class };
+                            Class<?>[] parameterTypes = { MuBackwardActivityContext.class };
                             Method method = loader.createMethod(activity, methodName, parameterTypes);
 
                             MuBackwardActivityContext context =

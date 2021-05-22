@@ -9,12 +9,12 @@
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A library implementing a micro process manager, based on the Saga pattern</description>
-    <url>http://github.com/FrodeRanders/muprocessmanager</url>
+    <url>https://github.com/FrodeRanders/muprocessmanager</url>
 
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
 
@@ -33,17 +33,17 @@
     <scm>
         <connection>scm:git:git://github.com/FrodeRanders/muprocessmanager.git</connection>
         <developerConnection>scm:git:ssh://github.com:FrodeRanders/muprocessmanager.git</developerConnection>
-        <url>http://github.com/FrodeRanders/muprocessmanager/tree/master</url>
+        <url>https://github.com/FrodeRanders/muprocessmanager/tree/master</url>
     </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <commons.io.version>2.6</commons.io.version>
-        <commons.lang3.version>3.9</commons.lang3.version>
+        <commons.io.version>2.8.0</commons.io.version>
+        <commons.lang3.version>3.12.0</commons.lang3.version>
         <derby.version>10.14.2.0</derby.version> <!-- later versions demands jdk 9 -->
         <gson.version>2.8.6</gson.version>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.14.1</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
         <vopn.version>2.3</vopn.version>
     </properties>
@@ -112,7 +112,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
