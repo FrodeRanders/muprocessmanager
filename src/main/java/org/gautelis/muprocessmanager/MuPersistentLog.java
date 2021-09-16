@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +73,7 @@ public class MuPersistentLog {
     private int i = 0; // for development purposes -- ignore please :)
 
     private String getStatement(String key) throws MuProcessException {
+        Objects.requireNonNull(key, "key");
 
         String statement = sqlStatements.getProperty(key);
         if (null == statement || statement.length() == 0) {
@@ -113,9 +114,12 @@ public class MuPersistentLog {
      * @return the processId of the (new) process.
      * @throws MuProcessException
      */
-    /* package private */ int pushProcess(
+    /* package private */
+    int pushProcess(
             final MuProcess process
     ) throws MuProcessException {
+        Objects.requireNonNull(process, "process");
+
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("STORE_PROCESS"), Statement.RETURN_GENERATED_KEYS)) {
                 int idx = 0;
@@ -168,9 +172,12 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ Optional<Integer> countProcessSteps(
+    /* package private */
+    Optional<Integer> countProcessSteps(
             final int processId
     ) throws MuProcessException {
+        Objects.requireNonNull(processId, "processId");
+
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("COUNT_PROCESS_STEPS"),
@@ -197,9 +204,12 @@ public class MuPersistentLog {
         return Optional.empty();
     }
 
-    /* package private */ Optional<MuProcessState> getProcessState(
-            final String correlationId
+    /* package private */
+    Optional<MuProcessState> getProcessState(
+            String correlationId
     ) throws MuProcessException {
+        Objects.requireNonNull(correlationId, "correlationId");
+
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_STATE_BY_CORRID"),
@@ -226,9 +236,12 @@ public class MuPersistentLog {
         return Optional.empty();
     }
 
-    /* package private */ Optional<MuProcessResult> getProcessResult(
+    /* package private */
+    Optional<MuProcessResult> getProcessResult(
             final String correlationId
     ) throws MuProcessException {
+        Objects.requireNonNull(correlationId, "correlationId");
+
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESS_RESULT_BY_CORRID"),
@@ -272,9 +285,11 @@ public class MuPersistentLog {
         return Optional.empty();
     }
 
-    /* package private */ void setProcessStateAndResult(
+    /* package private */
+    void setProcessStateAndResult(
             final int processId, final MuProcessState state, final MuProcessResult result
     ) throws MuProcessException {
+        Objects.requireNonNull(state, "state");
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(getStatement("UPDATE_PROCESS"))) {
@@ -304,14 +319,20 @@ public class MuPersistentLog {
         log.trace("Updated process {} with state {}", processId, state);
     }
 
-    /* package private */ void setProcessState(
+    /* package private */
+    void setProcessState(
             final int processId, final MuProcessState state
     ) throws MuProcessException {
         setProcessStateAndResult(processId, state, /* no result */ null);
     }
 
 
-    /* package private */ Optional<Boolean> resetProcess(final String correlationId) throws MuProcessException {
+    /* package private */
+    Optional<Boolean> resetProcess(
+            final String correlationId
+    ) throws MuProcessException {
+        Objects.requireNonNull(correlationId, "correlationId");
+
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
@@ -418,7 +439,13 @@ public class MuPersistentLog {
         }
     }
 
-    private void fetchDetails(PreparedStatement stmt, List<MuProcessDetails> list) throws SQLException {
+    private void fetchDetails(
+            PreparedStatement stmt,
+            List<MuProcessDetails> list
+    ) throws SQLException {
+        Objects.requireNonNull(stmt, "stmt");
+        Objects.requireNonNull(list, "list");
+
         try (ResultSet rs = Database.executeQuery(stmt)) {
             MuProcessDetails details = null;
             while (rs.next()) {
@@ -462,7 +489,8 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ Collection<MuProcessDetails> getAbandonedProcessDetails() throws MuProcessException {
+    /* package private */
+    Collection<MuProcessDetails> getAbandonedProcessDetails() throws MuProcessException {
         List<MuProcessDetails> detailsList = new LinkedList<>();
 
         try (Connection conn = dataSource.getConnection()) {
@@ -483,7 +511,8 @@ public class MuPersistentLog {
         return detailsList;
     }
 
-    /* package private */ Collection<MuProcessDetails> getProcessDetails() throws MuProcessException {
+    /* package private */
+    Collection<MuProcessDetails> getProcessDetails() throws MuProcessException {
         List<MuProcessDetails> detailsList = new LinkedList<>();
 
         try (Connection conn = dataSource.getConnection()) {
@@ -504,7 +533,9 @@ public class MuPersistentLog {
         return detailsList;
     }
 
-    /* package private */ Optional<MuProcessDetails> getProcessDetails(String correlationId) throws MuProcessException {
+    /* package private */
+    Optional<MuProcessDetails> getProcessDetails(String correlationId) throws MuProcessException {
+        Objects.requireNonNull(correlationId, "correlationId");
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -537,7 +568,8 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void markRetry(
+    /* package private */
+    void markRetry(
         final int processId, final int stepId
     ) throws MuProcessException {
 
@@ -559,7 +591,8 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void markSuccessful(
+    /* package private */
+    void markSuccessful(
             final int processId, final int stepId, final boolean successful
     ) throws MuProcessException {
 
@@ -588,9 +621,11 @@ public class MuPersistentLog {
         log.trace("Updated process step {}#{}", processId, stepId);
     }
 
-    /* package private */ void compensate(
+    /* package private */
+    void compensate(
             final int processId, final CompensationRunnable runnable
     ) throws MuProcessException {
+        Objects.requireNonNull(runnable, "runnable");
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
@@ -729,9 +764,11 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void cleanupAfterSuccess(
+    /* package private */
+    void cleanupAfterSuccess(
             final int processId, final MuProcessResult result
     ) throws MuProcessException {
+        Objects.requireNonNull(result, "result");
 
         // Remove process steps
         try (Connection conn = dataSource.getConnection()) {
@@ -761,25 +798,31 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void cleanupAfterSuccessfulCompensation(
+    /* package private */
+    void cleanupAfterSuccessfulCompensation(
             final int processId
     ) throws MuProcessException {
         setProcessState(processId, MuProcessState.COMPENSATED);
     }
 
-    /* package private */ void cleanupAfterFailedCompensation(
+    /* package private */
+    void cleanupAfterFailedCompensation(
             final int processId
     ) throws MuProcessException {
         setProcessState(processId, MuProcessState.COMPENSATION_FAILED);
     }
 
-    /* package private */ void cleanupAfterFailure(
+    /* package private */
+    void cleanupAfterFailure(
             final int processId
     ) throws MuProcessException {
         setProcessState(processId, MuProcessState.ABANDONED);
     }
 
-    /* package private */ void dumpStatistics(WorkQueue workQueue) {
+    /* package private */
+    void dumpStatistics(WorkQueue workQueue) {
+        Objects.requireNonNull(workQueue, "workQueue");
+
         // Prepare collecting statistics for each state
         final int numStates = MuProcessState.values().length;
         long[] stateCount = new long[numStates];
@@ -852,9 +895,12 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void recover(
+    /* package private */
+    void recover(
             final CleanupRunnable runnable
     ) throws MuProcessException {
+        Objects.requireNonNull(runnable, "runnable");
+
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("FETCH_PROCESSES"),
@@ -888,7 +934,8 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void abandon(String correlationId, int processId) throws MuProcessException {
+    /* package private */
+    void abandon(String correlationId, int processId) throws MuProcessException {
         log.trace("Abandoning process: correlationId=\"{}\", processId={}", correlationId, processId);
         setProcessState(processId, MuProcessState.ABANDONED);
     }
@@ -899,9 +946,12 @@ public class MuPersistentLog {
      * private static HashMap<Integer, Exception> debugRemovalHistory = new HashMap<>();
      */
 
-    /* package private */ void remove(
+    /* package private */
+    void remove(
             String correlationId, int processId, Date modified
     ) throws MuProcessException {
+        Objects.requireNonNull(correlationId, "correlationId");
+
         log.trace("Removing process: correlationId=\"{}\", processId={}", correlationId, processId);
 
         try (Connection conn = dataSource.getConnection()) {
@@ -958,9 +1008,11 @@ public class MuPersistentLog {
     //    Methods called from MuProcess and tightly integrated with the MuProcess lifecycle
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /* package private */ void touchProcess(
+    /* package private */
+    void touchProcess(
             final MuProcess process
     ) throws MuProcessException {
+        Objects.requireNonNull(process, "process");
 
         // Persist
         if (0 == process.incrementCurrentStep()) {
@@ -988,13 +1040,17 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void pushCompensation(
+    /* package private */
+    void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
             final MuActivityParameters activityParameters,
             final MuOrchestrationParameters orchestrationParameters,
             final MuActivityState preState,
             final boolean onlyCompensateIfTransactionWasSuccessful
     ) throws MuProcessException {
+        Objects.requireNonNull(process, "process");
+        Objects.requireNonNull(activity, "activity");
+        Objects.requireNonNull(activityParameters, "activityParameters");
 
         // Determine class name
         Class<? extends MuBackwardBehaviour> clazz = activity.getClass();
@@ -1100,7 +1156,8 @@ public class MuPersistentLog {
         }
     }
 
-    /* package private */ void pushCompensation(
+    /* package private */
+    void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
             final MuActivityParameters activityParameters,
             final MuOrchestrationParameters orchestrationParameters,
@@ -1110,7 +1167,8 @@ public class MuPersistentLog {
                 null, onlyCompensateIfTransactionWasSuccessful);
     }
 
-    /* package private */ void pushCompensation(
+    /* package private */
+    void pushCompensation(
             final MuProcess process, final MuBackwardBehaviour activity,
             final MuActivityParameters activityParameters,
             final boolean onlyCompensateIfTransactionWasSuccessful
@@ -1122,6 +1180,7 @@ public class MuPersistentLog {
     private void popCompensation(
             Connection conn, final int processId, final int stepId
     ) throws MuProcessException {
+        Objects.requireNonNull(conn, "conn");
 
         try (PreparedStatement stmt = conn.prepareStatement(getStatement("REMOVE_PROCESS_STEP"))) {
             int idx = 0;

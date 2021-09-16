@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.*;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -49,6 +50,10 @@ public class MuProcessManagerFactory {
     public static MuProcessManager getManager(
             DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy
     ) {
+        Objects.requireNonNull(dataSource, "dataSource");
+        Objects.requireNonNull(sqlStatements, "sqlStatements");
+        Objects.requireNonNull(policy, "policy");
+
         return new MuProcessManager(
                 new MuSynchronousManagerImpl(dataSource, sqlStatements, policy),
                 new MuAsynchronousManagerImpl(dataSource, sqlStatements, policy)
@@ -222,6 +227,8 @@ public class MuProcessManagerFactory {
 
 
     public static void prepareInternalDatabase(DataSource dataSource) throws MuProcessException {
+        Objects.requireNonNull(dataSource, "dataSource");
+
         try {
             Options options = Options.getDefault();
             options.debug = DEBUG_DATABASE_SETUP;

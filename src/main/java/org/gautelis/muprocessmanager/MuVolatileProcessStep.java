@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,25 +17,37 @@
  */
 package org.gautelis.muprocessmanager;
 
+import java.util.Objects;
+
 /**
  * Corresponds to an individual volatile process step.
  */
-/* package private */ class MuVolatileProcessStep {
+/* package private */
+class MuVolatileProcessStep {
 
     private final String correlationId;
     private final MuActivityParameters activityParameters;
 
     private MuBackwardBehaviour backwardBehaviour = null;
 
-    /* package private */ MuVolatileProcessStep(String correlationId, final MuActivityParameters activityParameters) {
+    /* package private */
+    MuVolatileProcessStep(String correlationId, final MuActivityParameters activityParameters) {
+        Objects.requireNonNull(correlationId, "correlationId");
+        Objects.requireNonNull(activityParameters, "activityParameters");
+
         this.correlationId = correlationId;
         this.activityParameters = activityParameters;
     }
 
-    /* package private */ boolean execute(
+    /* package private */
+    boolean execute(
             final MuForwardBehaviour forward, final MuBackwardBehaviour backward,
             final MuProcessResult result
     ) {
+        Objects.requireNonNull(forward, "forward");
+        Objects.requireNonNull(backward, "backward");
+        Objects.requireNonNull(result, "result");
+
         backwardBehaviour = backward;
 
         // Run forward transaction
@@ -51,7 +63,8 @@ package org.gautelis.muprocessmanager;
         return success;
     }
 
-    /* package private */ boolean compensate() {
+    /* package private */
+    boolean compensate() {
         // Run backward transaction
         boolean success;
         try {

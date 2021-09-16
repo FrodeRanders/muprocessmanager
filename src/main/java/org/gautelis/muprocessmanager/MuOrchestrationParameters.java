@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,8 +82,7 @@ public class MuOrchestrationParameters implements Serializable {
      * @return MuActivityParameters made from JSON stream
      */
     public static MuOrchestrationParameters fromReader(Reader reader) {
-        MuOrchestrationParameters parameters = new MuOrchestrationParameters(gson.fromJson(reader, OrchestrationParameters.class));
-        return parameters;
+        return new MuOrchestrationParameters(gson.fromJson(reader, OrchestrationParameters.class));
     }
 
     /**

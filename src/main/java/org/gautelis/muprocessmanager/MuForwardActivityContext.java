@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +17,22 @@
  */
 package org.gautelis.muprocessmanager;
 
+import java.util.Objects;
+
 public class MuForwardActivityContext {
 
     private final String correlationId;
     private final MuActivityParameters activityParameters;
     private final MuProcessResult result;
 
-    /* package private */ MuForwardActivityContext(
+    /* package private */
+    MuForwardActivityContext(
             String correlationId, MuActivityParameters activityParameters, MuProcessResult result
     ) {
+        Objects.requireNonNull(correlationId, "correlationId");
+        Objects.requireNonNull(activityParameters, "activityParameters");
+        Objects.requireNonNull(result, "result");
+
         this.correlationId = correlationId;
         this.activityParameters = activityParameters;
         this.result = result;

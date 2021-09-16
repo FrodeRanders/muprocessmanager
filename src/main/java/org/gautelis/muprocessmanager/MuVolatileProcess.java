@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Stack;
 
 /**
@@ -39,7 +40,6 @@ public class MuVolatileProcess {
 
     private final String correlationId;
     private final boolean acceptCompensationFailure;
-    private final boolean assumeNativeProcessDataFlow;
 
     private final Stack<MuVolatileProcessStep> stepStack = new Stack<>();
 
@@ -47,12 +47,14 @@ public class MuVolatileProcess {
     private final MuProcessResult result;
 
 
-    /* package private */ MuVolatileProcess(
+    /* package private */
+    MuVolatileProcess(
             final String correlationId, final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow
     ) {
+        Objects.requireNonNull(correlationId, "correlationId");
+
         this.correlationId = correlationId;
         this.acceptCompensationFailure = acceptCompensationFailure;
-        this.assumeNativeProcessDataFlow = assumeNativeProcessDataFlow;
 
         if (assumeNativeProcessDataFlow) {
             result = new MuNativeProcessResult();
@@ -74,6 +76,9 @@ public class MuVolatileProcess {
             final MuForwardBehaviour forward, final MuBackwardBehaviour backward,
             final MuActivityParameters parameters
     ) throws MuProcessException {
+        Objects.requireNonNull(forward, "forward");
+        Objects.requireNonNull(backward, "backward");
+        Objects.requireNonNull(parameters, "parameters");
 
         MuVolatileProcessStep step = new MuVolatileProcessStep(correlationId, parameters);
         stepStack.push(step);

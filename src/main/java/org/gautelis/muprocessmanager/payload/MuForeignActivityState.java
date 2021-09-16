@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
+import java.util.Objects;
 
 /**
  * Wraps previous state (whatever that may be) before acted upon by an {@link MuForwardBehaviour activity},
@@ -43,6 +44,8 @@ public class MuForeignActivityState implements MuActivityState, Serializable {
     }
 
     public MuForeignActivityState(Reader reader) {
+        Objects.requireNonNull(reader, "reader");
+
         try {
             json = org.apache.commons.io.IOUtils.toString(reader);
         }

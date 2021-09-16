@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  */
 package org.gautelis.muprocessmanager;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class MuBackwardActivityContext {
@@ -27,10 +28,14 @@ public class MuBackwardActivityContext {
     private final MuOrchestrationParameters orchestrationParameters;
     private final MuActivityState preState;
 
-    /* package private */ MuBackwardActivityContext(
+    /* package private */
+    MuBackwardActivityContext(
             String correlationId, boolean acceptCompensationFailure, MuActivityParameters activityParameters,
             MuOrchestrationParameters orchestrationParameters, MuActivityState preState
     ) {
+        Objects.requireNonNull(correlationId, "correlationId");
+        Objects.requireNonNull(activityParameters, "activityParameters");
+
         this.correlationId = correlationId;
         this.acceptCompensationFailure = acceptCompensationFailure;
         this.activityParameters = activityParameters;

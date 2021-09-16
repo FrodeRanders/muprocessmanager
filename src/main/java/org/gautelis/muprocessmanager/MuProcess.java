@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -53,11 +54,15 @@ public class MuProcess {
     //
     final MuProcessResult result;
 
-    /* package private */ MuProcess(
+    /* package private */
+    MuProcess(
             final String correlationId, MuPersistentLog compensationLog,
             final boolean acceptCompensationFailure, final boolean assumeNativeProcessDataFlow,
             final boolean onlyCompensateIfTransactionWasSuccessful
     ) {
+        Objects.requireNonNull(correlationId, "correlationId");
+        Objects.requireNonNull(compensationLog, "compensationLog");
+
         this.correlationId = correlationId;
         this.compensationLog = compensationLog;
         this.acceptCompensationFailure = acceptCompensationFailure;
@@ -75,11 +80,13 @@ public class MuProcess {
         return acceptCompensationFailure;
     }
 
-    /* package private */ int getProcessId() {
+    /* package private */
+    int getProcessId() {
         return processId;
     }
 
-    /* package private */ void setProcessId(int processId) {
+    /* package private */
+    void setProcessId(int processId) {
         this.processId = processId;
     }
 
@@ -87,7 +94,8 @@ public class MuProcess {
         return correlationId;
     }
 
-    /* package private */ int incrementCurrentStep() {
+    /* package private */
+    int incrementCurrentStep() {
         return currentStep++; // returning previous
     }
 
@@ -125,6 +133,8 @@ public class MuProcess {
             final MuForwardBehaviour forwardBehaviour,
             final MuActivityParameters activityParameters
     ) throws MuProcessException {
+        Objects.requireNonNull(forwardBehaviour, "forwardBehaviour");
+        Objects.requireNonNull(activityParameters, "activityParameters");
 
         // Run forward action
         boolean forwardSuccess;
@@ -166,6 +176,8 @@ public class MuProcess {
             final MuActivityParameters activityParameters,
             final MuOrchestrationParameters orchestrationParameters
     ) throws MuProcessException {
+        Objects.requireNonNull(activity, "activity");
+        Objects.requireNonNull(activityParameters, "activityParameters");
 
         final Optional<MuActivityState> preState = activity.getState();
 
@@ -215,6 +227,9 @@ public class MuProcess {
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
             final MuActivityParameters activityParameters, final MuOrchestrationParameters orchestrationParameters
     ) throws MuProcessException {
+        Objects.requireNonNull(forwardBehaviour, "forwardBehaviour");
+        Objects.requireNonNull(backwardBehaviour, "backwardBehaviour");
+        Objects.requireNonNull(activityParameters, "activityParameters");
 
         String backwardClassName = backwardBehaviour.getClass().getName();
         if (backwardClassName.contains(LAMBDA_INDICATION)) {
@@ -261,6 +276,11 @@ public class MuProcess {
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
             final MuActivityParameters activityParameters, final MuOrchestrationParameters orchestrationParameters
     ) {
+        Objects.requireNonNull(preState, "preState");
+        Objects.requireNonNull(forwardBehaviour, "forwardBehaviour");
+        Objects.requireNonNull(backwardBehaviour, "backwardBehaviour");
+        Objects.requireNonNull(activityParameters, "activityParameters");
+
         boolean forwardSuccess;
 
         try {
@@ -362,10 +382,13 @@ public class MuProcess {
      * This is the synchronous handling of compensation, which has another
      * treatment of acceptCompensationFailure than has the asynchronous one.
      */
-    /* package private */ static MuProcessException compensate(
+    /* package private */
+    static MuProcessException compensate(
             final MuPersistentLog compensationLog,
             final String correlationId, final int processId
     ) throws MuProcessException {
+        Objects.requireNonNull(compensationLog, "compensationLog");
+        Objects.requireNonNull(correlationId, "correlationId");
 
         MuProcessException exception;
 

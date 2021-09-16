@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -54,6 +55,8 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
     }
 
     public MuNativeProcessResult(ActivityResults results) {
+        Objects.requireNonNull(results, "results");
+
         this.results = results;
     }
 

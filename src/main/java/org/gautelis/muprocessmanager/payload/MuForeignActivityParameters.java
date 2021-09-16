@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,12 @@ import org.gautelis.muprocessmanager.MuActivityParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.event.ObjectChangeListener;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
+import java.util.Objects;
 
 /**
  * Wraps foreign parameters to a {@link MuActivity}.
@@ -38,6 +40,8 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
     private String foreignData = null;
 
     public MuForeignActivityParameters(String foreignData) {
+        Objects.requireNonNull(foreignData, "foreignData");
+
         this.foreignData = foreignData;
     }
 
@@ -46,6 +50,8 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
     }
 
     public MuForeignActivityParameters(Reader reader) {
+        Objects.requireNonNull(reader, "reader");
+
         try {
             foreignData = IOUtils.toString(reader);
         }

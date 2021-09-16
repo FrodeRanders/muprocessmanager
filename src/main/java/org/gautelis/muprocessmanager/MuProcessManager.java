@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,11 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
     private final MuAsynchronousManagerImpl asynchronousManager;
 
 
-    /* package private */ MuProcessManager(MuSynchronousManagerImpl synchronousManager, MuAsynchronousManagerImpl asynchronousManager) {
+    /* package private */
+    MuProcessManager(MuSynchronousManagerImpl synchronousManager, MuAsynchronousManagerImpl asynchronousManager) {
+        Objects.requireNonNull(synchronousManager, "synchronousManager");
+        Objects.requireNonNull(asynchronousManager, "asynchronousManager");
+
         this.synchronousManager = synchronousManager;
         this.asynchronousManager = asynchronousManager;
     }

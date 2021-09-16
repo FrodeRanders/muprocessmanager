@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,12 @@ public class MuSynchronousManagerImpl implements MuSynchronousManager {
     private static final boolean DEBUG = false; // debug database setup?
 
 
-    /* package private */ MuSynchronousManagerImpl(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
+    /* package private */
+    MuSynchronousManagerImpl(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
+        Objects.requireNonNull(dataSource, "dataSource");
+        Objects.requireNonNull(sqlStatements, "sqlStatements");
+        Objects.requireNonNull(policy, "policy");
+
         acceptCompensationFailure = policy.acceptCompensationFailure();
         assumeNativeProcessDataFlow = policy.assumeNativeProcessDataFlow();
         onlyCompensateIfTransactionWasSuccessful = policy.onlyCompensateIfTransactionWasSuccessful();

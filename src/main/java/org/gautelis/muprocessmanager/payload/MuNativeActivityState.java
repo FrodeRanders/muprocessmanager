@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
@@ -48,6 +49,8 @@ public class MuNativeActivityState implements MuActivityState, Serializable {
     }
 
     public MuNativeActivityState(HashMap<String, Object> state) {
+        Objects.requireNonNull(state, "state");
+
         this.state = state;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ public class MuProcessDetails {
     private static final Gson gson =
             new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").create();
 
-    public class MuActivityDetails {
+    public static class MuActivityDetails {
         private final int stepId;
         private final int retries;
         private final MuActivityState preState;
@@ -59,9 +59,15 @@ public class MuProcessDetails {
     private final Date modified;
     private final Collection<MuActivityDetails> activityDetails = new LinkedList<>();
 
-    /* package private */ MuProcessDetails(
+    /* package private */
+    MuProcessDetails(
             final String correlationId, final int processId, final MuProcessState state, final Date created, final Date modified
     ) {
+        Objects.requireNonNull(correlationId, "correlationId");
+        Objects.requireNonNull(state, "state");
+        Objects.requireNonNull(created, "created");
+        Objects.requireNonNull(modified, "modified");
+
         this.correlationId = correlationId;
         this.processId = processId;
         this.state = state;
@@ -93,7 +99,8 @@ public class MuProcessDetails {
         return Collections.unmodifiableCollection(activityDetails);
     }
 
-    /* package private */ void addActivityDetails(int stepId, int retries, MuActivityState preState) {
+    /* package private */
+    void addActivityDetails(int stepId, int retries, MuActivityState preState) {
         activityDetails.add(new MuActivityDetails(stepId, retries, preState));
     }
 

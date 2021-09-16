@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Frode Randers
+ * Copyright (C) 2017-2021 Frode Randers
  * All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,12 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
     private boolean justStarted = true; // updated after first successful recover()
 
 
-    /* package private */ MuAsynchronousManagerImpl(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
+    /* package private */
+    MuAsynchronousManagerImpl(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
+        Objects.requireNonNull(dataSource, "dataSource");
+        Objects.requireNonNull(sqlStatements, "sqlStatements");
+        Objects.requireNonNull(policy, "policy");
+
         boolean assumeNativeProcessDataFlow = policy.assumeNativeProcessDataFlow();
 
         compensationLog = new MuPersistentLog(dataSource, sqlStatements, assumeNativeProcessDataFlow);
@@ -75,7 +80,6 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
      * Also initiates the statistics logging (in the background).
      */
     public void start() {
-
         // Schedule statistics dump, which will periodically log characteristics of the
         // compensation log.
         if (null == dumpStatisticsTimer) {
@@ -89,7 +93,7 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
             dumpStatisticsTimer = new Timer("org.gautelis.muprocessmanager.statistics");
             int initialDelay = 1000; // 1 second
             dumpStatisticsTimer.scheduleAtFixedRate(
-                    statisticsTask, initialDelay, 1000 * policy.secondsBetweenLoggingStatistics()
+                    statisticsTask, initialDelay, 1000L * policy.secondsBetweenLoggingStatistics()
             );
         }
 
@@ -108,7 +112,7 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
             recoverTimer = new Timer("org.gautelis.muprocessmanager.recover");
             int initialDelay = 1000 + (int)Math.round(Math.random() * 5000); // 1+ seconds
             recoverTimer.scheduleAtFixedRate(
-                    cleanupTask, initialDelay, 1000 * policy.secondsBetweenRecoveryAttempts()
+                    cleanupTask, initialDelay, 1000L * policy.secondsBetweenRecoveryAttempts()
             );
         }
 
@@ -136,7 +140,8 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
         System.out.println("Process manager asynchronous background task stopped.");
     }
 
-    /* package private */ void recover() {
+    /* package private */
+    void recover() {
         log.trace("Running scheduled recovery...");
 
         long size;
@@ -170,9 +175,9 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
 
         //
         try {
-            final long processRetentionTime = 60 * 1000 * policy.minutesToTrackProcess();
-            final long processRecompensationTime = 1000 * policy.secondsBetweenRecompensationAttempts();
-            final long processAssumedStuckTime = 60 * 1000 * policy.minutesBeforeAssumingProcessStuck();
+            final long processRetentionTime = 60L * 1000 * policy.minutesToTrackProcess();
+            final long processRecompensationTime = 1000L * policy.secondsBetweenRecompensationAttempts();
+            final long processAssumedStuckTime = 60L * 1000 * policy.minutesBeforeAssumingProcessStuck();
 
             compensationLog.recover(
                     (correlationId, processId, state, acceptCompensationFailure, created, modified, now) -> {
