@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -97,7 +98,6 @@ public class MuProcessManagerFactory {
             String info = "Failed to create process manager: No embedded database configuration: ";
             info += mpe.getMessage();
             throw new MuProcessException(info, mpe);
-
         }
     }
 
@@ -157,7 +157,6 @@ public class MuProcessManagerFactory {
             String info = "Failed to create process manager: No embedded database configuration: ";
             info += mpe.getMessage();
             throw new MuProcessException(info, mpe);
-
         }
     }
 
@@ -247,7 +246,7 @@ public class MuProcessManagerFactory {
      * Creates the database objects (tables, etc).
      * <p>
      *
-     * @throws Exception
+     * @throws Exception if fails to load configuration or fails to create database objects
      */
     private static void create(Manager manager, PrintWriter out) throws Exception {
         try (InputStream is = MuSynchronousManagerImpl.class.getResourceAsStream("default-database-create.sql")) {
@@ -256,15 +255,13 @@ public class MuProcessManagerFactory {
     }
 
     public static Database.Configuration getDatabaseConfiguration(File file) throws FileNotFoundException, MuProcessException {
-        if (null == file) {
-            throw new IllegalArgumentException("file");
-        }
+        Objects.requireNonNull(file, "file");
 
         if (!file.exists() || !file.canRead()) {
             throw new FileNotFoundException(file.getAbsolutePath());
         }
 
-        try (InputStream is = new FileInputStream(file)) {
+        try (InputStream is = Files.newInputStream(file.toPath())) {
             Properties properties = new Properties();
             properties.loadFromXML(is);
             return Database.getConfiguration(properties);
@@ -277,9 +274,7 @@ public class MuProcessManagerFactory {
     }
 
     public static Database.Configuration getDatabaseConfiguration(Class clazz, String resource) throws MuProcessException {
-        if (null == clazz) {
-            throw new IllegalArgumentException("class");
-        }
+        Objects.requireNonNull(clazz, "clazz");
 
         try (InputStream is = clazz.getResourceAsStream(resource)) {
             if (null == is) {
@@ -314,15 +309,13 @@ public class MuProcessManagerFactory {
     }
 
     public static Properties getSqlStatements(File file) throws FileNotFoundException, MuProcessException {
-        if (null == file) {
-            throw new IllegalArgumentException("file");
-        }
+        Objects.requireNonNull(file, "file");
 
         if (!file.exists() || !file.canRead()) {
             throw new FileNotFoundException(file.getAbsolutePath());
         }
 
-        try (InputStream is = new FileInputStream(file)) {
+        try (InputStream is = Files.newInputStream(file.toPath())) {
             final Properties sqlStatements = new Properties();
             sqlStatements.loadFromXML(is);
             return sqlStatements;
@@ -335,9 +328,7 @@ public class MuProcessManagerFactory {
     }
 
     public static Properties getSqlStatements(Class clazz, String resource) throws MuProcessException {
-        if (null == clazz) {
-            throw new IllegalArgumentException("class");
-        }
+        Objects.requireNonNull(clazz, "clazz");
 
         try (InputStream is = clazz.getResourceAsStream(resource)) {
             if (null == is) {
@@ -360,15 +351,13 @@ public class MuProcessManagerFactory {
     }
 
     public static MuProcessManagementPolicy getManagementPolicy(File file) throws FileNotFoundException, MuProcessException {
-        if (null == file) {
-            throw new IllegalArgumentException("file");
-        }
+        Objects.requireNonNull(file, "file");
 
         if (!file.exists() || !file.canRead()) {
             throw new FileNotFoundException(file.getAbsolutePath());
         }
 
-        try (InputStream is = new FileInputStream(file)) {
+        try (InputStream is = Files.newInputStream(file.toPath())) {
             final Properties policyProperties = new Properties();
             policyProperties.loadFromXML(is);
 
@@ -382,9 +371,7 @@ public class MuProcessManagerFactory {
     }
 
     public static MuProcessManagementPolicy getManagementPolicy(Class clazz, String resource) throws MuProcessException {
-        if (null == clazz) {
-            throw new IllegalArgumentException("class");
-        }
+        Objects.requireNonNull(clazz, "clazz");
 
         try (InputStream is = clazz.getResourceAsStream(resource)) {
             if (null == is) {

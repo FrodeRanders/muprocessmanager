@@ -219,6 +219,7 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
                                     // here (since we cannot be re-compensating -- process was progressing -- and
                                     // re-compensation may not be allowed if we failed at it earlier)
                                     //
+                                    //noinspection ThrowableNotThrown
                                     MuProcess.compensate(compensationLog, correlationId, processId);
                                     recoverCount[state]++;
 
@@ -290,6 +291,7 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
                                     // exceptions
                                     try {
                                         // Ignored returned exception -- we don't want to throw anything here
+                                        //noinspection ThrowableNotThrown
                                         MuProcess.compensate(compensationLog, correlationId, processId);
                                         recoverCount[state]++;
 

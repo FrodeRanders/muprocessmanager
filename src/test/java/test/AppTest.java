@@ -50,6 +50,7 @@ public class AppTest extends TestCase {
         }
         catch (Exception e) {
             String info = "Failed to initiate: " + e.getMessage();
+            System.out.println(info);
             log.warn(info, e);
         }
     }
@@ -300,6 +301,7 @@ public class AppTest extends TestCase {
                     }
                 }
 
+                //noinspection BusyWait
                 Thread.sleep(20 * 1000); // 20 seconds
             }
             catch (InterruptedException | MuProcessException ignore) {}

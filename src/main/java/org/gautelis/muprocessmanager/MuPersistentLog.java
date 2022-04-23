@@ -112,7 +112,8 @@ public class MuPersistentLog {
      * after persisting (and allocating identity).
      * @param process the process to persist.
      * @return the processId of the (new) process.
-     * @throws MuProcessException
+     * @throws MuProcessAlreadyExistsException if a process already exists for this business request
+     * @throws MuProcessException if fails to determine auto-generated process id or if Fails to persist process header
      */
     /* package private */
     int pushProcess(
@@ -176,8 +177,6 @@ public class MuPersistentLog {
     Optional<Integer> countProcessSteps(
             final int processId
     ) throws MuProcessException {
-        Objects.requireNonNull(processId, "processId");
-
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(
                     getStatement("COUNT_PROCESS_STEPS"),

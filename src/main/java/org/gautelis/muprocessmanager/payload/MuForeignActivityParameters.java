@@ -23,7 +23,6 @@ import org.gautelis.muprocessmanager.MuActivityParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.event.ObjectChangeListener;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;

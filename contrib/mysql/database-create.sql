@@ -1,4 +1,4 @@
----------------------------------------------------------------
+-- -------------------------------------------------------------
 -- Copyright (C) 2017-2021 Frode Randers
 -- All rights reserved
 --
@@ -13,18 +13,18 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
----------------------------------------------------------------
+-- -------------------------------------------------------------
 
----------------------------------------------------------------
+-- -------------------------------------------------------------
 -- Database schema: MySQL
 --
 -- Remember to grant privileges to the specific database user:
 --
 --    GRANT ALL PRIVILEGES ON muproc.* TO 'muproc'@'remote-ip' identified by 'xyz';
 --
----------------------------------------------------------------
+-- -------------------------------------------------------------
 
----------------------------------------------------------------
+-- -------------------------------------------------------------
 -- Processes
 --
 CREATE TABLE mu_process (
@@ -43,7 +43,7 @@ CREATE TABLE mu_process (
 
 CREATE UNIQUE INDEX mu_process_corrid_ix ON mu_process ( correlation_id );
 
----------------------------------------------------------------
+-- -------------------------------------------------------------
 --
 --
 CREATE TABLE mu_process_step (

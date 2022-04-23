@@ -182,7 +182,7 @@ public class MuProcess {
         final Optional<MuActivityState> preState = activity.getState();
 
         boolean forwardSuccess = runForwardAction(
-                preState, /* forwardBehaviour */ activity, /* backwardBehaviour */ activity,
+                preState.orElse(null), /* forwardBehaviour */ activity, /* backwardBehaviour */ activity,
                 activityParameters, orchestrationParameters
         );
         compensationLog.markSuccessful(processId, currentStep, forwardSuccess);
@@ -240,7 +240,7 @@ public class MuProcess {
         final Optional<MuActivityState> preState = forwardBehaviour.getState();
 
         boolean forwardSuccess = runForwardAction(
-                preState, forwardBehaviour, backwardBehaviour, activityParameters, orchestrationParameters
+                preState.orElse(null), forwardBehaviour, backwardBehaviour, activityParameters, orchestrationParameters
         );
         compensationLog.markSuccessful(processId, currentStep, forwardSuccess);
 
@@ -272,11 +272,10 @@ public class MuProcess {
     }
 
     private boolean runForwardAction(
-            final Optional<MuActivityState> preState,
+            final MuActivityState preState,
             final MuForwardBehaviour forwardBehaviour, final MuBackwardBehaviour backwardBehaviour,
             final MuActivityParameters activityParameters, final MuOrchestrationParameters orchestrationParameters
     ) {
-        Objects.requireNonNull(preState, "preState");
         Objects.requireNonNull(forwardBehaviour, "forwardBehaviour");
         Objects.requireNonNull(backwardBehaviour, "backwardBehaviour");
         Objects.requireNonNull(activityParameters, "activityParameters");
@@ -285,9 +284,9 @@ public class MuProcess {
 
         try {
             // Log backward activity
-            if (preState.isPresent()) {
+            if (null != preState) {
                 compensationLog.pushCompensation(
-                        this, backwardBehaviour, activityParameters, orchestrationParameters, preState.get(),
+                        this, backwardBehaviour, activityParameters, orchestrationParameters, preState,
                         onlyCompensateIfTransactionWasSuccessful
                 );
             }

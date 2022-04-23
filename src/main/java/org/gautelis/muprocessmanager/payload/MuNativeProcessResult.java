@@ -107,8 +107,7 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
      * @return MuActivityParameters made from JSON stream
      */
     public static MuNativeProcessResult fromReader(final Reader reader) {
-        MuNativeProcessResult result = new MuNativeProcessResult(gson.fromJson(reader, ActivityResults.class));
-        return result;
+        return new MuNativeProcessResult(gson.fromJson(reader, ActivityResults.class));
     }
 
     /**
