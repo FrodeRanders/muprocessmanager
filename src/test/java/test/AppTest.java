@@ -165,7 +165,7 @@ public class AppTest extends TestCase {
 
         System.out.println("\n---- MuProcess test ----");
         WorkQueue workQueue = WorkerQueueFactory.getWorkQueue(
-            WorkerQueueFactory.Type.Multi,
+            WorkerQueueFactory.Type.Multi, // WorkerQueueFactory.Type.WorkStealing
             /* number of threads */ Runtime.getRuntime().availableProcessors()
         );
 

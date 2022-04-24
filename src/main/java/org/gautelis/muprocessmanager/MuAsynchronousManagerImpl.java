@@ -64,7 +64,7 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
 
         // Queue used to recover 'unattended' processes
         recoverWorkQueue = WorkerQueueFactory.getWorkQueue(
-                WorkerQueueFactory.Type.Multi,
+                WorkerQueueFactory.Type.Multi, // WorkerQueueFactory.Type.WorkStealing,
                 policy.numberOfRecoveryThreads()
         );
     }
