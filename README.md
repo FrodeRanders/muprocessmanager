@@ -6,7 +6,7 @@ This library implements a Saga execution coordinator (SEC), suitable as a micro-
 a local embedded Derby database is used to persist processes and process activities; if the database does not 
 exist, the database and tables are created automatically &#8212; trivializing development use.
 
-In a non-development scenario, the backing database may be stored in the application database or in
+In a non-development scenario, process data may be stored in the application database or in
 a separate database. DDL and SQL statements for some database managers are available under [contrib/](contrib).
 
 A key concern has been to provide a relatively simple abstraction over the Saga pattern. This library

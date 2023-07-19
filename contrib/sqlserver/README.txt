@@ -1,6 +1,9 @@
 ~ > docker --version
 Docker version 18.03.0-ce, build 0520e24
 
+
+# Newer version of SQL Server: docker pull mcr.microsoft.com/mssql/server
+
 ~ > docker pull microsoft/mssql-server-linux:2017-latest
 Password:
 2017-latest: Pulling from microsoft/mssql-server-linux
