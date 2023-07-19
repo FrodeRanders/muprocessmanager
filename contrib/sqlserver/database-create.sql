@@ -31,7 +31,7 @@ CREATE TABLE mu_process (
   state INTEGER NOT NULL DEFAULT 0, -- 0=new, 1=progressing, 2=successful, 3=compensated, 4=compensation-failed, 5=abandoned
   accept_failure BIT NOT NULL DEFAULT 1,
 
-  result TEXT DEFAULT NULL,
+  result VARCHAR(MAX) DEFAULT NULL,
 
   created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -54,9 +54,9 @@ CREATE TABLE mu_process_step (
 
   class_name VARCHAR(255) NOT NULL,  -- qualified class name must fit
   method_name VARCHAR(255) NOT NULL, -- method name must fit
-  activity_params TEXT NOT NULL,
-  orchestr_params TEXT DEFAULT NULL,
-  previous_state TEXT DEFAULT NULL,
+  activity_params VARCHAR(MAX) NOT NULL,
+  orchestr_params VARCHAR(MAX) DEFAULT NULL,
+  previous_state VARCHAR(MAX) DEFAULT NULL,
 
   compensate_if_failure BIT NOT NULL DEFAULT 0,
   transaction_successful BIT DEFAULT NULL,
