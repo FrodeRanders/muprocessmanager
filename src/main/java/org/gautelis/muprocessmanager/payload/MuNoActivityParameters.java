@@ -32,16 +32,6 @@ import java.util.Optional;
 public class MuNoActivityParameters implements MuActivityParameters, Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public boolean isEmpty() {
-        return true;
-    }
-
-    @Override
-    public boolean isNative() {
-        return false;
-    }
-
     /**
      * Creates a JSON stream from a MuActivityParameters
      *

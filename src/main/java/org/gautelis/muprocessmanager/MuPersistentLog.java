@@ -825,9 +825,6 @@ public class MuPersistentLog {
         // Prepare collecting statistics for each state
         final int numStates = MuProcessState.values().length;
         long[] stateCount = new long[numStates];
-        for (int i = 0; i < numStates; i++) {
-            stateCount[i] = 0L;
-        }
 
         //
         try (Connection conn = dataSource.getConnection()) {
