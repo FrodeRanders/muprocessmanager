@@ -98,7 +98,7 @@ Example activities are found in the test-package.
 
 ## Example
 How to prepare the &#956;processmanager:
-```
+``` java
 // Prepare process manager
 MuProcessManager mngr;
 try {
@@ -112,12 +112,12 @@ catch (Exception e) {
 ```
 
 How to instantiate and run a process:
-```
+``` java
 // A correlation ID identifying this process
 String correlationId = UUID.randomUUID().toString();
 ```
 
-```
+``` java
 // This implements a micro-process, consisting of a series
 // of individual activities.
 MuProcess process = null;
@@ -164,7 +164,7 @@ catch (Throwable t) {
 
 An individual activity from the example above (`test.FirstActivity`),
 in this case a simple dummy load with probabilistic failure behaviour:
-```
+``` java
 package test;
 
 import org.gautelis.muprocessmanager.MuActivity;
