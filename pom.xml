@@ -41,7 +41,7 @@
         <commons.io.version>2.16.1</commons.io.version>
         <commons.lang3.version>3.14.0</commons.lang3.version>
         <derby.version>10.17.1.0</derby.version> 
-        <gson.version>2.10.1</gson.version>
+        <gson.version>2.11.0</gson.version>
         <log4j.version>2.23.1</log4j.version>
         <slf4j.version>1.7.36</slf4j.version>
         <vopn.version>2.4-SNAPSHOT</vopn.version> <!-- sibling project -->
