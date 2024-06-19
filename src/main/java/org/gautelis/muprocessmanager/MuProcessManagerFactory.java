@@ -327,7 +327,7 @@ public class MuProcessManagerFactory {
         }
     }
 
-    public static Properties getSqlStatements(Class clazz, String resource) throws MuProcessException {
+    public static Properties getSqlStatements(Class<?> clazz, String resource) throws MuProcessException {
         Objects.requireNonNull(clazz, "clazz");
 
         try (InputStream is = clazz.getResourceAsStream(resource)) {
@@ -370,7 +370,7 @@ public class MuProcessManagerFactory {
         }
     }
 
-    public static MuProcessManagementPolicy getManagementPolicy(Class clazz, String resource) throws MuProcessException {
+    public static MuProcessManagementPolicy getManagementPolicy(Class<?> clazz, String resource) throws MuProcessException {
         Objects.requireNonNull(clazz, "clazz");
 
         try (InputStream is = clazz.getResourceAsStream(resource)) {

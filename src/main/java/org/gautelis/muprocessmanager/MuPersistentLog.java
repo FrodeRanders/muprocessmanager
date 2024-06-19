@@ -76,7 +76,7 @@ public class MuPersistentLog {
         Objects.requireNonNull(key, "key");
 
         String statement = sqlStatements.getProperty(key);
-        if (null == statement || statement.length() == 0) {
+        if (null == statement || statement.isEmpty()) {
             /*
              * Make sure we catch this during development!!!
              */
