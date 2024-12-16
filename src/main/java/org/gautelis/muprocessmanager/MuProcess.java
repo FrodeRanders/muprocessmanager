@@ -432,7 +432,7 @@ public class MuProcess {
             });
         }
         finally {
-            if (failedCompensations.size() == 0) {
+            if (failedCompensations.isEmpty()) {
                 compensationLog.cleanupAfterSuccessfulCompensation(processId);
 
                 String info = "Forward activity failed, but compensations were successful";

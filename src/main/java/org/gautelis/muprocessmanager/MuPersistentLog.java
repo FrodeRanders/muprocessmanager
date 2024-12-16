@@ -56,6 +56,8 @@ public class MuPersistentLog {
     private final static int STATE_SUCCESSFUL = MuProcessState.SUCCESSFUL.ordinal();
     private final boolean assumeNativeProcessDataFlow;
 
+    private static final boolean CHECKED_AT_DEV_TIME = false;
+
     public interface CompensationRunnable {
         boolean run(MuBackwardBehaviour activity, Method method, MuBackwardActivityContext context, int step, int retries) throws MuProcessBackwardBehaviourException;
     }
@@ -87,7 +89,7 @@ public class MuPersistentLog {
             throw syntheticException;
         }
 
-        if (false) {
+        if (CHECKED_AT_DEV_TIME) {
             //---------------------------------------------------------------------------
             // Used during development to prune unused statements and otherwise
             // harmless since constantly false conditional blocks are removed at
@@ -710,7 +712,7 @@ public class MuPersistentLog {
                         //
                         MuBackwardBehaviour activity = loader.load(className);
                         if (activity != null) {
-                            if (false) {
+                            if (CHECKED_AT_DEV_TIME) {
                                  //---------------------------------------------------------------------------
                                  // Used during development to trap inadvertent changes to signature of
                                  // MuBackwardBehaviour#backward, since we have a non-compile time detectable
@@ -1056,7 +1058,7 @@ public class MuPersistentLog {
         String methodName = activity.getPersistableMethodName();
 
         try {
-            if (false) {
+            if (CHECKED_AT_DEV_TIME) {
                 //---------------------------------------------------------------------------
                 // Used during development to trap inadvertent changes to signature of
                 // MuBackwardBehaviour#backward, since we have a non-compile time detectable

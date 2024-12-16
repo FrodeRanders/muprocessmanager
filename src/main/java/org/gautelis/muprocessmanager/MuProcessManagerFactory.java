@@ -249,8 +249,12 @@ public class MuProcessManagerFactory {
      * @throws Exception if fails to load configuration or fails to create database objects
      */
     private static void create(Manager manager, PrintWriter out) throws Exception {
-        try (InputStream is = MuSynchronousManagerImpl.class.getResourceAsStream("default-database-create.sql")) {
-            manager.execute("default-database-create.sql", new InputStreamReader(is), out);
+        final String resource = "default-database-create.sql";
+        try (InputStream is = MuSynchronousManagerImpl.class.getResourceAsStream(resource)) {
+            if (null == is) {
+                throw new Exception("Could not load default configuration: " + resource);
+            }
+            manager.execute(resource, new InputStreamReader(is), out);
         }
     }
 
@@ -273,7 +277,7 @@ public class MuProcessManagerFactory {
         }
     }
 
-    public static Database.Configuration getDatabaseConfiguration(Class clazz, String resource) throws MuProcessException {
+    public static Database.Configuration getDatabaseConfiguration(Class<?> clazz, String resource) throws MuProcessException {
         Objects.requireNonNull(clazz, "clazz");
 
         try (InputStream is = clazz.getResourceAsStream(resource)) {

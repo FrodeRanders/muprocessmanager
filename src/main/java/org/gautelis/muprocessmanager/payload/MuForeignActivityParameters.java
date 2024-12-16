@@ -64,7 +64,7 @@ public class MuForeignActivityParameters implements MuActivityParameters, Serial
 
     @Override
     public boolean isEmpty() {
-        return null == foreignData || foreignData.length() == 0;
+        return null == foreignData || foreignData.isEmpty();
     }
 
     /**

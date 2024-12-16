@@ -59,7 +59,7 @@ public class MuForeignActivityState implements MuActivityState, Serializable {
 
     @Override
     public boolean isEmpty() {
-        return null == json || json.length() == 0;
+        return null == json || json.isEmpty();
     }
 
     /**

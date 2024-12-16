@@ -42,7 +42,7 @@ public class MuNativeProcessResult implements MuProcessResult, Serializable {
 
     private static final Gson gson = new GsonBuilder().create();
 
-    /* package private */ static class ActivityResults extends ArrayList<Object> {}
+    public static class ActivityResults extends ArrayList<Object> {}
     private final ActivityResults results;
 
     public MuNativeProcessResult() {
