@@ -38,7 +38,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <commons.io.version>2.17.0</commons.io.version>
+        <commons.io.version>2.18.0</commons.io.version>
         <commons.lang3.version>3.17.0</commons.lang3.version>
         <derby.version>10.17.1.0</derby.version>
         <junit.version>4.13.2</junit.version>
