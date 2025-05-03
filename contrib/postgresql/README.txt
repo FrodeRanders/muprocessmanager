@@ -1,3 +1,44 @@
+You can either choose to run 'setup-for-test.py' or manually set up the environment.
+
+---8<--------------------------------------------------------------------
+
+// Automated //
+
+➜   python contrib/postgresql/setup-for-test.py
+Pulling the latest 'postgres' image from Docker Hub...
+Using default tag: latest
+latest: Pulling from library/postgres
+Digest: sha256:304ab813518754228f9f792f79d6da36359b82d8ecf418096c636725f8c930ad
+Status: Image is up to date for postgres:latest
+docker.io/library/postgres:latest
+Image pulled successfully.
+
+Removing existing container named 'muproc' (if any)...
+Removed old container 'muproc'.
+
+Starting new container 'muproc' on port 1402 ...
+f94c373ef73ca468a857bfa3b96e0971289df720bf04d250fde9ab597018baec
+Container started.
+
+Waiting 10 seconds for the database to initialize...
+Proceeding...
+
+Entering container to run psql commands...
+Commands executed. Exiting psql.
+All SQL files have been executed.
+
+Setup completed.
+
+You can now connect using something like:
+  psql -h localhost -p 1402 -U postgres
+using the superuser password you specified.
+
+➜
+
+---8<--------------------------------------------------------------------
+
+// Manual //
+
 ~ > docker pull postgres
 Using default tag: latest
 latest: Pulling from library/postgres
