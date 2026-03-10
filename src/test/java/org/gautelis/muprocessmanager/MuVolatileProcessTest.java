@@ -18,6 +18,7 @@
 package org.gautelis.muprocessmanager;
 
 import org.gautelis.muprocessmanager.payload.MuNativeActivityParameters;
+import org.gautelis.muprocessmanager.payload.MuForeignProcessResult;
 import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.junit.Test;
 
@@ -114,5 +115,73 @@ public class MuVolatileProcessTest {
         catch (MuProcessBackwardBehaviourException expected) {
             // Expected: compensation failed with acceptCompensationFailure=false.
         }
+    }
+
+    @Test
+    public void testCompensationFailureContinuesWhenAccepted() throws MuProcessException {
+        MuVolatileProcess process = new MuVolatileProcess("corr-4", true, true);
+        MuNativeActivityParameters parameters = new MuNativeActivityParameters();
+        List<String> calls = new ArrayList<>();
+
+        process.execute(
+                c -> {
+                    calls.add("forward1");
+                    return true;
+                },
+                c -> {
+                    calls.add("backward1");
+                    return false;
+                },
+                parameters
+        );
+
+        process.execute(
+                c -> {
+                    calls.add("forward2");
+                    return true;
+                },
+                c -> {
+                    calls.add("backward2");
+                    return true;
+                },
+                parameters
+        );
+
+        try {
+            process.execute(
+                    c -> {
+                        calls.add("forward3");
+                        return false;
+                    },
+                    c -> {
+                        calls.add("backward3");
+                        return false;
+                    },
+                    parameters
+            );
+            fail("Expected accepted compensation failures to still signal backward failure");
+        }
+        catch (MuProcessBackwardBehaviourException expected) {
+            // Expected: all compensations are attempted, but the process still reports backward failure.
+        }
+
+        assertEquals(
+                Arrays.asList("forward1", "forward2", "forward3", "backward3", "backward2", "backward1"),
+                calls
+        );
+    }
+
+    @Test
+    public void testForeignDataFlowUsesForeignResultType() throws MuProcessException {
+        MuVolatileProcess process = new MuVolatileProcess("corr-5", false, false);
+        MuNativeActivityParameters parameters = new MuNativeActivityParameters();
+
+        process.execute(
+                c -> true,
+                c -> true,
+                parameters
+        );
+
+        assertTrue(process.getResult() instanceof MuForeignProcessResult);
     }
 }

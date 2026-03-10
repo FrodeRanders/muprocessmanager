@@ -18,7 +18,6 @@
 package org.gautelis.muprocessmanager;
 
 import org.gautelis.vopn.queue.WorkQueue;
-import org.gautelis.vopn.queue.WorkerQueueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,20 +52,26 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
 
     /* package private */
     MuAsynchronousManagerImpl(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy) {
+        this(
+                dataSource,
+                sqlStatements,
+                policy,
+                new ExecutorWorkQueue(policy.numberOfRecoveryThreads(), "org.gautelis.muprocessmanager.recover")
+        );
+    }
+
+    /* package private */
+    MuAsynchronousManagerImpl(DataSource dataSource, Properties sqlStatements, MuProcessManagementPolicy policy, WorkQueue recoverWorkQueue) {
         Objects.requireNonNull(dataSource, "dataSource");
         Objects.requireNonNull(sqlStatements, "sqlStatements");
         Objects.requireNonNull(policy, "policy");
+        Objects.requireNonNull(recoverWorkQueue, "recoverWorkQueue");
 
         boolean assumeNativeProcessDataFlow = policy.assumeNativeProcessDataFlow();
 
         compensationLog = new MuPersistentLog(dataSource, sqlStatements, assumeNativeProcessDataFlow);
         this.policy = policy;
-
-        // Queue used to recover 'unattended' processes
-        recoverWorkQueue = WorkerQueueFactory.getWorkQueue(
-                WorkerQueueFactory.Type.Multi, // WorkerQueueFactory.Type.WorkStealing,
-                policy.numberOfRecoveryThreads()
-        );
+        this.recoverWorkQueue = recoverWorkQueue;
     }
 
     /**
@@ -78,6 +83,10 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
      * the asynchronous background task in one single instance.
      * <p>
      * Also initiates the statistics logging (in the background).
+     * <p>
+     * Recovery work is derived from persisted process state, not from the transient contents
+     * of the in-memory queue. After a shutdown, a subsequent start and recovery cycle will
+     * rebuild pending recovery work from the database.
      */
     public void start() {
         // Schedule statistics dump, which will periodically log characteristics of the
@@ -116,13 +125,17 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
             );
         }
 
-        System.out.println("Process manager asynchronous background task started.");
+        log.debug("Process manager asynchronous background task started.");
     }
 
     /**
      * Stops the micro process manager asynchronous background tasks.
      * <p>
      * As long as these tasks are running, the program will not exit.
+     * <p>
+     * The underlying executor-backed recovery queue is stopped as part of shutdown. Queued
+     * recovery tasks that have not yet started are discarded and are expected to be rebuilt
+     * from persisted process state after restart.
      */
     public void stop() {
         if (null != dumpStatisticsTimer) {
@@ -137,7 +150,7 @@ public class MuAsynchronousManagerImpl implements MuAsynchronousManager {
 
         recoverWorkQueue.stop();
 
-        System.out.println("Process manager asynchronous background task stopped.");
+        log.debug("Process manager asynchronous background task stopped.");
     }
 
     /* package private */

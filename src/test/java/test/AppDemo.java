@@ -28,13 +28,25 @@ import org.gautelis.muprocessmanager.payload.MuNativeProcessResult;
 import org.gautelis.vopn.queue.WorkQueue;
 import org.gautelis.vopn.queue.WorkerQueueFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.gautelis.muprocessmanager.MuProcessManagerFactory.getManager;
 
-import java.util.*;
-
-public class AppTest extends TestCase {
-    private static final Logger log = LogManager.getLogger(AppTest.class);
+/**
+ * Legacy demo and stress harness. This class is intentionally not named with a *Test suffix,
+ * so it is excluded from the default Maven test run. Execute explicitly with:
+ * {@code mvn -Dtest=test.AppDemo test}
+ */
+public class AppDemo extends TestCase {
+    private static final Logger log = LogManager.getLogger(AppDemo.class);
     private static final Object lock = new Object();
+    private static final int DEFAULT_PROCESS_COUNT = Integer.getInteger("muprocessmanager.appTest.processes", 5000);
+    private static final int SAMPLE_DIVISOR = Integer.getInteger("muprocessmanager.appTest.sampleDivisor", 100);
+    private static final long POLL_INTERVAL_MILLIS = Long.getLong("muprocessmanager.appTest.pollMillis", 1000L);
 
     private MuProcessManager mngr = null;
 
@@ -47,8 +59,7 @@ public class AppTest extends TestCase {
             mngr = getManager();
             mngr.start();
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             String info = "Failed to initiate: " + e.getMessage();
             System.out.println(info);
             log.warn(info, e);
@@ -65,24 +76,13 @@ public class AppTest extends TestCase {
         }
     }
 
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
+    public AppDemo(String testName) {
+        super(testName);
     }
 
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
+    public static Test suite() {
+        return new TestSuite(AppDemo.class);
     }
-
 
     public void testVolatileProcess() {
         if (null == mngr) {
@@ -125,21 +125,21 @@ public class AppTest extends TestCase {
             process.execute(
                     c -> {
                         System.out.println("Third forward activity: " + c.getActivityParameters());
-                        if (/* failure? */ true) {
+                        if (true) {
                             System.out.println("Simulated FAILURE");
-                            return false; // i.e. FAILURE
+                            return false;
                         } else {
                             return true;
                         }
                     },
                     c -> {
                         System.out.println("Third backward activity: " + c.getActivityParameters());
-                        return false; // Even compensation failed
+                        return false;
                     },
                     parameters
             );
 
-            parameters.put("arg4", 22/7.0);
+            parameters.put("arg4", 22 / 7.0);
             process.execute(
                     c -> {
                         System.out.println("Fourth forward activity: " + c.getActivityParameters());
@@ -151,28 +151,25 @@ public class AppTest extends TestCase {
                     },
                     parameters
             );
-        }
-        catch (MuProcessException mpe) {
+        } catch (MuProcessException mpe) {
             System.out.println("Failure during process execution: " + mpe.getMessage());
         }
     }
 
-    public void testPersistedProcess()
-    {
+    public void testPersistedProcess() {
         if (null == mngr) {
             fail("No MuProcessManager available: Is another process using our database?");
         }
 
         System.out.println("\n---- MuProcess test ----");
         WorkQueue workQueue = WorkerQueueFactory.getWorkQueue(
-            WorkerQueueFactory.Type.Multi, // WorkerQueueFactory.Type.WorkStealing
-            /* number of threads */ Runtime.getRuntime().availableProcessors()
+                WorkerQueueFactory.Type.Multi,
+                Runtime.getRuntime().availableProcessors()
         );
 
         workQueue.start();
 
         if (false) {
-            // Introduce a competing process manager
             try {
                 MuProcessManager competingMngr = getManager();
                 competingMngr.start();
@@ -183,11 +180,11 @@ public class AppTest extends TestCase {
             }
         }
         final Collection<String> sampledCorrelationIds = new ArrayList<>();
+        final int sampleEvery = Math.max(1, DEFAULT_PROCESS_COUNT / Math.max(1, SAMPLE_DIVISOR));
 
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < DEFAULT_PROCESS_COUNT; i++) {
             final String correlationId = UUID.randomUUID().toString();
-            if (i % 1000 == 0) {
-                // Sample each thousandth correlation ID
+            if (i % sampleEvery == 0) {
                 synchronized (lock) {
                     sampledCorrelationIds.add(correlationId);
                 }
@@ -202,7 +199,6 @@ public class AppTest extends TestCase {
                     parameters.put("weight", 100.0 * Math.random());
                     process.execute(
                             c -> {
-
                                 if (c.usesNativeDataFlow()) {
                                     MuNativeActivityParameters np = (MuNativeActivityParameters) c.getActivityParameters();
                                     MuNativeProcessResult nr = (MuNativeProcessResult) c.getResult();
@@ -210,7 +206,7 @@ public class AppTest extends TestCase {
                                     double realWeight = 0.83 * weight;
                                     nr.add(realWeight);
                                 }
-                                return !(Math.random() < /* forward failure probability */ 0.01);
+                                return !(Math.random() < 0.01);
                             }, parameters
                     );
 
@@ -239,15 +235,11 @@ public class AppTest extends TestCase {
                     process.finished();
 
                 } catch (MuProcessForwardBehaviourException mpfae) {
-                    // Forward activity failed, but compensations were successful
-                     log.trace("No success, but managed to compensate: {}", mpfae.getMessage());
+                    log.trace("No success, but managed to compensate: {}", mpfae.getMessage());
 
                 } catch (MuProcessBackwardBehaviourException mpbae) {
-                    // Forward activity failed and so did some compensation activities
                     log.trace("Process and compensation failure: {}", mpbae.getMessage());
-                }
-                catch (Throwable t) {
-                    // Other reasons for failure not necessarily related to the activity
+                } catch (Throwable t) {
                     if (null != process) {
                         process.failed();
                     }
@@ -260,7 +252,6 @@ public class AppTest extends TestCase {
         do {
             System.out.println("\nProcess result samples: " + sampledCorrelationIds.size());
             try {
-                // Iterate since we will modify collection
                 synchronized (lock) {
                     Iterator<String> sit = sampledCorrelationIds.iterator();
                     while (sit.hasNext()) {
@@ -286,11 +277,9 @@ public class AppTest extends TestCase {
 
                                 case NEW:
                                 case PROGRESSING:
-                                    // Check later
                                     break;
 
                                 default:
-                                    // No idea to recheck, but we will try to reset the process here -- faking a retry
                                     Optional<Boolean> isReset = mngr.resetProcess(correlationId);
                                     isReset.ifPresent(aBoolean -> info.append(" (successfully ").append(aBoolean ? "" : "NOT ").append("reset)"));
                                     sit.remove();
@@ -301,10 +290,9 @@ public class AppTest extends TestCase {
                     }
                 }
 
-                //noinspection BusyWait
-                Thread.sleep(20 * 1000); // 20 seconds
+                Thread.sleep(POLL_INTERVAL_MILLIS);
+            } catch (InterruptedException | MuProcessException ignore) {
             }
-            catch (InterruptedException | MuProcessException ignore) {}
         } while (!workQueue.isEmpty());
 
         workQueue.stop();
@@ -315,10 +303,8 @@ public class AppTest extends TestCase {
             for (MuProcessDetails detail : details) {
                 System.out.println(detail.toJson());
             }
-        }
-        catch (MuProcessException mupp) {
-            String info = mupp.getMessage();
-            log.warn(info);
+        } catch (MuProcessException mupp) {
+            log.warn(mupp.getMessage());
         }
     }
 }

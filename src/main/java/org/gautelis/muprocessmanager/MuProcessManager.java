@@ -56,6 +56,10 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * the asynchronous background task in one single instance.
      * <p>
      * Also initiates the statistics logging (in the background).
+     * <p>
+     * Recovery backlog is reconstructed from persisted process state. This means that work
+     * dropped from the in-memory recovery queue during an earlier {@link #stop()} will be
+     * rediscovered after restart.
      */
     public void start() {
         asynchronousManager.start();
@@ -65,6 +69,10 @@ public class MuProcessManager implements MuSynchronousManager, MuAsynchronousMan
      * Stops the micro process manager asynchronous background tasks.
      * <p>
      * As long as these tasks are running, the program will not exit.
+     * <p>
+     * This also stops the in-memory recovery queue. Queued recovery tasks that have not yet
+     * started are discarded at shutdown and will instead be rebuilt from persisted database
+     * state after the next {@link #start()}.
      */
     public void stop() {
         asynchronousManager.stop();

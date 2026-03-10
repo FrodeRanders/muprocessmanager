@@ -85,7 +85,6 @@ public class MuPersistentLog {
             String info = "No SQL statement matching key=\"" + key + "\"";
             MuProcessException syntheticException = new MuProcessException(info);
             log.error(info, syntheticException);
-            syntheticException.printStackTrace(System.err);
             throw syntheticException;
         }
 
@@ -100,7 +99,7 @@ public class MuPersistentLog {
             if (++i % 100000 == 0) {
                 sqlStatements.forEach((k, s) -> {
                     if (!sqlStatementCount.containsKey(k)) {
-                        System.out.println("Unused statement (sofar): " + k);
+                        log.debug("Unused statement (so far): {}", k);
                     }
                 });
             }

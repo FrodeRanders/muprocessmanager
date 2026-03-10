@@ -231,8 +231,9 @@ public class MuProcess {
         Objects.requireNonNull(backwardBehaviour, "backwardBehaviour");
         Objects.requireNonNull(activityParameters, "activityParameters");
 
-        String backwardClassName = backwardBehaviour.getClass().getName();
-        if (backwardClassName.contains(LAMBDA_INDICATION)) {
+        Class<?> backwardClass = backwardBehaviour.getClass();
+        String backwardClassName = backwardClass.getName();
+        if (backwardClassName.contains(LAMBDA_INDICATION) || backwardClass.isSynthetic()) {
             String info = "Backward behaviour can not be a lambda: " + backwardClassName;
             throw new MuProcessException(info);
         }

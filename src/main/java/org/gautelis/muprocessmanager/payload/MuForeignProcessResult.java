@@ -102,7 +102,7 @@ public class MuForeignProcessResult implements MuProcessResult, Serializable {
      */
     @Override
     public Reader toReader() {
-        return new StringReader(toJson());
+        return new StringReader(gson.toJson(results));
     }
 
     @Override

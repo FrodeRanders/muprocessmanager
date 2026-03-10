@@ -31,6 +31,10 @@ public interface MuAsynchronousManager {
      * the asynchronous background task in one single instance.
      * <p>
      * Also initiates the statistics logging (in the background).
+     * <p>
+     * Recovery work is derived from persisted process state in the database. If a prior
+     * {@link #stop()} dropped in-memory queued recovery tasks during shutdown, a later
+     * {@code start()} followed by recovery will rebuild that backlog from persisted state.
      */
     void start();
 
@@ -38,6 +42,10 @@ public interface MuAsynchronousManager {
      * Stops the micro process manager asynchronous background tasks.
      * <p>
      * As long as these tasks are running, the program will not exit.
+     * <p>
+     * Stopping the manager stops the in-memory recovery queue as well. Any queued but not yet
+     * started recovery tasks are discarded and are expected to be rediscovered from persisted
+     * process state after the next {@link #start()}.
      */
     void stop();
 }

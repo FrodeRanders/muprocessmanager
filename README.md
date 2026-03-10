@@ -1,6 +1,42 @@
 A Saga execution coordinator implementing a micro-process manager.
 ==================================================================
 
+## Build
+This project currently depends on `org.gautelis:vopn` as a sibling project during local development.
+If `vopn` is not already installed in your local Maven repository, build and install it first and then build this project:
+
+```bash
+mvn -f ../java-vopn/pom.xml install
+mvn test
+```
+
+Historically both libraries were published to Maven Central. The published coordinates are still the same, but the
+examples below describe the current `2.0-SNAPSHOT` development branch rather than the older Central release.
+
+## Tests
+The default Maven test run is intended to be a deterministic regression suite:
+
+```bash
+mvn test
+```
+
+The old long-running demo/stress harness is still available, but it is no longer part of the default test phase.
+Run it explicitly when you want to exercise the library interactively:
+
+```bash
+mvn -Dtest=test.AppDemo test
+```
+
+The asynchronous recovery manager now uses the local `ExecutorWorkQueue` implementation by default.
+Its shutdown semantics differ from the older `vopn` multi-worker queue: queued recovery work is dropped on
+`stop()`, and then rebuilt from persisted database state on the next `start()`/`recover()` cycle. This matches
+the intended process-manager lifecycle, where `start()` and `stop()` follow application startup and shutdown.
+
+## Release Notes
+- `2.0-SNAPSHOT`: the asynchronous recovery manager now defaults to `ExecutorWorkQueue`. Shutdown no longer preserves
+  queued in-memory recovery backlog across `stop()`. Pending recovery, abandonment, and retirement work is instead
+  reconstructed from persisted process state after the next startup and recovery cycle.
+
 ## Description of content
 This library implements a Saga execution coordinator (SEC), suitable as a micro-process manager. Out of the box,
 a local embedded Derby database is used to persist processes and process activities; if the database does not 
@@ -17,8 +53,8 @@ The Saga pattern only offer so much and in the end you need to understand how th
 business application. Of course you need to understand that in a globally (distributed) transaction
 environment as well, but that environment makes it easier to reason about. 
 
-Available from Maven Central as:
-```
+Published releases have previously been available from Maven Central as:
+``` 
 <dependency>
     <groupId>org.gautelis</groupId>
     <artifactId>muprocessmanager</artifactId>
@@ -102,7 +138,7 @@ How to prepare the &#956;processmanager:
 // Prepare process manager
 MuProcessManager mngr;
 try {
-    mngr = MuProcessManager.getManager();
+    mngr = MuProcessManagerFactory.getManager(dataSource);
     mngr.start();
 }
 catch (Exception e) {
@@ -215,3 +251,8 @@ tasks of the `MuProcessManager`:
 [statistics] {1 NEW} {7 PROGRESSING} {13432 SUCCESSFUL} {17805 COMPENSATED} {547 COMPENSATION_FAILED} {31792 in total}
 ...
 ```
+
+## Notes
+- `ExecutorWorkQueue` now backs the asynchronous recovery manager by default. Characterization tests document the
+  intended difference from the older `vopn` queue: pending in-memory recovery backlog is not preserved across
+  shutdown, but persisted process state is rescanned and re-queued after restart.

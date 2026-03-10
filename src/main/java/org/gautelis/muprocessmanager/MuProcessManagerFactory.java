@@ -39,6 +39,7 @@ public class MuProcessManagerFactory {
     private static final Logger log = LoggerFactory.getLogger(MuProcessManagerFactory.class);
 
     private static final boolean DEBUG_DATABASE_SETUP = false;
+    private static final PrintWriter QUIET_DATABASE_SETUP_WRITER = new PrintWriter(new StringWriter());
 
     /**
      * Returns a {@link MuProcessManager} that uses an external database for persisting process information.
@@ -233,7 +234,7 @@ public class MuProcessManagerFactory {
             options.debug = DEBUG_DATABASE_SETUP;
             Manager instance = new Derby(dataSource, options);
 
-            create(instance, new PrintWriter(System.out));
+            create(instance, QUIET_DATABASE_SETUP_WRITER);
 
         } catch (Throwable t) {
             String info = "Failed to prepare internal database: ";
